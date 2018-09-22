@@ -1,0 +1,30 @@
+From 3afe0fbd15d3979c7090bb29aa047c6070693c02 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 5 Mar 2018 18:24:24 +0800
+Subject: [PATCH 20/23] modprobe: fix return value
+
+It seems bionic ignores the return value of the main function.
+As a result, kernel won't know modprobe failed. That may cause
+kernel panic.
+
+Using exit() function to fix that.
+---
+ init/devices.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/devices.cpp b/init/devices.cpp
+index 668f366711..83246f3932 100644
+--- a/init/devices.cpp
++++ b/init/devices.cpp
+@@ -574,7 +574,7 @@ int modprobe_main(int argc, char **argv)
+     DeviceHandler dh;
+     dh.ReadModulesDescFiles();
+     dh.OnColdBootDone();
+-    return dh.LoadModule(uevent) || dh.LoadModule(uevent.modalias, options.c_str()) ? 0 : -1;
++    exit(!dh.LoadModule(uevent) && !dh.LoadModule(uevent.modalias, options.c_str()));
+ }
+ 
+ }  // namespace init
+-- 
+2.17.1
+

@@ -1,0 +1,53 @@
+From f8829253295a234f86f4ff8cd640822081130fe5 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 23 Feb 2018 16:46:31 +0800
+Subject: [PATCH 19/23] modprobe: handle module options correctly
+
+I forgot to pass module options to insmod_by_dep(). Therefore
+modules are loaded without options.
+---
+ init/devices.cpp | 6 +++---
+ init/devices.h   | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/init/devices.cpp b/init/devices.cpp
+index 7efe287275..668f366711 100644
+--- a/init/devices.cpp
++++ b/init/devices.cpp
+@@ -472,9 +472,9 @@ bool DeviceHandler::LoadModule(const Uevent& uevent) const
+     return ret;
+ }
+ 
+-bool DeviceHandler::LoadModule(const std::string& mod) const
++bool DeviceHandler::LoadModule(const std::string& mod, const char* options) const
+ {
+-    bool ret = !insmod_by_dep(mod.c_str(), "", NULL, 0, NULL);
++    bool ret = !insmod_by_dep(mod.c_str(), options, NULL, 0, NULL);
+     if (!ret) {
+         PLOG(WARNING) << "failed to load " << mod;
+     }
+@@ -574,7 +574,7 @@ int modprobe_main(int argc, char **argv)
+     DeviceHandler dh;
+     dh.ReadModulesDescFiles();
+     dh.OnColdBootDone();
+-    return dh.LoadModule(uevent) || dh.LoadModule(uevent.modalias) ? 0 : -1;
++    return dh.LoadModule(uevent) || dh.LoadModule(uevent.modalias, options.c_str()) ? 0 : -1;
+ }
+ 
+ }  // namespace init
+diff --git a/init/devices.h b/init/devices.h
+index 36d696265f..176814d7f5 100644
+--- a/init/devices.h
++++ b/init/devices.h
+@@ -112,7 +112,7 @@ class DeviceHandler {
+     void HandleDeviceEvent(const Uevent& uevent);
+     void HandleModuleEvent(const Uevent& uevent, std::vector<std::string>* mod_queue = nullptr);
+     bool LoadModule(const Uevent& uevent) const;
+-    bool LoadModule(const std::string& mod) const;
++    bool LoadModule(const std::string& mod, const char* options = "") const;
+     void ReadModulesDescFiles();
+     void OnColdBootDone();
+ 
+-- 
+2.17.1
+

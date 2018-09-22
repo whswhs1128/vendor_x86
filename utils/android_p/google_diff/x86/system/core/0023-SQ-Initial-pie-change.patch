@@ -1,0 +1,990 @@
+From 702d16da723b24f25893b27210a56a069a20ff81 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 22 Sep 2018 19:20:48 -0400
+Subject: [PATCH 23/23] [SQ] Initial pie change
+
+From @fguy
+
+Change-Id: I60f80084ae71b0728ab4665f8c5cf5a719622f17
+---
+ init/Android.bp                               |   4 +-
+ init/Android.mk                               |   1 -
+ init/builtins.cpp                             |   5 +-
+ init/devices.cpp                              |  14 +-
+ init/devices.h                                |   2 +
+ init/init.cpp                                 |  21 +-
+ init/init_parser.cpp                          | 168 +++++++++++++++
+ init/init_parser.h                            | 102 +++++++++
+ init/uevent_listener.cpp                      |   4 +-
+ init/ueventd.cpp                              |   1 +
+ init/util.cpp                                 |  30 +++
+ init/util.h                                   |   1 +
+ libcutils/Android.bp                          |   3 +-
+ libdiskconfig/config_mbr.c                    |   4 +-
+ libdiskconfig/diskconfig.c                    |   2 +-
+ libdiskconfig/diskutils.c                     |   5 +-
+ libpixelflinger/Android.mk                    |   4 +-
+ .../codeflinger/x86/libenc/Android.mk         |   1 +
+ libpixelflinger/tests/codegen/codegen.cpp     |   6 -
+ libsuspend/autosuspend_wakeup_count.cpp       | 195 +++++++++++++++++-
+ rootdir/ueventd.rc                            |   3 -
+ toolbox/newfs_msdos.c                         |  11 +-
+ 22 files changed, 556 insertions(+), 31 deletions(-)
+ create mode 100644 init/init_parser.cpp
+ create mode 100644 init/init_parser.h
+
+diff --git a/init/Android.bp b/init/Android.bp
+index 23537c9db4..e101ab864f 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -26,7 +26,8 @@ cc_defaults {
+         "-Wextra",
+         "-Wno-unused-parameter",
+         "-Werror",
+-        "-DALLOW_LOCAL_PROP_OVERRIDE=1",
++        "-DTARGET_PRODUCT=\"$(TARGET_PRODUCT)\"",
++        "-DALLOW_LOCAL_PROP_OVERRIDE=0",
+         "-DALLOW_PERMISSIVE_SELINUX=0",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
+         "-DWORLD_WRITABLE_KMSG=0",
+@@ -104,6 +105,7 @@ cc_library_static {
+         "import_parser.cpp",
+         "init.cpp",
+         "init_first_stage.cpp",
++        "init_parser.cpp",
+         "keychords.cpp",
+         "log.cpp",
+         "parser.cpp",
+diff --git a/init/Android.mk b/init/Android.mk
+index d33f9d32a0..cba63af43c 100644
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -50,7 +50,6 @@ LOCAL_SRC_FILES := main.cpp \
+     keychords.cpp \
+     property_service.cpp \
+     reboot.cpp \
+-    signal_handler.cpp \
+     ueventd.cpp \
+     watchdogd.cpp \
+ 
+diff --git a/init/builtins.cpp b/init/builtins.cpp
+index 011b84e5a4..3a5adabf33 100644
+--- a/init/builtins.cpp
++++ b/init/builtins.cpp
+@@ -234,10 +234,9 @@ static Result<Success> do_insmod(const BuiltinArguments& args) {
+     std::string filename = *it++;
+     std::string options = android::base::Join(std::vector<std::string>(it, args.end()), ' ');
+ 
+-    unique_fd fd(TEMP_FAILURE_RETRY(open(filename.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
+-    if (fd == -1) return ErrnoError() << "open(\"" << filename << "\") failed";
++//    return insmod(filename.c_str(), options.c_str(), flags);
++	int rc = insmod(filename.c_str(), options.c_str(), flags); 
+ 
+-    int rc = syscall(__NR_finit_module, fd.get(), options.c_str(), flags);
+     if (rc == -1) return ErrnoError() << "finit_module for \"" << filename << "\" failed";
+ 
+     return Success();
+diff --git a/init/devices.cpp b/init/devices.cpp
+index 83246f3932..b688e406d9 100644
+--- a/init/devices.cpp
++++ b/init/devices.cpp
+@@ -417,7 +417,7 @@ void DeviceHandler::HandleDeviceEvent(const Uevent& uevent) {
+                    std::find(subsystems_.cbegin(), subsystems_.cend(), uevent.subsystem);
+                subsystem != subsystems_.cend()) {
+         devpath = subsystem->ParseDevPath(uevent);
+-    } else if (uevent.subsystem == "usb") {
++    } else if (uevent.subsystem == "usb" || uevent.subsystem == "usbmisc") {
+         if (!uevent.device_name.empty()) {
+             devpath = "/dev/" + uevent.device_name;
+         } else {
+@@ -484,20 +484,25 @@ bool DeviceHandler::LoadModule(const std::string& mod, const char* options) cons
+ void DeviceHandler::ReadModulesDescFiles()
+ {
+     auto line_parser = [] (auto args, auto err, std::set<std::string>* set_) -> bool {
++//    auto line_parser = [&] (auto args, std::set<std::string>* set_) -> bool {
+         if (args.size() < 2) {
+             *err = "must have 2 entries";
+             return false;
++//            return Error() << "must have 2 entries";
+         }
+ 
+         set_->emplace(args[1]);
+         return true;
++//        return Success();
+     };
+     using namespace std::placeholders;
+     std::set<std::string> blacklist, deferred;
+ 
+-    Parser parser;
++    InitParser parser;
+     parser.AddSingleLineParser("blacklist", std::bind(line_parser, _1, _2, &blacklist));
+     parser.AddSingleLineParser("deferred", std::bind(line_parser, _1, _2, &deferred));
++//    parser.AddSingleLineParser("blacklist", std::bind(line_parser, _1, &blacklist));
++//    parser.AddSingleLineParser("deferred", std::bind(line_parser, _1, &deferred));
+ 
+     // wait until the file is ready
+     while (!parser.ParseConfig("/system/etc/modules.blacklist")) {
+@@ -505,9 +510,12 @@ void DeviceHandler::ReadModulesDescFiles()
+     }
+ 
+     parser.AddSingleLineParser("alias", [&] (auto args, auto err) {
++//    parser.AddSingleLineParser("alias", [&] (auto args) {
+         if (args.size() < 3) {
+             *err = "must have 3 entries";
+             return false;
++//            return Error() << "must have 3 entries";
++//            return Error();
+         }
+         if (deferred.find(args[2]) != deferred.end()) {
+             deferred_mod_aliases_.emplace(args[1], args[2]);
+@@ -515,7 +523,9 @@ void DeviceHandler::ReadModulesDescFiles()
+             mod_aliases_.emplace(args[1], args[2]);
+         }
+         return true;
++//        return Success();
+     });
++
+     char alias[PATH_MAX];
+     strlcat(get_default_mod_path(alias), "modules.alias", PATH_MAX);
+     parser.ParseConfig(alias);
+diff --git a/init/devices.h b/init/devices.h
+index 176814d7f5..ce819d5234 100644
+--- a/init/devices.h
++++ b/init/devices.h
+@@ -132,6 +132,8 @@ class DeviceHandler {
+     std::vector<Permissions> dev_permissions_;
+     std::vector<SysfsPermissions> sysfs_permissions_;
+     std::vector<Subsystem> subsystems_;
++    std::multimap<std::string, std::string> mod_aliases_;
++    std::multimap<std::string, std::string> deferred_mod_aliases_;
+     std::set<std::string> boot_devices_;
+     std::multimap<std::string, std::string> mod_aliases_;
+     std::multimap<std::string, std::string> deferred_mod_aliases_;
+diff --git a/init/init.cpp b/init/init.cpp
+index 76029a8919..e57c6c6ffc 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -457,7 +457,25 @@ static void set_usb_controller() {
+         break;
+     }
+ }
++/*
++void handle_control_message(const std::string& msg, const std::string& name) {
++    Service* svc = ServiceManager::GetInstance().FindServiceByName(name);
++    if (svc == nullptr) {
++        LOG(ERROR) << "no such service '" << name << "'";
++        return;
++    }
+ 
++    if (msg == "start") {
++        svc->Start();
++    } else if (msg == "stop") {
++        svc->Stop();
++    } else if (msg == "restart") {
++        svc->Restart();
++    } else {
++        LOG(ERROR) << "unknown control msg '" << msg << "'";
++    }
++}
++*/
+ static void InstallRebootSignalHandlers() {
+     // Instead of panic'ing the kernel as is the default behavior when init crashes,
+     // we prefer to reboot to bootloader on development builds, as this will prevent
+@@ -490,12 +508,13 @@ static void InstallRebootSignalHandlers() {
+ #endif
+     sigaction(SIGSYS, &action, nullptr);
+     sigaction(SIGTRAP, &action, nullptr);
+-
++/*
+     action.sa_handler = [](int sig) {
+         LOG(INFO) << "Got ctrl-alt-del: " << sig;
+         handle_control_message("start", "ctrl-alt-del");
+     };
+     sigaction(SIGINT, &action, nullptr);
++*/
+ }
+ 
+ static void HandleSigtermSignal() {
+diff --git a/init/init_parser.cpp b/init/init_parser.cpp
+new file mode 100644
+index 0000000000..be9fc96521
+--- /dev/null
++++ b/init/init_parser.cpp
+@@ -0,0 +1,168 @@
++/*
++ * Copyright (C) 2010 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include "init_parser.h"
++
++#include <dirent.h>
++
++#include <android-base/chrono_utils.h>
++#include <android-base/logging.h>
++#include <android-base/stringprintf.h>
++#include <android-base/strings.h>
++
++#include "tokenizer.h"
++#include "util.h"
++
++namespace android {
++namespace init {
++
++InitParser::InitParser() {
++}
++
++InitParser& InitParser::GetInstance() {
++    static InitParser instance;
++    return instance;
++}
++
++void InitParser::AddSectionParser(const std::string& name,
++                              std::unique_ptr<SectionParser> parser) {
++    section_parsers_[name] = std::move(parser);
++}
++
++void InitParser::AddSingleLineParser(const std::string& prefix, LineCallback callback) {
++    line_callbacks_.emplace_back(prefix, callback);
++}
++
++void InitParser::ParseData(const std::string& filename, const std::string& data) {
++    //TODO: Use a parser with const input and remove this copy
++    std::vector<char> data_copy(data.begin(), data.end());
++    data_copy.push_back('\0');
++
++    parse_state state;
++    state.line = 0;
++    state.ptr = &data_copy[0];
++    state.nexttoken = 0;
++
++    SectionParser* section_parser = nullptr;
++    std::vector<std::string> args;
++
++    for (;;) {
++        switch (next_token(&state)) {
++        case T_EOF:
++            if (section_parser) {
++                section_parser->EndSection();
++            }
++            return;
++        case T_NEWLINE:
++            state.line++;
++            if (args.empty()) {
++                break;
++            }
++            // If we have a line matching a prefix we recognize, call its callback and unset any
++            // current section parsers.  This is meant for /sys/ and /dev/ line entries for uevent.
++            for (const auto& [prefix, callback] : line_callbacks_) {
++                if (android::base::StartsWith(args[0], prefix.c_str())) {
++                    if (section_parser) section_parser->EndSection();
++
++                    std::string ret_err;
++                    if (!callback(std::move(args), &ret_err)) {
++                        LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
++                    }
++                    section_parser = nullptr;
++                    break;
++                }
++            }
++            if (section_parsers_.count(args[0])) {
++                if (section_parser) {
++                    section_parser->EndSection();
++                }
++                section_parser = section_parsers_[args[0]].get();
++                std::string ret_err;
++                if (!section_parser->ParseSection(std::move(args), filename, state.line, &ret_err)) {
++                    LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
++                    section_parser = nullptr;
++                }
++            } else if (section_parser) {
++                std::string ret_err;
++                if (!section_parser->ParseLineSection(std::move(args), state.line, &ret_err)) {
++                    LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
++                }
++            }
++            args.clear();
++            break;
++        case T_TEXT:
++            args.emplace_back(state.text);
++            break;
++        }
++    }
++}
++
++bool InitParser::ParseConfigFile(const std::string& path) {
++    LOG(INFO) << "Parsing file " << path << "...";
++    android::base::Timer t;
++    std::string data;
++    std::string err;
++    if (!ReadFile(path, &data, &err)) {
++        LOG(ERROR) << err;
++        return false;
++    }
++
++    data.push_back('\n'); // TODO: fix parse_config.
++    ParseData(path, data);
++    for (const auto& [section_name, section_parser] : section_parsers_) {
++        section_parser->EndFile();
++    }
++
++    LOG(VERBOSE) << "(Parsing " << path << " took " << t << ".)";
++    return true;
++}
++
++bool InitParser::ParseConfigDir(const std::string& path) {
++    LOG(INFO) << "Parsing directory " << path << "...";
++    std::unique_ptr<DIR, int(*)(DIR*)> config_dir(opendir(path.c_str()), closedir);
++    if (!config_dir) {
++        PLOG(ERROR) << "Could not import directory '" << path << "'";
++        return false;
++    }
++    dirent* current_file;
++    std::vector<std::string> files;
++    while ((current_file = readdir(config_dir.get()))) {
++        // Ignore directories and only process regular files.
++        if (current_file->d_type == DT_REG) {
++            std::string current_path =
++                android::base::StringPrintf("%s/%s", path.c_str(), current_file->d_name);
++            files.emplace_back(current_path);
++        }
++    }
++    // Sort first so we load files in a consistent order (bug 31996208)
++    std::sort(files.begin(), files.end());
++    for (const auto& file : files) {
++        if (!ParseConfigFile(file)) {
++            LOG(ERROR) << "could not import file '" << file << "'";
++        }
++    }
++    return true;
++}
++
++bool InitParser::ParseConfig(const std::string& path) {
++    if (is_dir(path.c_str())) {
++        return ParseConfigDir(path);
++    }
++    return ParseConfigFile(path);
++}
++
++}  // namespace init
++}  // namespace android
+diff --git a/init/init_parser.h b/init/init_parser.h
+new file mode 100644
+index 0000000000..1dc150bf06
+--- /dev/null
++++ b/init/init_parser.h
+@@ -0,0 +1,102 @@
++/*
++ * Copyright (C) 2010 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef _INIT_INIT_PARSER_H_
++#define _INIT_INIT_PARSER_H_
++
++#include <map>
++#include <memory>
++#include <string>
++#include <vector>
++
++//  SectionParser is an interface that can parse a given 'section' in init.
++//
++//  You can implement up to 4 functions below, with ParseSection() being mandatory.
++//  The first two function return bool with false indicating a failure and has a std::string* err
++//  parameter into which an error string can be written.  It will be reported along with the
++//  filename and line number of where the error occurred.
++//
++//  1) bool ParseSection(std::vector<std::string>&& args, const std::string& filename,
++//                       int line, std::string* err)
++//    This function is called when a section is first encountered.
++//
++//  2) bool ParseLineSection(std::vector<std::string>&& args, int line, std::string* err)
++//    This function is called on each subsequent line until the next section is encountered.
++//
++//  3) bool EndSection()
++//    This function is called either when a new section is found or at the end of the file.
++//    It indicates that parsing of the current section is complete and any relevant objects should
++//    be committed.
++//
++//  4) bool EndFile()
++//    This function is called at the end of the file.
++//    It indicates that the parsing has completed and any relevant objects should be committed.
++
++namespace android {
++namespace init {
++
++class SectionParser {
++  public:
++    virtual ~SectionParser() {}
++    virtual bool ParseSection(std::vector<std::string>&& args, const std::string& filename,
++                              int line, std::string* err) = 0;
++    virtual bool ParseLineSection(std::vector<std::string>&&, int, std::string*) { return true; };
++    virtual void EndSection(){};
++    virtual void EndFile(){};
++};
++
++class InitParser {
++  public:
++    //  LineCallback is the type for callbacks that can parse a line starting with a given prefix.
++    //
++    //  They take the form of bool Callback(std::vector<std::string>&& args, std::string* err)
++    //
++    //  Similar to ParseSection() and ParseLineSection(), this function returns bool with false
++    //  indicating a failure and has an std::string* err parameter into which an error string can
++    //  be written.
++    using LineCallback = std::function<bool(std::vector<std::string>&&, std::string*)>;
++
++    // TODO: init is the only user of this as a singleton; remove it.
++    static InitParser& GetInstance();
++
++    InitParser();
++
++    bool ParseConfig(const std::string& path);
++    void AddSectionParser(const std::string& name, std::unique_ptr<SectionParser> parser);
++    void AddSingleLineParser(const std::string& prefix, LineCallback callback);
++    void set_is_system_etc_init_loaded(bool loaded) { is_system_etc_init_loaded_ = loaded; }
++    void set_is_vendor_etc_init_loaded(bool loaded) { is_vendor_etc_init_loaded_ = loaded; }
++    void set_is_odm_etc_init_loaded(bool loaded) { is_odm_etc_init_loaded_ = loaded; }
++    bool is_system_etc_init_loaded() { return is_system_etc_init_loaded_; }
++    bool is_vendor_etc_init_loaded() { return is_vendor_etc_init_loaded_; }
++    bool is_odm_etc_init_loaded() { return is_odm_etc_init_loaded_; }
++
++  private:
++    void ParseData(const std::string& filename, const std::string& data);
++    bool ParseConfigFile(const std::string& path);
++    bool ParseConfigDir(const std::string& path);
++
++    std::map<std::string, std::unique_ptr<SectionParser>> section_parsers_;
++    std::vector<std::pair<std::string, LineCallback>> line_callbacks_;
++    bool is_system_etc_init_loaded_ = false;
++    bool is_vendor_etc_init_loaded_ = false;
++    bool is_odm_etc_init_loaded_ = false;
++};
++
++}  // namespace init
++}  // namespace android
++
++#endif
+diff --git a/init/uevent_listener.cpp b/init/uevent_listener.cpp
+index 8cf212867d..4d9e5a7196 100644
+--- a/init/uevent_listener.cpp
++++ b/init/uevent_listener.cpp
+@@ -87,8 +87,8 @@ static void ParseEvent(const char* msg, Uevent* uevent) {
+ }
+ 
+ UeventListener::UeventListener() {
+-    // is 2MB enough? udev uses 128MB!
+-    device_fd_.reset(uevent_open_socket(2 * 1024 * 1024, true));
++    // is 8MB enough? udev uses 16MB!
++    device_fd_.reset(uevent_open_socket(8 * 1024 * 1024, true));
+     if (device_fd_ == -1) {
+         LOG(FATAL) << "Could not open uevent socket";
+     }
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index b8e065e517..1bf0b12b76 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -30,6 +30,7 @@
+ #include <android-base/chrono_utils.h>
+ #include <android-base/logging.h>
+ #include <android-base/properties.h>
++#include <cutils/klog.h>
+ #include <fstab/fstab.h>
+ #include <cutils/klog.h>
+ #include <selinux/android.h>
+diff --git a/init/util.cpp b/init/util.cpp
+index 4455b2eb1e..f87e096c52 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -160,6 +160,36 @@ out_unlink:
+     return -1;
+ }
+ 
++bool ReadFile(const std::string& path, std::string* content, std::string* err) {
++    content->clear();
++    *err = "";
++
++    android::base::unique_fd fd(
++        TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
++    if (fd == -1) {
++        *err = "Unable to open '" + path + "': " + strerror(errno);
++        return false;
++    }
++
++    // For security reasons, disallow world-writable
++    // or group-writable files.
++    struct stat sb;
++    if (fstat(fd, &sb) == -1) {
++        *err = "fstat failed for '" + path + "': " + strerror(errno);
++        return false;
++    }
++    if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
++        *err = "Skipping insecure file '" + path + "'";
++        return false;
++    }
++
++    if (!android::base::ReadFdToString(fd, content)) {
++        *err = "Unable to read '" + path + "': " + strerror(errno);
++        return false;
++    }
++    return true;
++}
++
+ Result<std::string> ReadFile(const std::string& path) {
+     android::base::unique_fd fd(
+         TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
+diff --git a/init/util.h b/init/util.h
+index 07e4864ace..d8b4b7116d 100644
+--- a/init/util.h
++++ b/init/util.h
+@@ -41,6 +41,7 @@ namespace init {
+ int CreateSocket(const char* name, int type, bool passcred, mode_t perm, uid_t uid, gid_t gid,
+                  const char* socketcon);
+ 
++bool ReadFile(const std::string& path, std::string* content, std::string* err);
+ Result<std::string> ReadFile(const std::string& path);
+ Result<Success> WriteFile(const std::string& path, const std::string& content);
+ 
+diff --git a/libcutils/Android.bp b/libcutils/Android.bp
+index 41600be4d3..09da6d5858 100644
+--- a/libcutils/Android.bp
++++ b/libcutils/Android.bp
+@@ -104,9 +104,8 @@ cc_library {
+                 "android_reboot.cpp",
+                 "ashmem-dev.cpp",
+                 "klog.cpp",
+-                "partition_utils.c",
+-                "probe_module.c",
+                 "partition_utils.cpp",
++                "probe_module.c",
+                 "properties.cpp",
+                 "qtaguid.cpp",
+                 "trace-dev.cpp",
+diff --git a/libdiskconfig/config_mbr.c b/libdiskconfig/config_mbr.c
+index ace9bbfb1e..a0fe1c343b 100644
+--- a/libdiskconfig/config_mbr.c
++++ b/libdiskconfig/config_mbr.c
+@@ -259,11 +259,11 @@ config_mbr(struct disk_info *dinfo)
+         }
+ 
+         /* if extended, need 1 lba for ebr */
+-        if ((cur_lba + extended) >= dinfo->num_lba)
++        if (dinfo->num_lba && (cur_lba + extended) >= dinfo->num_lba)
+             goto nospace;
+         else if (pinfo->len_kb != (uint32_t)-1) {
+             uint32_t sz_lba = (pinfo->len_kb / dinfo->sect_size) * 1024;
+-            if ((cur_lba + sz_lba + extended) > dinfo->num_lba)
++            if (dinfo->num_lba && (cur_lba + sz_lba + extended) > dinfo->num_lba)
+                 goto nospace;
+         }
+ 
+diff --git a/libdiskconfig/diskconfig.c b/libdiskconfig/diskconfig.c
+index 236f79b089..e8a98981eb 100644
+--- a/libdiskconfig/diskconfig.c
++++ b/libdiskconfig/diskconfig.c
+@@ -74,7 +74,7 @@ parse_len(const char *str, uint64_t *plen)
+         }
+     } else {
+         /* convert len to kilobytes */
+-        if (multiple > 1024)
++        if (multiple >= 1024)
+             multiple >>= 10;
+         *plen *= multiple;
+ 
+diff --git a/libdiskconfig/diskutils.c b/libdiskconfig/diskutils.c
+index fe1b4c180a..3b73d5e0e8 100644
+--- a/libdiskconfig/diskutils.c
++++ b/libdiskconfig/diskutils.c
+@@ -36,6 +36,7 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+     int dst_fd = -1;
+     int src_fd = -1;
+     uint8_t buffer[2048];
++    ssize_t buf_offset;
+     ssize_t nr_bytes;
+     ssize_t tmp;
+     int done = 0;
+@@ -80,8 +81,9 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+         if (test)
+             nr_bytes = 0;
+ 
++        buf_offset = 0;
+         while (nr_bytes > 0) {
+-            if ((tmp = write(dst_fd, buffer, nr_bytes)) < 0) {
++            if ((tmp = write(dst_fd, &buffer[buf_offset], nr_bytes)) < 0) {
+                 /* XXX: Should we not even bother with EINTR? */
+                 if (errno == EINTR)
+                     continue;
+@@ -91,6 +93,7 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+             if (!tmp)
+                 continue;
+             nr_bytes -= tmp;
++            buf_offset += tmp;
+         }
+     }
+ 
+diff --git a/libpixelflinger/Android.mk b/libpixelflinger/Android.mk
+index f87b38b2ac..73cacdd91c 100644
+--- a/libpixelflinger/Android.mk
++++ b/libpixelflinger/Android.mk
+@@ -30,8 +30,8 @@ PIXELFLINGER_SRC_FILES += \
+ endif
+ 
+ PIXELFLINGER_CFLAGS := -fstrict-aliasing -fomit-frame-pointer
+-PIXELFLINGER_CFLAGS += -Wall -Werror
+-PIXELFLINGER_CFLAGS += -Wno-unused-function
++PIXELFLINGER_CFLAGS += -Wall -Werror -Wno-format
++PIXELFLINGER_CFLAGS += -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter
+ 
+ PIXELFLINGER_SRC_FILES_arm := \
+ 	codeflinger/ARMAssembler.cpp \
+diff --git a/libpixelflinger/codeflinger/x86/libenc/Android.mk b/libpixelflinger/codeflinger/x86/libenc/Android.mk
+index 445de06c9e..ac6357d41c 100644
+--- a/libpixelflinger/codeflinger/x86/libenc/Android.mk
++++ b/libpixelflinger/codeflinger/x86/libenc/Android.mk
+@@ -26,5 +26,6 @@ include $(CLEAR_VARS)
+ LOCAL_SRC_FILES := $(enc_src_files)
+ LOCAL_MODULE := libenc
+ LOCAL_MODULE_TAGS := optional
++LOCAL_CFLAGS += -Wno-unused-parameter
+ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
+ include $(BUILD_STATIC_LIBRARY)
+diff --git a/libpixelflinger/tests/codegen/codegen.cpp b/libpixelflinger/tests/codegen/codegen.cpp
+index 37708418bc..b27a65342a 100644
+--- a/libpixelflinger/tests/codegen/codegen.cpp
++++ b/libpixelflinger/tests/codegen/codegen.cpp
+@@ -47,7 +47,6 @@ public:
+     const AssemblyKey<needs_t>& key() const { return mKey; }
+ };
+ 
+-#if ANDROID_ARM_CODEGEN
+ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+ {
+     GGLContext* c;
+@@ -90,11 +89,6 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+ #endif
+     gglUninit(c);
+ }
+-#else
+-static void ggl_test_codegen(uint32_t, uint32_t, uint32_t, uint32_t) {
+-    printf("This test runs only on ARM, Arm64 or MIPS\n");
+-}
+-#endif
+ 
+ int main(int argc, char** argv)
+ {
+diff --git a/libsuspend/autosuspend_wakeup_count.cpp b/libsuspend/autosuspend_wakeup_count.cpp
+index 27c862957f..8126ed4030 100644
+--- a/libsuspend/autosuspend_wakeup_count.cpp
++++ b/libsuspend/autosuspend_wakeup_count.cpp
+@@ -27,16 +27,31 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <unistd.h>
++#include <log/log.h>
+ 
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+ #include <android-base/strings.h>
+ 
++#include <cutils/properties.h>
++
++#include <linux/uinput.h>
++#include <dirent.h>
++#include <poll.h>
++
+ #include "autosuspend_ops.h"
+ 
++#define SYS_POWER_STATE "/sys/power/state"
++#define SYS_POWER_WAKEUP_COUNT "/sys/power/wakeup_count"
++#define MAX_POWERBTNS 3
++
+ #define BASE_SLEEP_TIME 100000
+ #define MAX_SLEEP_TIME 60000000
+ 
++static const char *default_sleep_state = "mem";
++static const char *fallback_sleep_state = "freeze";
++
++static int uinput_fd = -1;
+ static int state_fd = -1;
+ static int wakeup_count_fd;
+ 
+@@ -62,6 +77,179 @@ static void update_sleep_time(bool success) {
+     sleep_time = MIN(sleep_time * 2, MAX_SLEEP_TIME);
+ }
+ 
++static void emit_key(int ufd, int key_code, int val)
++{
++    struct input_event iev;
++    iev.type = EV_KEY;
++    iev.code = key_code;
++    iev.value = val;
++    iev.time.tv_sec = 0;
++    iev.time.tv_usec = 0;
++    write(ufd, &iev, sizeof(iev));
++    iev.type = EV_SYN;
++    iev.code = SYN_REPORT;
++    iev.value = 0;
++    write(ufd, &iev, sizeof(iev));
++    ALOGD("send key %d (%d) on fd %d", key_code, val, ufd);
++}
++
++static void send_key_wakeup(int ufd)
++{
++    emit_key(ufd, KEY_WAKEUP, 1);
++    emit_key(ufd, KEY_WAKEUP, 0);
++}
++
++static void send_key_power(int ufd, bool longpress)
++{
++    emit_key(ufd, KEY_POWER, 1);
++    if (longpress) sleep(2);
++    emit_key(ufd, KEY_POWER, 0);
++}
++
++static int openfds(struct pollfd pfds[])
++{
++    int cnt = 0;
++    const char *dirname = "/dev/input";
++    struct dirent *de;
++    DIR *dir;
++
++    if ((dir = opendir(dirname))) {
++        while ((cnt < MAX_POWERBTNS) && (de = readdir(dir))) {
++            int fd;
++            char name[PATH_MAX];
++            if (de->d_name[0] != 'e') /* eventX */
++                continue;
++            snprintf(name, PATH_MAX, "%s/%s", dirname, de->d_name);
++            fd = open(name, O_RDWR | O_NONBLOCK);
++            if (fd < 0) {
++                ALOGE("could not open %s, %s", name, strerror(errno));
++                continue;
++            }
++            name[sizeof(name) - 1] = '\0';
++            if (ioctl(fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1) {
++                ALOGE("could not get device name for %s, %s", name, strerror(errno));
++                name[0] = '\0';
++            }
++            // TODO: parse /etc/excluded-input-devices.xml
++            if (strcmp(name, "Power Button")) {
++                close(fd);
++                continue;
++            }
++
++            ALOGI("open %s(%s) ok fd=%d", de->d_name, name, fd);
++            pfds[cnt].events = POLLIN;
++            pfds[cnt++].fd = fd;
++        }
++        closedir(dir);
++    }
++
++    return cnt;
++}
++
++static void *powerbtnd_thread_func(void *arg __attribute__((unused)))
++{
++    int cnt, timeout, pollres;
++    bool longpress = true;
++    bool doubleclick = property_get_bool("poweroff.doubleclick", 0);
++    struct pollfd pfds[MAX_POWERBTNS];
++
++    timeout = -1;
++    cnt = openfds(pfds);
++
++    while (cnt > 0 && (pollres = poll(pfds, cnt, timeout)) >= 0) {
++        ALOGV("pollres=%d %d\n", pollres, timeout);
++        if (pollres == 0) {
++            ALOGI("timeout, send one power key");
++            send_key_power(uinput_fd, 0);
++            timeout = -1;
++            longpress = true;
++            continue;
++        }
++        for (int i = 0; i < cnt; ++i) {
++            if (pfds[i].revents & POLLIN) {
++                struct input_event iev;
++                size_t res = read(pfds[i].fd, &iev, sizeof(iev));
++                if (res < sizeof(iev)) {
++                    ALOGW("insufficient input data(%zd)? fd=%d", res, pfds[i].fd);
++                    continue;
++                }
++                ALOGD("type=%d code=%d value=%d from fd=%d", iev.type, iev.code, iev.value, pfds[i].fd);
++                if (iev.type == EV_KEY && iev.code == KEY_POWER && !iev.value) {
++                    if (!doubleclick || timeout > 0) {
++                        send_key_power(uinput_fd, longpress);
++                        timeout = -1;
++                    } else {
++                        timeout = 1000; // one second
++                    }
++                } else if (iev.type == EV_SYN && iev.code == SYN_REPORT && iev.value) {
++                    ALOGI("got a resuming event");
++                    longpress = false;
++                    timeout = 1000; // one second
++                }
++            }
++        }
++    }
++
++    ALOGE_IF(cnt, "poll error: %s", strerror(errno));
++    return NULL;
++}
++
++static void init_android_power_button()
++{
++    static pthread_t powerbtnd_thread;
++    struct uinput_user_dev ud;
++
++    if (uinput_fd >= 0) return;
++
++    uinput_fd = open("/dev/uinput", O_WRONLY | O_NDELAY);
++    if (uinput_fd < 0) {
++        ALOGE("could not open uinput device: %s", strerror(errno));
++        return;
++    }
++
++    memset(&ud, 0, sizeof(ud));
++    strcpy(ud.name, "Android Power Button");
++    write(uinput_fd, &ud, sizeof(ud));
++    ioctl(uinput_fd, UI_SET_EVBIT, EV_KEY);
++    ioctl(uinput_fd, UI_SET_KEYBIT, KEY_POWER);
++    ioctl(uinput_fd, UI_SET_KEYBIT, KEY_WAKEUP);
++    ioctl(uinput_fd, UI_DEV_CREATE, 0);
++
++    pthread_create(&powerbtnd_thread, NULL, powerbtnd_thread_func, NULL);
++    pthread_setname_np(powerbtnd_thread, "powerbtnd");
++}
++
++static bool sleep_state_available(const char *state)
++{
++    char buf[64];
++    int fd = TEMP_FAILURE_RETRY(open(SYS_POWER_STATE, O_RDONLY));
++    if (fd < 0) {
++        ALOGE("Error reading power state: %s", SYS_POWER_STATE);
++        return false;
++    }
++    TEMP_FAILURE_RETRY(read(fd, buf, 64));
++    close(fd);
++    return !!strstr(buf, state);
++}
++
++static const char *get_sleep_state()
++{
++    static char sleep_state[PROPERTY_VALUE_MAX] = "";
++
++    if (!sleep_state[0]) {
++        if (property_get("sleep.state", sleep_state, NULL) > 0) {
++            ALOGD("autosuspend using sleep.state property (%s)", sleep_state);
++        } else if (sleep_state_available(default_sleep_state)) {
++            ALOGD("autosuspend using default sleep_state (%s)", default_sleep_state);
++            strncpy(sleep_state, default_sleep_state, PROPERTY_VALUE_MAX);
++        } else {
++            ALOGW("autosuspend \"%s\" unavailable, using fallback sleep.state (%s)", default_sleep_state, fallback_sleep_state);
++            strncpy(sleep_state, fallback_sleep_state, PROPERTY_VALUE_MAX);
++        }
++    }
++    return sleep_state;
++}
++
+ static void* suspend_thread_func(void* arg __attribute__((unused))) {
+     bool success = true;
+ 
+@@ -92,9 +280,12 @@ static void* suspend_thread_func(void* arg __attribute__((unused))) {
+ 
+         LOG(VERBOSE) << "write " << wakeup_count << " to wakeup_count";
+         if (WriteStringToFd(wakeup_count, wakeup_count_fd)) {
++            const char *sleep_state = get_sleep_state();
+             LOG(VERBOSE) << "write " << sleep_state << " to " << sys_power_state;
+             success = WriteStringToFd(sleep_state, state_fd);
+-
++            if (success) {
++                send_key_wakeup(uinput_fd);
++            }
+             void (*func)(bool success) = wakeup_func;
+             if (func != NULL) {
+                 (*func)(success);
+@@ -129,6 +320,8 @@ static int init_state_fd(void) {
+ }
+ 
+ static int autosuspend_init(void) {
++    init_android_power_button();
++
+     if (autosuspend_is_init) {
+         return 0;
+     }
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index b03d83bf1b..53639b8c93 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -108,9 +108,6 @@ subsystem sound
+ /dev/htc-acoustic         0660   system     audio
+ /dev/vdec                 0660   system     audio
+ /dev/q6venc               0660   system     audio
+-/dev/snd/dsp              0660   system     audio
+-/dev/snd/dsp1             0660   system     audio
+-/dev/snd/mixer            0660   system     audio
+ /dev/smd0                 0640   radio      radio
+ /dev/qmi                  0640   radio      radio
+ /dev/qmi0                 0640   radio      radio
+diff --git a/toolbox/newfs_msdos.c b/toolbox/newfs_msdos.c
+index d7047e2c47..eb2cfbdc4a 100644
+--- a/toolbox/newfs_msdos.c
++++ b/toolbox/newfs_msdos.c
+@@ -249,7 +249,7 @@ int newfs_msdos_main(int argc, char *argv[])
+     char buf[MAXPATHLEN];
+     struct stat sb;
+     struct timeval tv;
+-    struct bpb bpb;
++    struct bpb bpb, tempbpb;
+     struct tm *tm;
+     struct bs *bs;
+     struct bsbpb *bsbpb;
+@@ -553,6 +553,7 @@ int newfs_msdos_main(int argc, char *argv[])
+     set_spf = !bpb.bspf;
+     set_spc = !bpb.spc;
+     tempx = x;
++    memset(&tempbpb, 0, sizeof(bpb));
+     /*
+      * Attempt to align if opt_A is set. This is done by increasing the number
+      * of reserved blocks. This can cause other factors to change, which can in
+@@ -600,10 +601,14 @@ int newfs_msdos_main(int argc, char *argv[])
+             alignment = (bpb.res + bpb.bspf * bpb.nft) % bpb.spc;
+             extra_res += bpb.spc - alignment;
+         }
+-        attempts++;
++        if (++attempts == 1)
++            memcpy(&tempbpb, &bpb, sizeof(bpb));
+     } while(opt_A && alignment != 0 && attempts < 2);
+-    if (alignment != 0)
++    if (alignment != 0) {
+         warnx("warning: Alignment failed.");
++        /* return to data from first iteration */
++        memcpy(&bpb, &tempbpb, sizeof(bpb));
++    }
+ 
+     cls = (bpb.bsec - x1) / bpb.spc;
+     x = (u_int64_t)bpb.bspf * bpb.bps * NPB / (fat / BPN) - RESFTE;
+-- 
+2.17.1
+

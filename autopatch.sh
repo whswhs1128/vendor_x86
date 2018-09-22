@@ -15,9 +15,9 @@
 # more details.
 
 top_dir=`pwd`
-utils_dir="$top_dir/vendor/intel/utils"
-patch_dir="$utils_dir/android_p/google_diff/$TARGET_PRODUCT"
-private_utils_dir="$top_dir/vendor/intel/PRIVATE/utils"
+utils_dir="$top_dir/vendor/x86/utils"
+patch_dir="$utils_dir/android_p/google_diff/x86"
+private_utils_dir="$top_dir/vendor/x86/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_p/google_diff/$TARGET_PRODUCT"
 
 current_project=""

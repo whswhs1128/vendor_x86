@@ -1,7 +1,7 @@
-From 2d165de616983cce203dba6d8374e6fc0f6257c8 Mon Sep 17 00:00:00 2001
+From c729932ce518ddbecf3ce626fbfd3cd56590f3f4 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 10 Aug 2015 16:31:28 +0800
-Subject: [PATCH 05/23] Software-accelerated Pixel Flinger
+Subject: [PATCH 08/24] Software-accelerated Pixel Flinger
 
 The typical graphic workloads on VirtualBox are improved 3X.
 
@@ -16,7 +16,7 @@ http://review.cyanogenmod.org/#/c/97125/
 Conflicts:
 	libpixelflinger/tests/codegen/codegen.cpp
 
-Change-Id: Ia1f3d5169f4abc48f553a3e21522dbb8f53f7481
+Change-Id: Ia86fe9d3d0b9678d7718e2ded01da722c6f282a7
 ---
  libpixelflinger/Android.mk                    |   31 +-
  libpixelflinger/codeflinger/Android.mk        |    3 +
@@ -44,8 +44,8 @@ Change-Id: Ia1f3d5169f4abc48f553a3e21522dbb8f53f7481
  libpixelflinger/pixelflinger.cpp              |    4 +
  libpixelflinger/scanline.cpp                  |   48 +-
  libpixelflinger/tests/codegen/Android.mk      |   11 +-
- libpixelflinger/tests/codegen/codegen.cpp     |   16 +
- 27 files changed, 15193 insertions(+), 10 deletions(-)
+ libpixelflinger/tests/codegen/codegen.cpp     |   17 +
+ 27 files changed, 15194 insertions(+), 10 deletions(-)
  create mode 100644 libpixelflinger/codeflinger/Android.mk
  create mode 100644 libpixelflinger/codeflinger/x86/GGLX86Assembler.cpp
  create mode 100644 libpixelflinger/codeflinger/x86/GGLX86Assembler.h
@@ -15515,7 +15515,7 @@ index 72d71efd3a..034e36fbb3 100644
  
  LOCAL_CFLAGS:= -Wall -Werror
 diff --git a/libpixelflinger/tests/codegen/codegen.cpp b/libpixelflinger/tests/codegen/codegen.cpp
-index dce4ed72c3..37708418bc 100644
+index dce4ed72c3..47fa070d2b 100644
 --- a/libpixelflinger/tests/codegen/codegen.cpp
 +++ b/libpixelflinger/tests/codegen/codegen.cpp
 @@ -7,6 +7,10 @@
@@ -15565,6 +15565,14 @@ index dce4ed72c3..37708418bc 100644
      gglUninit(c);
  }
  #else
+@@ -79,6 +95,7 @@ static void ggl_test_codegen(uint32_t, uint32_t, uint32_t, uint32_t) {
+     printf("This test runs only on ARM, Arm64 or MIPS\n");
+ }
+ #endif
++}
+ 
+ int main(int argc, char** argv)
+ {
 -- 
 2.17.1
 

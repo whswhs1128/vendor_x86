@@ -1,7 +1,7 @@
-From 886b5da4f44296ef688bab49b5f4a1ffe75d8f0b Mon Sep 17 00:00:00 2001
+From 6316aa144029b6e6e312329335fce529056893ca Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 23 Sep 2016 17:59:47 +0800
-Subject: [PATCH 11/23] init: set default value of ro.hardware to the target
+Subject: [PATCH 14/24] init: set default value of ro.hardware to the target
  name
 
 People usually forget to set the value of androidboot.hardware to
@@ -14,36 +14,24 @@ androidboot.hardware.
 Conflicts:
 	init/Android.mk
 
-Change-Id: I253413ae7fb9790b991dd2d727528c6083baa019
+Change-Id: Ieef00dce33f52e556bad66b1ee9d1c0991c0f041
 ---
- init/Android.mk | 13 ++++++++++++-
- init/init.cpp   |  2 +-
- 2 files changed, 13 insertions(+), 2 deletions(-)
+ init/Android.mk | 1 +
+ init/init.cpp   | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/init/Android.mk b/init/Android.mk
-index c89bacc99e..5fbbd386cb 100644
+index c89bacc99e..a41f669c9a 100644
 --- a/init/Android.mk
 +++ b/init/Android.mk
-@@ -41,7 +41,18 @@ init_cflags += \
+@@ -41,6 +41,7 @@ init_cflags += \
  
  include $(CLEAR_VARS)
  LOCAL_CPPFLAGS := $(init_cflags)
--LOCAL_SRC_FILES := main.cpp
 +LOCAL_CPPFLAGS += -DTARGET_PRODUCT=\"$(TARGET_PRODUCT)\"
-+LOCAL_SRC_FILES := main.cpp \
-+    bootchart.cpp \
-+    builtins.cpp \
-+    init_first_stage.cpp \
-+    init.cpp \
-+    keychords.cpp \
-+    property_service.cpp \
-+    reboot.cpp \
-+    signal_handler.cpp \
-+    ueventd.cpp \
-+    watchdogd.cpp \
+ LOCAL_SRC_FILES := main.cpp
  
  LOCAL_MODULE:= init
- 
 diff --git a/init/init.cpp b/init/init.cpp
 index 4fe115e924..3c020366e7 100644
 --- a/init/init.cpp

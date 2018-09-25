@@ -1,14 +1,14 @@
-From 6f87ebb355751f2b4878cb14e9b81a537522615d Mon Sep 17 00:00:00 2001
+From 667e0ee465263ceda4ec6b28d7ec80419959fa6c Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 13 Dec 2017 14:57:06 +0800
-Subject: [PATCH 15/23] ueventd: fix the buggy logging
+Subject: [PATCH 18/24] ueventd: fix the buggy logging
 
 LOG(xxx) is totally broken. Use KLOG_xxx to actually show the log.
 
 Conflicts:
 	init/ueventd.cpp
 
-Change-Id: I14e23715a106e309b336d21f099effb90122182c
+Change-Id: I757cf2d3002b570e76b9e32e2f03f854386bca5e
 ---
  init/ueventd.cpp | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)

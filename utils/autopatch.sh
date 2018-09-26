@@ -62,7 +62,7 @@ apply_patch() {
     c=`git log --pretty=format:%aD | grep "$b"`
 
     if [[ "$c" == "" ]] ; then
-      git am $pd/$i >& /dev/null
+      git am -3 $pd/$i >& /dev/null
       if [[ $? == 0 ]]; then
         echo "        Applying          $i"
       else

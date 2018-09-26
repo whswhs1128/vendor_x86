@@ -1,7 +1,7 @@
-From b20c9b900ad9f95280cdd7b58c18653534b31be6 Mon Sep 17 00:00:00 2001
+From 3fdb2265820f0d3570e844069f5d1113ac1796fe Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 17 Aug 2018 23:51:45 -0400
-Subject: [PATCH] [forward port] [PATCH] Disable AVX support in bcc
+Subject: [PATCH] Disable AVX support in bcc
 
 Orig From: Yang Ni <yangni@google.com>
 Date: Mon, 13 Jun 2016 11:18:40 -0700

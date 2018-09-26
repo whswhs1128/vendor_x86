@@ -1,7 +1,7 @@
-From a8e9e695e75409a7999194054d411b8f12c5840a Mon Sep 17 00:00:00 2001
+From 175c1537c17bb92b0647757cb32431e2d46ea4c4 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Mon, 24 Sep 2018 21:11:45 -0400
-Subject: [PATCH 19/25] Remove some root permissions
+Subject: [PATCH 19/24] Remove some root permissions
 
 Change-Id: I3fa4f811742446ed4b84eca70296fd3d09ed418c
 ---

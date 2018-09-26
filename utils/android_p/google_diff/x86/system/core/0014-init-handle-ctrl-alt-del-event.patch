@@ -1,7 +1,7 @@
-From 8fbb2ebcc6e4cd21c39dfbb229fca1bee2999c7c Mon Sep 17 00:00:00 2001
+From 8bbf2e96ec8f4f73e0cccadc9e0d5eec7ed35558 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 20 Nov 2017 16:50:20 +0800
-Subject: [PATCH 14/25] init: handle ctrl-alt-del event
+Subject: [PATCH 14/24] init: handle ctrl-alt-del event
 
 By setting /proc/sys/kernel/ctrl-alt-del to 1, kernel will trap
 ctrl-alt-del event and send a SIGINT signal to init.

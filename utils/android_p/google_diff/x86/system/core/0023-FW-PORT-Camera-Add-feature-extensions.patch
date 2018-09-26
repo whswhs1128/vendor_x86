@@ -1,7 +1,9 @@
-From e9fc4f969bbcd01666af3817f227b4559b575c6c Mon Sep 17 00:00:00 2001
-From: Susmitha Gummalla <vgummall@codeaurora.org>
-Date: Wed, 24 Jun 2015 22:38:25 -0700
-Subject: [PATCH 23/25] Camera: Add feature extensions
+From a90ae51072da0fecdf618381288b454cd7cf8b68 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 26 Sep 2018 16:54:19 -0400
+Subject: [PATCH 23/24] [FW PORT] Camera: Add feature extensions
+
+Camera: Add feature extensions
 
 This change includes below commits:
 

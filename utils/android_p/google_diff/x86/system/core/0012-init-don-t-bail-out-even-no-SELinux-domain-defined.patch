@@ -1,7 +1,7 @@
-From d90edf812ed534cf06dfd84edee64827d4274e7e Mon Sep 17 00:00:00 2001
+From 0766cd3959736c9c6bf512f8e63489ed70a7cd28 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 12 Sep 2017 16:22:04 +0800
-Subject: [PATCH 12/25] init: don't bail out even no SELinux domain defined
+Subject: [PATCH 12/24] init: don't bail out even no SELinux domain defined
 
 Conflicts:
 	init/service.cpp

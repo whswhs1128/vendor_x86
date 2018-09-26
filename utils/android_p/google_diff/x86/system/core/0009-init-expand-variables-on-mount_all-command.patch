@@ -1,7 +1,7 @@
 From aaf9218c9fa3f91d7202942ad27721179d5af002 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 23 Nov 2015 17:57:37 +0800
-Subject: [PATCH 09/24] init: expand variables on mount_all command
+Subject: [PATCH 09/25] init: expand variables on mount_all command
 
 This allows mount_all to handle fstab.${ro.hardware} instead
 of hardcoding the file name.

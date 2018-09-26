@@ -1,7 +1,7 @@
 From 4b0434ae785dd9604d3eb53f0355d49ddfbeb54f Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Mon, 24 Sep 2018 21:13:12 -0400
-Subject: [PATCH 23/24] Set sect_sz differently
+Subject: [PATCH 23/25] Set sect_sz differently
 
 Device sector size is zero or sector sizes do not match
 

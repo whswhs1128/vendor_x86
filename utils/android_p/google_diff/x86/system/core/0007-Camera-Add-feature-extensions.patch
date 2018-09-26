@@ -1,7 +1,7 @@
 From f38e2d7815b98fe2879dc9fb31ff1b02632a8bdf Mon Sep 17 00:00:00 2001
 From: Susmitha Gummalla <vgummall@codeaurora.org>
 Date: Wed, 24 Jun 2015 22:38:25 -0700
-Subject: [PATCH 07/24] Camera: Add feature extensions
+Subject: [PATCH 07/25] Camera: Add feature extensions
 
 This change includes below commits:
 

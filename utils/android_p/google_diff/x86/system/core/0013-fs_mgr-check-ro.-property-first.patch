@@ -1,7 +1,7 @@
-From 76d2950d0c344e7df47d79e0c1ddb7adcbc48f19 Mon Sep 17 00:00:00 2001
+From 7286b0803b3af3fabb621def015942c1624df4a1 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 13 Sep 2017 00:31:57 +0800
-Subject: [PATCH 16/25] fs_mgr: check ro.* property first
+Subject: [PATCH 13/25] fs_mgr: check ro.* property first
 
 fs_mgr reads default fstab via ro.hardware property before Android 8.0.
 However, Android 8.0 changed it to use ro.boot.hardware. This is an

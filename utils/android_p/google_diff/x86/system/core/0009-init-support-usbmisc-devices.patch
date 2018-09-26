@@ -1,7 +1,7 @@
-From dae37d831adadea4f78af1fb9a9934d31eaa6c51 Mon Sep 17 00:00:00 2001
+From c8acf48749855d96c1e33a961a0f5293ece83c8b Mon Sep 17 00:00:00 2001
 From: Roman Petrovski <roman.petrovski@gmail.com>
 Date: Sat, 11 Jun 2016 03:50:00 +0800
-Subject: [PATCH 11/25] init: support usbmisc devices
+Subject: [PATCH 09/25] init: support usbmisc devices
 
 The patch allows to create usbmisc device nodes like /dev/cdc-wdm0.
 

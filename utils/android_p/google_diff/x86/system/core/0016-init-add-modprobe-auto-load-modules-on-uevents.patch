@@ -1,8 +1,7 @@
-From 2180c0b650d9c024836d1446a525058cabdb4555 Mon Sep 17 00:00:00 2001
+From 28ac3a60b1ecb4e0ea084b50c87b711b40fb2ada Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 13 Dec 2017 15:04:30 +0800
-Subject: [PATCH 19/25] [SQUASHED] init: add modprobe & auto load modules on
- uevents
+Subject: [PATCH 16/25] init: add modprobe & auto load modules on uevents
 
 We added the modprobe function to init before but it was dropped in
 oreo-x86. Originally I planned to replace it by toybox's modprobe.

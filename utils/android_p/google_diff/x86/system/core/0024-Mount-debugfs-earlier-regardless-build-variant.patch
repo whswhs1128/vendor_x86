@@ -1,7 +1,7 @@
-From 93884f6600f8b5f97a8fdc49d6c6099f1e9217ad Mon Sep 17 00:00:00 2001
+From cb159d0e2b9c8e2ff13214ab8f58954fde838df3 Mon Sep 17 00:00:00 2001
 From: Ching Tzung Lin <ctlin@google.com>
 Date: Mon, 11 Jan 2016 13:00:22 -0800
-Subject: [PATCH 10/25] Mount debugfs earlier regardless build variant
+Subject: [PATCH 24/25] Mount debugfs earlier regardless build variant
 
 ag/835596 can be reverted after this CL is merged.
 

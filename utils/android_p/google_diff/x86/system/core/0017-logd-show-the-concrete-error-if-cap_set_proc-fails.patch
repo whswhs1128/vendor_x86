@@ -1,7 +1,7 @@
-From 54684b12d41bdd3226bdac08120a03d3a9f4149f Mon Sep 17 00:00:00 2001
+From 0281993a70c0ee98f81c92dad82a14c3fe72dccb Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 25 May 2018 18:27:22 +0800
-Subject: [PATCH 20/25] logd: show the concrete error if cap_set_proc fails
+Subject: [PATCH 17/25] logd: show the concrete error if cap_set_proc fails
 
 ---
  logd/main.cpp | 4 ++--

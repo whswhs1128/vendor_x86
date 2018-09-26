@@ -1,4 +1,4 @@
-From a035efdca213e0d4b0c9abd11a581aed9b486f6d Mon Sep 17 00:00:00 2001
+From 4cf7d14f15478f1d22a8d78e9cbce4b3a65da425 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 11 Dec 2017 14:43:57 +0800
 Subject: [PATCH 06/25] Merge branch 'android-ia' into oreo-x86

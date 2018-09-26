@@ -1,4 +1,4 @@
-From 884f9a748dc92962ae3f450df8af25fda8101188 Mon Sep 17 00:00:00 2001
+From c8da13fa7964aff08ac5acf30066f821b473dc0f Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 29 Oct 2014 23:25:57 +0800
 Subject: [PATCH 04/25] init.rc: run the console shell as root

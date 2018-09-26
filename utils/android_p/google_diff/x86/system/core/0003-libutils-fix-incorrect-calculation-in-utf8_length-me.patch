@@ -1,4 +1,4 @@
-From a808bef9fdaa736b53e08518369b70248d804cf3 Mon Sep 17 00:00:00 2001
+From fa4819adabe4ebc6100c4a173210207fa9a3da7c Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 8 Aug 2014 18:17:04 +0800
 Subject: [PATCH 03/25] libutils: fix incorrect calculation in utf8_length()

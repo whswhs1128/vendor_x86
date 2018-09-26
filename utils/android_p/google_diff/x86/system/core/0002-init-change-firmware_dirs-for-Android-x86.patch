@@ -1,4 +1,4 @@
-From dd213e86e2edba9c9ae9489e15d71b89f82a65d4 Mon Sep 17 00:00:00 2001
+From 386258a6b776c8be17a93312e94725e7d4da7925 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 1 Feb 2011 15:47:03 +0800
 Subject: [PATCH 02/25] init: change firmware_dirs for Android-x86

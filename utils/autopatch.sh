@@ -52,7 +52,7 @@ apply_patch() {
         default_revision=`grep default $top_dir/.repo/manifest.xml | grep -o 'revision="[^"]\+"' | cut -d'=' -f2 | sed 's/\"//g'`
       else
         echo "Please make sure .repo/manifest.xml"
-        return 1
+        # return 1
       fi
     fi
 
@@ -98,8 +98,8 @@ if [[ "$conflict" == "y" ]]; then
   echo "==========================================================================="
   for i in $conflict_list ; do echo $i; done | sort -u
   echo "==========================================================================="
-  echo "Error: Please resolve Conflict(s) and re-run lunch..."
-  return
+  echo "WARNING: Please resolve Conflict(s). You may need to re-run build..."
+  # return 1
 else
   echo "==========================================================================="
   echo "           INFO : All patches applied fine !!                              "

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash'
 # -*- coding: utf-8; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 # autopatch.sh: script to manage patches on top of repo
@@ -19,7 +19,6 @@ utils_dir="$top_dir/vendor/x86/utils"
 patch_dir="$utils_dir/android_p/google_diff/x86"
 private_utils_dir="$top_dir/vendor/x86/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_p/google_diff/$TARGET_PRODUCT"
-set -e
 
 current_project=""
 previous_project=""

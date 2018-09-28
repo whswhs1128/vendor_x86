@@ -1,4 +1,4 @@
-#!/bin/bash
+ue#!/bin/bash
 # -*- coding: utf-8; tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 # autopatch.sh: script to manage patches on top of repo
@@ -53,7 +53,7 @@ apply_patch() {
         default_revision=`grep default $top_dir/.repo/manifest.xml | grep -o 'revision="[^"]\+"' | cut -d'=' -f2 | sed 's/\"//g'`
       else
         echo "Please make sure .repo/manifest.xml"
-        exit 1
+        return 1
       fi
     fi
 

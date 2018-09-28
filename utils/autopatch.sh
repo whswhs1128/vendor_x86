@@ -19,6 +19,7 @@ utils_dir="$top_dir/vendor/x86/utils"
 patch_dir="$utils_dir/android_p/google_diff/x86"
 private_utils_dir="$top_dir/vendor/x86/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_p/google_diff/$TARGET_PRODUCT"
+set -e
 
 current_project=""
 previous_project=""
@@ -98,7 +99,8 @@ if [[ "$conflict" == "y" ]]; then
   echo "==========================================================================="
   for i in $conflict_list ; do echo $i; done | sort -u
   echo "==========================================================================="
-  echo -e "Error: Please resolve Conflict(s) and re-run lunch..."
+  echo "Error: Please resolve Conflict(s) and re-run lunch..."
+  return
 else
   echo "==========================================================================="
   echo "           INFO : All patches applied fine !!                              "

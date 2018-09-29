@@ -1,0 +1,77 @@
+From ef1d54613098c68b12dd1014b8c37631a3bc4eb0 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Oct 2014 15:39:53 +0800
+Subject: [PATCH 07/12] auto determine the density if not provided in
+ surfaceflinger
+
+We hope to support tablet UI for different resolutions.
+So adjust the density according to the resolution.
+
+Conflicts:
+	services/surfaceflinger/SurfaceFlinger_hwc1.cpp
+
+Change-Id: Ibbe48e9e0f95db899eaff370497ac74dbcc8d4ec
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 29 ++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 5 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 8cf044e86c..d821df4798 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -847,8 +847,27 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+     public:
+         static int getEmuDensity() {
+             return getDensityFromProperty("qemu.sf.lcd_density"); }
+-        static int getBuildDensity()  {
+-            return getDensityFromProperty("ro.sf.lcd_density"); }
++        static int getBuildDensity(const DisplayInfo& info)  {
++            static int density = getDensityFromProperty("ro.sf.lcd_density");
++#if defined(__i386__) || defined(__x86_64__)
++            if (density == 0) {
++                uint32_t area = info.w * info.h;
++                if (area <= 800 * 480) {
++                    density = 120;
++                } else if (area <= 1024 * 600) {
++                    density = 130;
++                } else if (area < 1024 * 768) {
++                    density = 140;
++                } else if (area < 1920 * 1080) {
++                    density = 160;
++                } else {
++                    density = 240;
++                }
++                ALOGI("auto set density to %d", density);
++            }
++#endif
++            return density;
++        }
+     };
+ 
+     configs->clear();
+@@ -860,10 +879,12 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+ 
+         float xdpi = hwConfig->getDpiX();
+         float ydpi = hwConfig->getDpiY();
++        info.w = hwConfig->getWidth();
++        info.h = hwConfig->getHeight();
+ 
+         if (type == DisplayDevice::DISPLAY_PRIMARY) {
+             // The density of the device is provided by a build property
+-            float density = Density::getBuildDensity() / 160.0f;
++            float density = Density::getBuildDensity(info) / 160.0f;
+             if (density == 0) {
+                 // the build doesn't provide a density -- this is wrong!
+                 // use xdpi instead
+@@ -887,8 +908,6 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+             info.orientation = 0;
+         }
+ 
+-        info.w = hwConfig->getWidth();
+-        info.h = hwConfig->getHeight();
+         info.xdpi = xdpi;
+         info.ydpi = ydpi;
+         info.fps = 1e9 / hwConfig->getVsyncPeriod();
+-- 
+2.17.1
+

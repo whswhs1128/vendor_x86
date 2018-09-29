@@ -1,0 +1,31 @@
+From 723ba4ee48710d2b6a6e492f26dcc8349ca2d727 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 14 Sep 2017 18:20:23 +0800
+Subject: [PATCH 10/12] libEGL: use SwiftShader if hardware gralloc is not set
+
+---
+ opengl/libs/EGL/Loader.cpp | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/opengl/libs/EGL/Loader.cpp b/opengl/libs/EGL/Loader.cpp
+index 91a34558aa..abfe231534 100644
+--- a/opengl/libs/EGL/Loader.cpp
++++ b/opengl/libs/EGL/Loader.cpp
+@@ -225,7 +225,13 @@ void* Loader::open(egl_connection_t* cnx)
+ 
+     setEmulatorGlesValue();
+ 
+-    dso = load_driver("GLES", cnx, EGL | GLESv1_CM | GLESv2);
++    // Check if hardware gralloc is set explicitly
++    char prop[PROPERTY_VALUE_MAX];
++    if (property_get("ro.hardware.gralloc", prop, nullptr) && strcmp(prop, "default")) {
++        dso = load_driver("GLES", cnx, EGL | GLESv1_CM | GLESv2);
++    } else {
++        dso = nullptr;
++    }
+     if (dso) {
+         hnd = new driver_t(dso);
+     } else {
+-- 
+2.17.1
+

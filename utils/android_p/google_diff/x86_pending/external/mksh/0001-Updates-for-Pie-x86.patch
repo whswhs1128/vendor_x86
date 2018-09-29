@@ -1,0 +1,31 @@
+From e3bc8cfbf6c214208be734c966ce26650af6c6ef Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 23 Sep 2018 19:52:31 -0400
+Subject: [PATCH] Updates for Pie x86
+
+Thanks to @fguy
+
+Change-Id: Ib324b06f4e86d3c75336be0b2c1768c6a1129160
+---
+ mkshrc | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/mkshrc b/mkshrc
+index 4cc8bac..1f8f7e3 100644
+--- a/mkshrc
++++ b/mkshrc
+@@ -6,6 +6,11 @@
+ #
+ # Support: https://launchpad.net/mksh
+ 
++alias l='ls'
++alias la='l -a'
++alias ll='l -l'
++alias lo='l -a -l'
++
+ if (( USER_ID )); then PS1='$'; else PS1='#'; fi
+ PS4='[$EPOCHREALTIME] '; PS1='${|
+ 	local e=$?
+-- 
+2.17.1
+

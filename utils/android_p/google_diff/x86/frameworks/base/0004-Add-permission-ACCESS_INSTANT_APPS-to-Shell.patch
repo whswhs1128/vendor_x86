@@ -1,7 +1,7 @@
-From f4f47c8bdcdfea2dd9a82eda00a5d548cd98e647 Mon Sep 17 00:00:00 2001
+From 8dbe1f6a350913db06a96ca4a150b19d1c10abb1 Mon Sep 17 00:00:00 2001
 From: "Yan, WalterX" <walterx.yan@intel.com>
 Date: Thu, 22 Mar 2018 18:25:53 +0800
-Subject: [PATCH 17/21] Add permission ACCESS_INSTANT_APPS to Shell.
+Subject: [PATCH 04/28] Add permission ACCESS_INSTANT_APPS to Shell.
 
 If the setUp/tearDown of InstantCookieHostTest cannot
 clear the instant app data, that will cause the case
@@ -21,10 +21,10 @@ Signed-off-by: Yan, WalterX <walterx.yan@intel.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/packages/Shell/AndroidManifest.xml b/packages/Shell/AndroidManifest.xml
-index b758e7f5..38d671e 100644
+index 02cb93e0550e..be902fc09dff 100644
 --- a/packages/Shell/AndroidManifest.xml
 +++ b/packages/Shell/AndroidManifest.xml
-@@ -75,6 +75,7 @@
+@@ -77,6 +77,7 @@
      <uses-permission android:name="android.permission.CLEAR_APP_CACHE" />
      <uses-permission android:name="android.permission.DELETE_CACHE_FILES" />
      <uses-permission android:name="android.permission.DELETE_PACKAGES" />
@@ -33,5 +33,5 @@ index b758e7f5..38d671e 100644
      <uses-permission android:name="android.permission.READ_FRAME_BUFFER" />
      <uses-permission android:name="android.permission.DEVICE_POWER" />
 -- 
-1.9.1
+2.17.1
 

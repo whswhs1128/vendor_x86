@@ -1,7 +1,7 @@
-From 3aaf3707ddc8fe161d41e1d4f0e927806e72e5cc Mon Sep 17 00:00:00 2001
+From 95720f8631aeb3717e14f41a4558d9ba7857d6c4 Mon Sep 17 00:00:00 2001
 From: "Yan, WalterX" <walterx.yan@intel.com>
 Date: Fri, 27 Oct 2017 15:44:01 +0800
-Subject: [PATCH 16/21] Only hide usb notificaiton when it's in host mode.
+Subject: [PATCH 01/28] Only hide usb notificaiton when it's in host mode.
 
 For the devices have female usb interface and some usb
 devices plugged-in, e.g. mouse, keyboard, the usb notification
@@ -13,14 +13,14 @@ Change-Id: I1c648f597fa7154d1a44b40ff831652730e819cd
 Tracked-On:https://jira01.devtools.intel.com/browse/OAM-58562
 Signed-off-by: Yan, WalterX <walterx.yan@intel.com>
 ---
- .../com/android/server/usb/UsbDeviceManager.java   | 36 ++++++++++++----------
+ .../android/server/usb/UsbDeviceManager.java  | 36 ++++++++++---------
  1 file changed, 19 insertions(+), 17 deletions(-)
 
 diff --git a/services/usb/java/com/android/server/usb/UsbDeviceManager.java b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
-index 7437332..4961857 100644
+index 36f8063cca52..3510d5f14396 100644
 --- a/services/usb/java/com/android/server/usb/UsbDeviceManager.java
 +++ b/services/usb/java/com/android/server/usb/UsbDeviceManager.java
-@@ -947,23 +947,25 @@ public class UsbDeviceManager {
+@@ -877,23 +877,25 @@ public class UsbDeviceManager implements ActivityManagerInternal.ScreenObserver
                      }
  
                      mHideUsbNotification = false;
@@ -64,5 +64,5 @@ index 7437332..4961857 100644
                              }
                          }
 -- 
-1.9.1
+2.17.1
 

@@ -1,0 +1,3 @@
+[submodule "utils/android_p/google_diff/treble_patches"]
+	path = utils/android_p/google_diff/treble_patches
+	url = https://github.com/phhusson/treble_patches

@@ -1,7 +1,7 @@
-From 78b21c1edc5fa7243e79085195979e7d54109a29 Mon Sep 17 00:00:00 2001
-From: Jon West <electrikjesus@gmail.com>
+From c96ea09ca020617c240dabe40777abbb3bb57556 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 24 Sep 2018 21:13:12 -0400
-Subject: [PATCH 20/24] Set sect_sz differently
+Subject: [PATCH 19/25] Set sect_sz differently
 
 Device sector size is zero or sector sizes do not match
 

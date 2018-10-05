@@ -1,7 +1,7 @@
-From f69b4a621790dd3ca4addc8cc6b65a880a74e61e Mon Sep 17 00:00:00 2001
+From 7d1bdb85e6b2a99aaa91a1e132989217f4511eca Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 29 Oct 2014 23:25:57 +0800
-Subject: [PATCH 04/24] init.rc: run the console shell as root
+Subject: [PATCH 04/25] init.rc: run the console shell as root
 
 To make debugging easier.
 ---

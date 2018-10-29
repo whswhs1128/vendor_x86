@@ -1,11 +1,12 @@
-From e3bc8cfbf6c214208be734c966ce26650af6c6ef Mon Sep 17 00:00:00 2001
-From: Jon West <electrikjesus@gmail.com>
-Date: Sun, 23 Sep 2018 19:52:31 -0400
-Subject: [PATCH] Updates for Pie x86
+From dc593fee0bf4c045ec225829d902f9544615c538 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 2 Jul 2015 00:07:20 +0800
+Subject: [PATCH] mkshrc: add back the aliases I like
 
-Thanks to @fguy
+Conflicts:
+	mkshrc
 
-Change-Id: Ib324b06f4e86d3c75336be0b2c1768c6a1129160
+Change-Id: I8bfa4ce2e5f741acba362b20dad2f62b2eb8ea15
 ---
  mkshrc | 5 +++++
  1 file changed, 5 insertions(+)

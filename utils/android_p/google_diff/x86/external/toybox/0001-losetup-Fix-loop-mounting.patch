@@ -1,11 +1,14 @@
-From 2c4f5e9c69c0d70596112fa59002fe96c37e1932 Mon Sep 17 00:00:00 2001
-From: Jon West <electrikjesus@gmail.com>
-Date: Sun, 23 Sep 2018 13:41:05 -0400
-Subject: [PATCH] Initial change for Pie x86
+From f85b13ec5fd038ae88f27c4221fe82e9ebdbe96e Mon Sep 17 00:00:00 2001
+From: Gabriele M <moto.falcon.git@gmail.com>
+Date: Sun, 20 Nov 2016 22:04:36 +0100
+Subject: [PATCH] losetup: Fix loop mounting
 
-Thanks to @fguy
+Vold creates the loop blocks in /dev/block.
 
-Change-Id: Iadda96d24e179e1b36ad1f1d37b0b6223575ffc7
+Change-Id: Ie926ce672deae4a3494aad2ea19d44d7be60ec97
+
+Conflicts:
+	toys/other/losetup.c
 ---
  toys/other/losetup.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

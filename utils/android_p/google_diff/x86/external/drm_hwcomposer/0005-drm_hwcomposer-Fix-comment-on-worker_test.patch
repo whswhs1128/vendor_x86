@@ -1,0 +1,30 @@
+From a209ac3c81055db7e6ab77fd38392129dbe4ac3d Mon Sep 17 00:00:00 2001
+From: Rhys Kidd <rhyskidd@gmail.com>
+Date: Mon, 26 Feb 2018 01:17:42 -0500
+Subject: [PATCH 5/7] drm_hwcomposer: Fix comment on worker_test
+
+Reflect the boolean logic of the accompanying code, which is run after
+Worker.InitWorker() has completed in test setup.
+
+Signed-off-by: Rhys Kidd <rhyskidd@gmail.com>
+Signed-off-by: Robert Foss <robert.foss@collabora.com>
+---
+ tests/worker_test.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/worker_test.cpp b/tests/worker_test.cpp
+index 38f91db..82523f0 100644
+--- a/tests/worker_test.cpp
++++ b/tests/worker_test.cpp
+@@ -66,7 +66,7 @@ struct WorkerTest : public testing::Test {
+ };
+ 
+ TEST_F(WorkerTest, test_worker) {
+-  // already isInitialized so should fail
++  // already isInitialized so should succeed
+   ASSERT_TRUE(worker.initialized());
+ 
+   int val = worker.value;
+-- 
+2.17.1
+

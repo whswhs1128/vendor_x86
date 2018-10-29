@@ -1,0 +1,69 @@
+From 1b8ad3a664ef5c44edf1db1532f44e840eab13c1 Mon Sep 17 00:00:00 2001
+From: John Stultz <john.stultz@linaro.org>
+Date: Tue, 23 Jan 2018 15:16:36 -0800
+Subject: [PATCH 4/7] drm_hwcomposer: Make sure we set the active state when
+ doing modesets
+
+In trying to use drm_hwcomposer with HiKey/HiKey960 boards, I
+found that the crtc wouldn't intitalize and the atomic commit
+calls were failing.
+
+I initially chased this down to following check in the kernel
+drm_atomic_crtc_check() function failing:
+
+ if (state->event && !state->active && !crtc->state->active) {
+     DRM_DEBUG_ATOMIC("[CRTC:%d:%s] requesting event but off\n",
+                      crtc->base.id, crtc->name);
+     return -EINVAL;
+ }
+
+Where because a fence was submitted state->event was set, but
+the crtc state was not active. This results in the atomic commit
+to fail and no mode to be set.
+
+After hacking around this in the kernel, Sean Paul helped me
+understand that it was the kernel complaining about the crtc
+state being provided in the atomic commit which did not have the
+active flag set.
+
+Thus, the proper fix is to make sure when we do the modesetting
+that we also set the crtc state active flag in property set.
+
+With this change, the kernel no longer rejects the atomic commit
+and the crtc initializes properly.
+
+Cc: Marissa Wall <marissaw@google.com>
+Cc: Sean Paul <seanpaul@google.com>
+Cc: Dmitry Shmidt <dimitrysh@google.com>
+Cc: Robert Foss <robert.foss@collabora.com>
+Cc: Matt Szczesiak <matt.szczesiak@arm.com>
+Cc: Liviu Dudau <Liviu.Dudau@arm.com>
+Cc: David Hanna <david.hanna11@gmail.com>
+Cc: Rob Herring <rob.herring@linaro.org>
+Signed-off-by: John Stultz <john.stultz@linaro.org>
+Signed-off-by: Sean Paul <seanpaul@chromium.org>
+---
+ drmdisplaycompositor.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/drmdisplaycompositor.cpp b/drmdisplaycompositor.cpp
+index bee16f4..2ac9022 100644
+--- a/drmdisplaycompositor.cpp
++++ b/drmdisplaycompositor.cpp
+@@ -591,6 +591,13 @@ int DrmDisplayCompositor::CommitFrame(DrmDisplayComposition *display_comp,
+   }
+ 
+   if (mode_.needs_modeset) {
++    ret = drmModeAtomicAddProperty(pset, crtc->id(), crtc->active_property().id(), 1);
++    if (ret < 0) {
++      ALOGE("Failed to add crtc active to pset\n");
++      drmModeAtomicFree(pset);
++      return ret;
++    }
++
+     ret = drmModeAtomicAddProperty(pset, crtc->id(), crtc->mode_property().id(),
+                                    mode_.blob_id) < 0 ||
+           drmModeAtomicAddProperty(pset, connector->id(),
+-- 
+2.17.1
+

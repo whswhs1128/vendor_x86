@@ -1,7 +1,7 @@
-From f4057dfb7648cc09599338cbb3f79d77ec5300c6 Mon Sep 17 00:00:00 2001
+From 4b121504d192b4565f7cdfd22218844ed599a64a Mon Sep 17 00:00:00 2001
 From: rajucm <rajkumar.mallikarjun.chegaraddi@intel.com>
 Date: Tue, 20 Mar 2018 02:15:24 +0530
-Subject: [PATCH 01/12] sensors: fix sensor cts issue for android aia2.0
+Subject: [PATCH 01/25] sensors: fix sensor cts issue for android aia2.0
 
 Android AIA doesnt support sensors.
 Remove permissions related to compass & accelerometer sensor

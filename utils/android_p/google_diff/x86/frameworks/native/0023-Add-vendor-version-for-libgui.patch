@@ -1,0 +1,92 @@
+From a967eb71cea5b59fbeb92940c5a1f431d27f2b0c Mon Sep 17 00:00:00 2001
+From: Vinay Verma <vvinay@codeaurora.org>
+Date: Tue, 12 Jun 2018 18:04:44 +0530
+Subject: [PATCH 23/25] Add vendor version for libgui
+
+libstagefright_omx library need to be extended to vendor which
+is depenednet on libgui which is a vndk_private lib.
+Creating vendor version so that libstagefright_omx_ext can link
+to libgui_vendor.
+
+CRs-Fixed: 2258968
+Change-Id: I777eebffc405c8bb74aab270e9f272c806501458
+Signed-off-by: Sipun Ku Mahanta <sipunkumar85@gmail.com>
+---
+ libs/gui/Android.bp | 28 +++++++++++++++++++---------
+ libs/ui/Android.bp  |  2 +-
+ 2 files changed, 20 insertions(+), 10 deletions(-)
+
+diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
+index 73f2147deb..af0e15a1e9 100644
+--- a/libs/gui/Android.bp
++++ b/libs/gui/Android.bp
+@@ -17,13 +17,8 @@ cc_library_headers {
+     export_include_dirs: ["include"],
+ }
+ 
+-cc_library_shared {
+-    name: "libgui",
+-    vendor_available: false,
+-    vndk: {
+-        enabled: true,
+-    },
+-
++cc_defaults {
++    name: "libgui_defaults",
+     clang: true,
+     cflags: [
+         "-Wall",
+@@ -57,7 +52,7 @@ cc_library_shared {
+         "-Wno-weak-vtables",
+ 
+         // Allow four-character integer literals
+-	"-Wno-four-char-constants",
++        "-Wno-four-char-constants",
+ 
+         // Allow documentation warnings
+         "-Wno-documentation",
+@@ -169,7 +164,7 @@ cc_library_shared {
+         "libEGL",
+         "libnativewindow",
+         "libui",
+-        "android.hidl.token@1.0-utils",
++       "android.hidl.token@1.0-utils",
+         "android.hardware.graphics.bufferqueue@1.0",
+         "android.hardware.graphics.common@1.1",
+     ],
+@@ -183,4 +178,19 @@ cc_library_shared {
+     ],
+ }
+ 
++cc_library_shared {
++    name: "libgui",
++    vendor_available: false,
++    vndk: {
++        enabled: true,
++    },
++    defaults: ["libgui_defaults"]
++}
++
++cc_library_shared {
++    name: "libgui_vendor",
++    vendor: true,
++    defaults: ["libgui_defaults"]
++}
++
+ subdirs = ["tests"]
+diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
+index 25c353a519..bf774b3f8f 100644
+--- a/libs/ui/Android.bp
++++ b/libs/ui/Android.bp
+@@ -47,7 +47,7 @@ cc_library_shared {
+     ],
+ 
+     product_variables: {
+-        lineage: {
++        superior: {
+             additional_gralloc_10_usage_bits: {
+                 cppflags: ["-DADDNL_GRALLOC_10_USAGE_BITS=%s"],
+             },
+-- 
+2.17.1
+

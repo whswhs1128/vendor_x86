@@ -1,7 +1,7 @@
-From d1b3f309b6ead00741e518bb3310c520f1c1c836 Mon Sep 17 00:00:00 2001
+From 404d1c28fb76f44664e70427347ae4bacf93f1e8 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 17 May 2018 17:29:48 +0800
-Subject: [PATCH 12/12] SurfaceFlinger: support higher resolution
+Subject: [PATCH 12/25] SurfaceFlinger: support higher resolution
 
 Conflicts:
 	services/surfaceflinger/SurfaceFlinger_hwc1.cpp

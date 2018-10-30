@@ -1,7 +1,7 @@
-From b5a57053976150ecf65f1e9498c6b7837bdb6dcd Mon Sep 17 00:00:00 2001
+From 3d77e7eff00e2da6b6154878a011cc2ac88eea4a Mon Sep 17 00:00:00 2001
 From: DanielK <daniel.kenzelmann@googlemail.com>
 Date: Tue, 20 Mar 2012 14:28:43 +0800
-Subject: [PATCH 03/12] Support old single-touch touchscreens with BTN_LEFT
+Subject: [PATCH 03/25] Support old single-touch touchscreens with BTN_LEFT
 
 ---
  services/inputflinger/EventHub.cpp    | 2 +-

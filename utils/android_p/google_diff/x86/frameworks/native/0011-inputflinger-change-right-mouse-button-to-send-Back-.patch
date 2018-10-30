@@ -1,7 +1,7 @@
-From e13c15ff5ef6ceded8be0ae317c5ef55f85b2fe4 Mon Sep 17 00:00:00 2001
+From 72b6fe7b3548ee0f9fb701939b5d4f94aa1a7c93 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 15 May 2018 16:06:27 +0800
-Subject: [PATCH 11/12] inputflinger: change right mouse button to send Back
+Subject: [PATCH 11/25] inputflinger: change right mouse button to send Back
  command
 
 People think this is more convenient.

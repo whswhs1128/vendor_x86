@@ -1,7 +1,7 @@
-From cf8b8f58c02f3f2aa0cd19ca130992c465c2d9a3 Mon Sep 17 00:00:00 2001
+From fbe4f098bd3ac2d43d48a31014d86e50ca8d21a8 Mon Sep 17 00:00:00 2001
 From: xianhaox <xianhaox.qing@intel.com>
 Date: Wed, 8 Nov 2017 18:43:44 +0800
-Subject: [PATCH 02/12] Make TYPE_DISPLAY_OVERLAY to be trusted
+Subject: [PATCH 02/25] Make TYPE_DISPLAY_OVERLAY to be trusted
 
 The Hvac app used TYPE_DISPLAY_OVERLAY window type. It covers
 almost the screen. Without trusting it will cause touch

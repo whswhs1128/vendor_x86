@@ -1,7 +1,7 @@
-From 961ecd3558cb659b12abc60d7cdb33d42585db94 Mon Sep 17 00:00:00 2001
+From 2e78205d0673875e84ee24d419373954e755b807 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 2 Nov 2014 01:21:12 +0800
-Subject: [PATCH 05/12] InputReader: add 5-point calibration
+Subject: [PATCH 05/25] InputReader: add 5-point calibration
 
 Updated for Android 5.0.
 ---

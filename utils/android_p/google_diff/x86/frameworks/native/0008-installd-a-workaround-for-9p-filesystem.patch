@@ -1,7 +1,7 @@
-From 8373e4fd591a96d0059edaaea9299430a703b6de Mon Sep 17 00:00:00 2001
+From 9a03bb4548e2ccd764cca49c542d721263d0bde2 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 27 Jun 2017 14:21:26 +0800
-Subject: [PATCH 08/12] installd: a workaround for 9p filesystem
+Subject: [PATCH 08/25] installd: a workaround for 9p filesystem
 
 SELinux and getxattr seem not work on 9p filesystem.
 Ignore the errors as a workaround.

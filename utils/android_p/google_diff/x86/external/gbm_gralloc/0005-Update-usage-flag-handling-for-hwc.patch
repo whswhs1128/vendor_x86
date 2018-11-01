@@ -1,7 +1,7 @@
-From 9b3144305b273902731cd941a07e16e837f3c5b0 Mon Sep 17 00:00:00 2001
+From 94f0c984cb2441e46766f6d5c224718cd880128a Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Fri, 29 Jun 2018 13:45:10 +0200
-Subject: [PATCH 5/6] Update usage flag handling for hwc
+Subject: [PATCH 5/7] Update usage flag handling for hwc
 
 Add support for GRALLOC_USAGE_HW_COMPOSER usage flag
 mapping it to GBM flags, inspired by minigbm implementation.

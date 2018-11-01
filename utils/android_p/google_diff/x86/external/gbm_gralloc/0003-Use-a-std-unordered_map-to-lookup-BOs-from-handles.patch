@@ -1,7 +1,7 @@
-From 77d5fbf02805cb7c884d67ca223150111b132aca Mon Sep 17 00:00:00 2001
+From 33300538316386809dba48dfd3aefd29e5e4014d Mon Sep 17 00:00:00 2001
 From: Rob Herring <robh@kernel.org>
 Date: Thu, 15 Feb 2018 16:15:57 -0600
-Subject: [PATCH 3/6] Use a std::unordered_map to lookup BOs from handles
+Subject: [PATCH 3/7] Use a std::unordered_map to lookup BOs from handles
 
 Remove the fragile dependency on the handle 'data' pointer and
 'data_owner' flag.

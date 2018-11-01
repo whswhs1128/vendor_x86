@@ -1,7 +1,7 @@
-From ce25820528e493f10e35c0d165d6a7bc2319ea3d Mon Sep 17 00:00:00 2001
+From 05f57f754fc94d02daa1b464effd4f508761eab9 Mon Sep 17 00:00:00 2001
 From: Rob Herring <robh@kernel.org>
 Date: Fri, 16 Feb 2018 10:23:26 -0600
-Subject: [PATCH 1/6] Move gralloc_gbm_handle_t accesses into gralloc_gbm.cpp
+Subject: [PATCH 1/7] Move gralloc_gbm_handle_t accesses into gralloc_gbm.cpp
 
 The only access to the gralloc_gbm_handle_t in gralloc.cpp is to set the
 stride of allocated buffers. Move this into gralloc_gbm.cpp to isolate

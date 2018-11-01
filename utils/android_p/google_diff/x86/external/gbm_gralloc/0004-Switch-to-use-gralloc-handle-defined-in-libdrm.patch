@@ -1,7 +1,7 @@
-From 3e0b66abd8ac3fc471a9012e165cd572214eaca9 Mon Sep 17 00:00:00 2001
+From c9f25314d898ca33a5f6b15669b8f5d27cfae9d0 Mon Sep 17 00:00:00 2001
 From: Rob Herring <robh@kernel.org>
 Date: Thu, 15 Feb 2018 15:59:41 -0600
-Subject: [PATCH 4/6] Switch to use gralloc handle defined in libdrm
+Subject: [PATCH 4/7] Switch to use gralloc handle defined in libdrm
 
 Remove our custom handle definition and use the one defined in libdrm.
 

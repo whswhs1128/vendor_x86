@@ -1,7 +1,7 @@
-From 06754daad510f5e0f2b5b81de63d20ca5a0e0584 Mon Sep 17 00:00:00 2001
+From 31b9344e59765987e491d4e61fb36d91a596ea55 Mon Sep 17 00:00:00 2001
 From: Rob Herring <robh@kernel.org>
 Date: Fri, 16 Feb 2018 08:07:42 -0600
-Subject: [PATCH 2/6] Remove GRALLOC_MODULE_PERFORM_GET_USAGE
+Subject: [PATCH 2/7] Remove GRALLOC_MODULE_PERFORM_GET_USAGE
 
 This is no longer used by drm_hwc and can be removed.
 

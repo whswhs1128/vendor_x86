@@ -1,7 +1,7 @@
-From c84ed942f6abf0794e7e1039aa1eaecf4406db01 Mon Sep 17 00:00:00 2001
+From 8a88c75643bfea51240ee46472620cb10e2b0d72 Mon Sep 17 00:00:00 2001
 From: lambdadroid <lambdadroid@gmail.com>
 Date: Wed, 31 Oct 2018 16:46:27 +0100
-Subject: [PATCH 6/6] Add simple framebuffer HAL implementation using
+Subject: [PATCH 6/7] Add simple framebuffer HAL implementation using
  drm_framebuffer
 
 ---

@@ -1,0 +1,175 @@
+From ce25820528e493f10e35c0d165d6a7bc2319ea3d Mon Sep 17 00:00:00 2001
+From: Rob Herring <robh@kernel.org>
+Date: Fri, 16 Feb 2018 10:23:26 -0600
+Subject: [PATCH 1/6] Move gralloc_gbm_handle_t accesses into gralloc_gbm.cpp
+
+The only access to the gralloc_gbm_handle_t in gralloc.cpp is to set the
+stride of allocated buffers. Move this into gralloc_gbm.cpp to isolate
+accesses to the struct in one place.
+
+Signed-off-by: Rob Herring <robh@kernel.org>
+---
+ gralloc.cpp        | 44 ++------------------------------------------
+ gralloc_gbm.cpp    | 40 +++++++++++++++++++++++++++++++++++++---
+ gralloc_gbm_priv.h |  4 ++--
+ 3 files changed, 41 insertions(+), 47 deletions(-)
+
+diff --git a/gralloc.cpp b/gralloc.cpp
+index cf9f9c1..68cf315 100644
+--- a/gralloc.cpp
++++ b/gralloc.cpp
+@@ -38,7 +38,6 @@
+ 
+ #include "gralloc_drm.h"
+ #include "gralloc_gbm_priv.h"
+-#include "gralloc_drm_handle.h"
+ 
+ struct gbm_module_t {
+ 	gralloc_module_t base;
+@@ -47,37 +46,6 @@ struct gbm_module_t {
+ 	struct gbm_device *gbm;
+ };
+ 
+-static inline int gralloc_gbm_get_bpp(int format)
+-{
+-	int bpp;
+-
+-	switch (format) {
+-	case HAL_PIXEL_FORMAT_RGBA_8888:
+-	case HAL_PIXEL_FORMAT_RGBX_8888:
+-	case HAL_PIXEL_FORMAT_BGRA_8888:
+-		bpp = 4;
+-		break;
+-	case HAL_PIXEL_FORMAT_RGB_888:
+-		bpp = 3;
+-		break;
+-	case HAL_PIXEL_FORMAT_RGB_565:
+-	case HAL_PIXEL_FORMAT_YCbCr_422_I:
+-		bpp = 2;
+-		break;
+-	/* planar; only Y is considered */
+-	case HAL_PIXEL_FORMAT_YV12:
+-	case HAL_PIXEL_FORMAT_YCbCr_422_SP:
+-	case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+-		bpp = 1;
+-		break;
+-	default:
+-		bpp = 0;
+-		break;
+-	}
+-
+-	return bpp;
+-}
+-
+ /*
+  * Initialize the DRM device object
+  */
+@@ -217,23 +185,15 @@ static int gbm_mod_alloc_gpu0(alloc_device_t *dev,
+ 		buffer_handle_t *handle, int *stride)
+ {
+ 	struct gbm_module_t *dmod = (struct gbm_module_t *) dev->common.module;
+-	struct gralloc_gbm_handle_t *gbm_handle;
+ 	int err = 0;
+ 
+ 	pthread_mutex_lock(&dmod->mutex);
+ 
+-	gbm_handle = gralloc_gbm_bo_create(dmod->gbm, w, h, format, usage);
+-	if (!gbm_handle) {
++	*handle = gralloc_gbm_bo_create(dmod->gbm, w, h, format, usage, stride);
++	if (!*handle)
+ 		err = -errno;
+-		goto unlock;
+-	}
+-
+-	*handle = &gbm_handle->base;
+-	/* in pixels */
+-	*stride = gbm_handle->stride / gralloc_gbm_get_bpp(format);
+ 
+ 	ALOGV("buffer %p usage = %08x", *handle, usage);
+-unlock:
+ 	pthread_mutex_unlock(&dmod->mutex);
+ 	return err;
+ }
+diff --git a/gralloc_gbm.cpp b/gralloc_gbm.cpp
+index e4bc9d8..99a7914 100644
+--- a/gralloc_gbm.cpp
++++ b/gralloc_gbm.cpp
+@@ -100,6 +100,37 @@ static uint32_t get_gbm_format(int format)
+ 	return fmt;
+ }
+ 
++static int gralloc_gbm_get_bpp(int format)
++{
++	int bpp;
++
++	switch (format) {
++	case HAL_PIXEL_FORMAT_RGBA_8888:
++	case HAL_PIXEL_FORMAT_RGBX_8888:
++	case HAL_PIXEL_FORMAT_BGRA_8888:
++		bpp = 4;
++		break;
++	case HAL_PIXEL_FORMAT_RGB_888:
++		bpp = 3;
++		break;
++	case HAL_PIXEL_FORMAT_RGB_565:
++	case HAL_PIXEL_FORMAT_YCbCr_422_I:
++		bpp = 2;
++		break;
++	/* planar; only Y is considered */
++	case HAL_PIXEL_FORMAT_YV12:
++	case HAL_PIXEL_FORMAT_YCbCr_422_SP:
++	case HAL_PIXEL_FORMAT_YCrCb_420_SP:
++		bpp = 1;
++		break;
++	default:
++		bpp = 0;
++		break;
++	}
++
++	return bpp;
++}
++
+ static unsigned int get_pipe_bind(int usage)
+ {
+ 	unsigned int bind = 0;
+@@ -359,8 +390,8 @@ static struct gralloc_gbm_handle_t *create_bo_handle(int width,
+ /*
+  * Create a bo.
+  */
+-struct gralloc_gbm_handle_t *gralloc_gbm_bo_create(struct gbm_device *gbm,
+-		int width, int height, int format, int usage)
++buffer_handle_t gralloc_gbm_bo_create(struct gbm_device *gbm,
++		int width, int height, int format, int usage, int *stride)
+ {
+ 	struct gbm_bo *bo;
+ 	struct gralloc_gbm_handle_t *handle;
+@@ -378,7 +409,10 @@ struct gralloc_gbm_handle_t *gralloc_gbm_bo_create(struct gbm_device *gbm,
+ 	handle->data_owner = getpid();
+ 	handle->data = bo;
+ 
+-	return handle;
++	/* in pixels */
++	*stride = handle->stride / gralloc_gbm_get_bpp(format);
++
++	return &handle->base;
+ }
+ 
+ /*
+diff --git a/gralloc_gbm_priv.h b/gralloc_gbm_priv.h
+index 5311627..5b17c08 100644
+--- a/gralloc_gbm_priv.h
++++ b/gralloc_gbm_priv.h
+@@ -38,8 +38,8 @@ struct gbm_bo;
+ int gralloc_gbm_handle_register(buffer_handle_t handle, struct gbm_device *gbm);
+ int gralloc_gbm_handle_unregister(buffer_handle_t handle);
+ 
+-struct gralloc_gbm_handle_t *gralloc_gbm_bo_create(struct gbm_device *gbm,
+-		int width, int height, int format, int usage);
++buffer_handle_t gralloc_gbm_bo_create(struct gbm_device *gbm,
++		int width, int height, int format, int usage, int *stride);
+ void gbm_free(buffer_handle_t handle);
+ 
+ struct gbm_bo *gralloc_gbm_bo_from_handle(buffer_handle_t handle);
+-- 
+2.17.1
+

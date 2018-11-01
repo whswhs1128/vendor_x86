@@ -1,0 +1,36 @@
+From 9b3144305b273902731cd941a07e16e837f3c5b0 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 29 Jun 2018 13:45:10 +0200
+Subject: [PATCH 5/6] Update usage flag handling for hwc
+
+Add support for GRALLOC_USAGE_HW_COMPOSER usage flag
+mapping it to GBM flags, inspired by minigbm implementation.
+
+Fixes the artifacts issues with vulkan hal radv with the following apps
+with benefit to all apps using HWC layers:
+V1 - GPU Benchmark Pro (Vulkan API)
+PPSSPP - PSP emulator
+Sascha Willems Vulkan Examples (e.g. Vulkan Gears, Vulkan Texture)
+
+Signed-off-by: Mauro Rossi <issor.oruam@gmail.com>
+Signed-off-by: Rob Herring <robh@kernel.org>
+---
+ gralloc_gbm.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gralloc_gbm.cpp b/gralloc_gbm.cpp
+index 247fba7..cd37f4d 100644
+--- a/gralloc_gbm.cpp
++++ b/gralloc_gbm.cpp
+@@ -147,6 +147,8 @@ static unsigned int get_pipe_bind(int usage)
+ 		bind |= GBM_BO_USE_RENDERING;
+ 	if (usage & GRALLOC_USAGE_HW_FB)
+ 		bind |= GBM_BO_USE_SCANOUT;
++	if (usage & GRALLOC_USAGE_HW_COMPOSER)
++		bind |= GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING;
+ 
+ 	return bind;
+ }
+-- 
+2.17.1
+

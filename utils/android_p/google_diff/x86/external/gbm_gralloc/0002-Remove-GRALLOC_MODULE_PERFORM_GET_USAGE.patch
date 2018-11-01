@@ -1,0 +1,51 @@
+From 06754daad510f5e0f2b5b81de63d20ca5a0e0584 Mon Sep 17 00:00:00 2001
+From: Rob Herring <robh@kernel.org>
+Date: Fri, 16 Feb 2018 08:07:42 -0600
+Subject: [PATCH 2/6] Remove GRALLOC_MODULE_PERFORM_GET_USAGE
+
+This is no longer used by drm_hwc and can be removed.
+
+Signed-off-by: Rob Herring <robh@kernel.org>
+---
+ gralloc.cpp   | 6 ------
+ gralloc_drm.h | 7 -------
+ 2 files changed, 13 deletions(-)
+
+diff --git a/gralloc.cpp b/gralloc.cpp
+index 68cf315..2753ee9 100644
+--- a/gralloc.cpp
++++ b/gralloc.cpp
+@@ -84,12 +84,6 @@ static int gbm_mod_perform(const struct gralloc_module_t *mod, int op, ...)
+ 			err = 0;
+ 		}
+ 		break;
+-	/* TODO: This is a stub and should be implemented fully */
+-	case GRALLOC_MODULE_PERFORM_GET_USAGE:
+-		{
+-			err = 0;
+-		}
+-		break;
+ 	default:
+ 		err = -EINVAL;
+ 		break;
+diff --git a/gralloc_drm.h b/gralloc_drm.h
+index 87047ca..0ece652 100644
+--- a/gralloc_drm.h
++++ b/gralloc_drm.h
+@@ -34,13 +34,6 @@ enum {
+ 	 *	   int *fd);
+ 	 */
+ 	GRALLOC_MODULE_PERFORM_GET_DRM_FD                = 0x40000002,
+-
+-	/* perform(const struct gralloc_module_t *mod,
+-	 *     int op,
+-	 *     buffer_handle_t buffer,
+-	 *     int *usage);
+-	 */
+-	GRALLOC_MODULE_PERFORM_GET_USAGE                 = 0xffeeff03,
+ };
+ 
+ #ifdef __cplusplus
+-- 
+2.17.1
+

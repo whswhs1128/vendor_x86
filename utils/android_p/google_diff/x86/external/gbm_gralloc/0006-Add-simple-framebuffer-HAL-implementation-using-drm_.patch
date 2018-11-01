@@ -1,0 +1,134 @@
+From c84ed942f6abf0794e7e1039aa1eaecf4406db01 Mon Sep 17 00:00:00 2001
+From: lambdadroid <lambdadroid@gmail.com>
+Date: Wed, 31 Oct 2018 16:46:27 +0100
+Subject: [PATCH 6/6] Add simple framebuffer HAL implementation using
+ drm_framebuffer
+
+---
+ Android.mk         |  2 ++
+ gralloc.cpp        | 23 +++++++++++++++++++++--
+ gralloc_gbm.cpp    |  4 ++--
+ gralloc_gbm_priv.h |  2 +-
+ 4 files changed, 26 insertions(+), 5 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index aa5348e..9c91e9b 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -32,6 +32,8 @@ LOCAL_SHARED_LIBRARIES := \
+ 	liblog \
+ 	libcutils
+ 
++LOCAL_STATIC_LIBRARIES := libdrm_framebuffer
++
+ LOCAL_EXPORT_C_INCLUDE_DIRS := \
+ 	$(LOCAL_PATH)
+ 
+diff --git a/gralloc.cpp b/gralloc.cpp
+index 2753ee9..5f6f2ea 100644
+--- a/gralloc.cpp
++++ b/gralloc.cpp
+@@ -35,6 +35,7 @@
+ #include <system/graphics.h>
+ 
+ #include <gbm.h>
++#include <drm_framebuffer.h>
+ 
+ #include "gralloc_drm.h"
+ #include "gralloc_gbm_priv.h"
+@@ -44,18 +45,19 @@ struct gbm_module_t {
+ 
+ 	pthread_mutex_t mutex;
+ 	struct gbm_device *gbm;
++	struct drm_framebuffer *fb;
+ };
+ 
+ /*
+  * Initialize the DRM device object
+  */
+-static int gbm_init(struct gbm_module_t *dmod)
++static int gbm_init(struct gbm_module_t *dmod, bool master = false)
+ {
+ 	int err = 0;
+ 
+ 	pthread_mutex_lock(&dmod->mutex);
+ 	if (!dmod->gbm) {
+-		dmod->gbm = gbm_dev_create();
++		dmod->gbm = gbm_dev_create(master);
+ 		if (!dmod->gbm)
+ 			err = -EINVAL;
+ 	}
+@@ -105,6 +107,8 @@ static int gbm_mod_register_buffer(const gralloc_module_t *mod,
+ 
+ 	pthread_mutex_lock(&dmod->mutex);
+ 	err = gralloc_gbm_handle_register(handle, dmod->gbm);
++	if (err == 0 && dmod->fb)
++		drm_framebuffer_import(dmod->fb, handle);
+ 	pthread_mutex_unlock(&dmod->mutex);
+ 
+ 	return err;
+@@ -218,6 +222,19 @@ static int gbm_mod_open_gpu0(struct gbm_module_t *dmod, hw_device_t **dev)
+ 	return 0;
+ }
+ 
++static int gbm_mod_open_fb0(struct gbm_module_t *dmod, hw_device_t **dev)
++{
++	int err = gbm_init(dmod, true);
++	if (err)
++		return err;
++
++	pthread_mutex_lock(&dmod->mutex);
++	err = drm_framebuffer_open(gbm_device_get_fd(dmod->gbm), &dmod->fb, dev);
++	pthread_mutex_unlock(&dmod->mutex);
++
++	return err;
++}
++
+ static int gbm_mod_open(const struct hw_module_t *mod,
+ 		const char *name, struct hw_device_t **dev)
+ {
+@@ -226,6 +243,8 @@ static int gbm_mod_open(const struct hw_module_t *mod,
+ 
+ 	if (strcmp(name, GRALLOC_HARDWARE_GPU0) == 0)
+ 		err = gbm_mod_open_gpu0(dmod, dev);
++	else if (strcmp(name, GRALLOC_HARDWARE_FB0) == 0)
++		err = gbm_mod_open_fb0(dmod, dev);
+ 	else
+ 		err = -EINVAL;
+ 
+diff --git a/gralloc_gbm.cpp b/gralloc_gbm.cpp
+index cd37f4d..d4f4bca 100644
+--- a/gralloc_gbm.cpp
++++ b/gralloc_gbm.cpp
+@@ -306,13 +306,13 @@ void gbm_dev_destroy(struct gbm_device *gbm)
+ 	close(fd);
+ }
+ 
+-struct gbm_device *gbm_dev_create(void)
++struct gbm_device *gbm_dev_create(bool master)
+ {
+ 	struct gbm_device *gbm;
+ 	char path[PROPERTY_VALUE_MAX];
+ 	int fd;
+ 
+-	property_get("gralloc.gbm.device", path, "/dev/dri/renderD128");
++	property_get("gralloc.gbm.device", path, master ? "/dev/dri/card0" : "/dev/dri/renderD128");
+ 	fd = open(path, O_RDWR | O_CLOEXEC);
+ 	if (fd < 0) {
+ 		ALOGE("failed to open %s", path);
+diff --git a/gralloc_gbm_priv.h b/gralloc_gbm_priv.h
+index 7174fb8..c0edb6b 100644
+--- a/gralloc_gbm_priv.h
++++ b/gralloc_gbm_priv.h
+@@ -46,7 +46,7 @@ int gralloc_gbm_get_gem_handle(buffer_handle_t handle);
+ int gralloc_gbm_bo_lock(buffer_handle_t handle, int x, int y, int w, int h, int enable_write, void **addr);
+ int gralloc_gbm_bo_unlock(buffer_handle_t handle);
+ 
+-struct gbm_device *gbm_dev_create(void);
++struct gbm_device *gbm_dev_create(bool master);
+ void gbm_dev_destroy(struct gbm_device *gbm);
+ 
+ #ifdef __cplusplus
+-- 
+2.17.1
+

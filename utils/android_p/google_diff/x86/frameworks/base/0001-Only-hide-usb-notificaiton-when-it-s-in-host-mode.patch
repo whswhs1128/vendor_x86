@@ -1,7 +1,7 @@
-From 95720f8631aeb3717e14f41a4558d9ba7857d6c4 Mon Sep 17 00:00:00 2001
+From d96f1f13a0d4f8815643b9b4a6e6bf0c13ccf0bc Mon Sep 17 00:00:00 2001
 From: "Yan, WalterX" <walterx.yan@intel.com>
 Date: Fri, 27 Oct 2017 15:44:01 +0800
-Subject: [PATCH 01/28] Only hide usb notificaiton when it's in host mode.
+Subject: [PATCH 01/40] Only hide usb notificaiton when it's in host mode.
 
 For the devices have female usb interface and some usb
 devices plugged-in, e.g. mouse, keyboard, the usb notification

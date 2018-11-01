@@ -1,7 +1,7 @@
-From e67711e7be04e1eac49f70f9fd19ee1210476903 Mon Sep 17 00:00:00 2001
+From 8037085aed8728271d8a3318967a867cc6428bd1 Mon Sep 17 00:00:00 2001
 From: Priya Shree <priya.shree@intel.com>
 Date: Fri, 23 Feb 2018 00:33:19 +0530
-Subject: [PATCH 02/28] To fix surround sound option not working in music
+Subject: [PATCH 02/40] To fix surround sound option not working in music
  application
 
 Change-Id: I70e8a6495f05c966af0a12259863ef76605c4e0b
@@ -12,10 +12,10 @@ Signed-off-by: Priya Shree <priya.shree@intel.com>
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/media/java/android/media/AudioManager.java b/media/java/android/media/AudioManager.java
-index 0c38c38e88ff..08da012d7bd3 100644
+index 90ee3cd7ff50..472ddd97ef86 100644
 --- a/media/java/android/media/AudioManager.java
 +++ b/media/java/android/media/AudioManager.java
-@@ -1636,7 +1636,13 @@ public class AudioManager {
+@@ -1682,7 +1682,13 @@ public class AudioManager {
              AudioSystem.getDeviceConnectionState(DEVICE_OUT_WIRED_HEADPHONE,"")
                  == AudioSystem.DEVICE_STATE_UNAVAILABLE &&
              AudioSystem.getDeviceConnectionState(DEVICE_OUT_USB_HEADSET, "")

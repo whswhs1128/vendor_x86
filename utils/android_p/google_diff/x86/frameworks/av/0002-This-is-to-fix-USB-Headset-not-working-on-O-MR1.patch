@@ -1,18 +1,18 @@
-From 2657319898e5fcc9eb7f168c23c434d731a624e5 Mon Sep 17 00:00:00 2001
+From f12c91137ad4b182f3d19807f052d6a82d04dba9 Mon Sep 17 00:00:00 2001
 From: Priya Shree <priya.shree@intel.com>
 Date: Tue, 20 Feb 2018 21:47:14 +0530
-Subject: [PATCH 3/5] [WA] This is to fix USB Headset not working on O MR1
+Subject: [PATCH 02/14] This is to fix USB Headset not working on O MR1
 
 Change-Id: Ib0ce976bec51771bd590f8548bc89e815f3db7f4
 Tracked-On: https://jira01.devtools.intel.com/browse/OAM-57262
 Signed-off-by: Priya Shree <priya.shree@intel.com>
 ---
- .../engineconfigurable/wrapper/config/audio_policy_criteria.conf   | 4 ++--
- services/audiopolicy/managerdefault/AudioPolicyManager.cpp         | 7 ++++++-
+ .../wrapper/config/audio_policy_criteria.conf              | 4 ++--
+ services/audiopolicy/managerdefault/AudioPolicyManager.cpp | 7 ++++++-
  2 files changed, 8 insertions(+), 3 deletions(-)
 
 diff --git a/services/audiopolicy/engineconfigurable/wrapper/config/audio_policy_criteria.conf b/services/audiopolicy/engineconfigurable/wrapper/config/audio_policy_criteria.conf
-index 043d5a6..6229748 100644
+index 043d5a6902..6229748006 100644
 --- a/services/audiopolicy/engineconfigurable/wrapper/config/audio_policy_criteria.conf
 +++ b/services/audiopolicy/engineconfigurable/wrapper/config/audio_policy_criteria.conf
 @@ -48,14 +48,14 @@ Policy {
@@ -33,10 +33,10 @@ index 043d5a6..6229748 100644
      ExclusiveCriterionType {
          #
 diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
-index bdfaf2f..47466dc 100644
+index d00d5fa692..653dde887a 100644
 --- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
 +++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
-@@ -799,8 +799,13 @@ status_t AudioPolicyManager::getOutputForAttr(const audio_attributes_t *attr,
+@@ -824,8 +824,13 @@ status_t AudioPolicyManager::getOutputForAttr(const audio_attributes_t *attr,
          *portId = AudioPort::getNextUniqueId();
      }
  
@@ -52,5 +52,5 @@ index bdfaf2f..47466dc 100644
          if (!audio_has_proportional_frames(config->format)) {
              return BAD_VALUE;
 -- 
-1.9.1
+2.17.1
 

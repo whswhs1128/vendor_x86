@@ -1,7 +1,7 @@
-From 0ef1a1b8bf92bffa15ddfac4030869693ecde404 Mon Sep 17 00:00:00 2001
+From e34826530ecf5ad399163abfdf1881959af8a39e Mon Sep 17 00:00:00 2001
 From: saranya <saranya.gopal@intel.com>
 Date: Tue, 15 May 2018 15:32:46 +0530
-Subject: [PATCH 5/5] MtpPacket: Add finite timeout for bulk transfer
+Subject: [PATCH 03/14] MtpPacket: Add finite timeout for bulk transfer
 
 When timeout is set as 0 for bulk transfer,
 kernel waits indefinitely resulting in hung_task
@@ -17,7 +17,7 @@ Signed-off-by: saranya <saranya.gopal@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/media/mtp/MtpPacket.cpp b/media/mtp/MtpPacket.cpp
-index 3dd4248..f069a83 100644
+index 3dd4248e4c..f069a83b5f 100644
 --- a/media/mtp/MtpPacket.cpp
 +++ b/media/mtp/MtpPacket.cpp
 @@ -157,7 +157,7 @@ int MtpPacket::transfer(struct usb_request* request) {
@@ -30,5 +30,5 @@ index 3dd4248..f069a83 100644
      return result;
  }
 -- 
-1.9.1
+2.17.1
 

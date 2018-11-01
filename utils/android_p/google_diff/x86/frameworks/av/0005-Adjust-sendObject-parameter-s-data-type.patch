@@ -1,7 +1,7 @@
-From e658c8b74a311cdfaf9a164d683be3808f841ae5 Mon Sep 17 00:00:00 2001
+From 7e39522e5ec86d41b6350b3dae45deed1e4deb5b Mon Sep 17 00:00:00 2001
 From: "Yan, WalterX" <walterx.yan@intel.com>
 Date: Wed, 19 Sep 2018 17:36:28 +0800
-Subject: [PATCH] Adjust sendObject parameter's data type.
+Subject: [PATCH 05/14] Adjust sendObject parameter's data type.
 
 Now the MtpDevice#sendObject is using int to define object size,
 if the object size is bigger than 2GB, the size will be type cast to
@@ -21,7 +21,7 @@ Signed-off-by: Yan, WalterX <walterx.yan@intel.com>
  2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/media/mtp/MtpDevice.cpp b/media/mtp/MtpDevice.cpp
-index 993797a..ff36dcc 100644
+index 993797abf0..ff36dccdbb 100644
 --- a/media/mtp/MtpDevice.cpp
 +++ b/media/mtp/MtpDevice.cpp
 @@ -516,7 +516,7 @@ MtpObjectHandle MtpDevice::sendObjectInfo(MtpObjectInfo* info) {
@@ -43,7 +43,7 @@ index 993797a..ff36dcc 100644
          return ret == MTP_RESPONSE_OK && writeResult > 0;
      }
 diff --git a/media/mtp/MtpDevice.h b/media/mtp/MtpDevice.h
-index 8cf9e5e..01bc3db 100644
+index 8cf9e5e4f6..01bc3dbbfe 100644
 --- a/media/mtp/MtpDevice.h
 +++ b/media/mtp/MtpDevice.h
 @@ -104,7 +104,7 @@ public:
@@ -56,5 +56,5 @@ index 8cf9e5e..01bc3db 100644
      MtpObjectHandle         getParent(MtpObjectHandle handle);
      MtpStorageID            getStorageID(MtpObjectHandle handle);
 -- 
-1.9.1
+2.17.1
 

@@ -1,7 +1,7 @@
-From 2b8e99d76ee4fd5434cd04dbd46384fcf8adc6dd Mon Sep 17 00:00:00 2001
+From 359bc2aa397bcd51951f7e424291011e259c1407 Mon Sep 17 00:00:00 2001
 From: Khalid Zubair <kzubair@cyngn.com>
 Date: Tue, 20 Oct 2015 16:13:27 -0700
-Subject: [PATCH 17/25] sensorservice: customize sensor fusion mag filter via
+Subject: [PATCH 16/28] sensorservice: customize sensor fusion mag filter via
  prop
 
 When large magnetic fields values get filtered out by the Sensor

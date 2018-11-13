@@ -1,7 +1,7 @@
-From c2cf4208ed6842084122fe2cbd232456de2486b7 Mon Sep 17 00:00:00 2001
+From d35d93f0741f31b7ea585c4bf43e092ca038b1a3 Mon Sep 17 00:00:00 2001
 From: Dave Kessler <activethrasher00@gmail.com>
 Date: Fri, 1 Apr 2016 21:40:52 -0400
-Subject: [PATCH 13/25] Input: improve touch response slightly
+Subject: [PATCH 13/28] Input: improve touch response slightly
 
 by removing some unnecessary preprocessor directives
 
@@ -54,7 +54,7 @@ index bcf55b0ea3..b7b154f0b8 100644
  #include <math.h>
  #include <limits.h>
 diff --git a/services/inputflinger/InputDispatcher.cpp b/services/inputflinger/InputDispatcher.cpp
-index 9a449fa6d1..f698fea157 100644
+index 5aab07d76c..d86036d45a 100644
 --- a/services/inputflinger/InputDispatcher.cpp
 +++ b/services/inputflinger/InputDispatcher.cpp
 @@ -20,28 +20,28 @@

@@ -1,7 +1,7 @@
-From e3edb576c0acfccda924f258f68cb6c2c16cac19 Mon Sep 17 00:00:00 2001
+From 415880a0de34c2b1fa4d5b9fc1dadbe620185bd3 Mon Sep 17 00:00:00 2001
 From: Arne Coucheron <arco68@gmail.com>
 Date: Wed, 5 Nov 2014 05:17:05 +0100
-Subject: [PATCH 16/25] sensorservice: Register orientation sensor if HAL
+Subject: [PATCH 15/28] sensorservice: Register orientation sensor if HAL
  doesn't provide it
 
  * In KitKat and on most Samsung devices, the orientation sensor is

@@ -1,7 +1,7 @@
-From 492da77bd94e4c6f68d774f3f4b51401473af748 Mon Sep 17 00:00:00 2001
+From 116ffb59f4ef18b0d3e8f6498a541b472084d1a2 Mon Sep 17 00:00:00 2001
 From: Corinna Vinschen <xda@vinschen.de>
 Date: Sat, 12 Aug 2017 21:22:27 +0200
-Subject: [PATCH 20/25] PowerManager.h: Define USER_ACTIVITY_FLAG values
+Subject: [PATCH 19/28] PowerManager.h: Define USER_ACTIVITY_FLAG values
 
 Change-Id: I90daada0d887008d56e84ce29b3f0b011a298698
 Signed-off-by: Corinna Vinschen <xda@vinschen.de>

@@ -1,7 +1,7 @@
-From 49e327adb90e6e3ce5b9bd206a08b38276a6218f Mon Sep 17 00:00:00 2001
+From 5a965fd27c7e2df95efbc8907bf2c30cac48b924 Mon Sep 17 00:00:00 2001
 From: zfu <zfu@codeaurora.org>
 Date: Thu, 1 Mar 2018 18:14:50 +0800
-Subject: [PATCH 22/25] native: touch response optimizations
+Subject: [PATCH 21/28] native: touch response optimizations
 
 add two variable MotionType and touchMoveCounter into InputCosumer.
 

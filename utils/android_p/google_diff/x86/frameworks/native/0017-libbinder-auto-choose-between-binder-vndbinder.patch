@@ -1,7 +1,7 @@
-From 5cc22e106f00af9863dee20322af7f1ea72f840b Mon Sep 17 00:00:00 2001
+From 3377ceea3646a3d9ab77edf78c34909902d640f3 Mon Sep 17 00:00:00 2001
 From: Steven Moreland <smoreland@google.com>
 Date: Fri, 6 Jul 2018 13:02:53 -0700
-Subject: [PATCH 18/25] libbinder: auto-choose between binder/vndbinder
+Subject: [PATCH 17/28] libbinder: auto-choose between binder/vndbinder
 
 Right now, a huge amount of client code has to manually
 specify initWithDriver("/dev/vndbinder"). This is kind

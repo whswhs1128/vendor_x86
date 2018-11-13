@@ -1,7 +1,7 @@
-From a967eb71cea5b59fbeb92940c5a1f431d27f2b0c Mon Sep 17 00:00:00 2001
+From 543ccc26145faff541216653613b42b9b0ce59f7 Mon Sep 17 00:00:00 2001
 From: Vinay Verma <vvinay@codeaurora.org>
 Date: Tue, 12 Jun 2018 18:04:44 +0530
-Subject: [PATCH 23/25] Add vendor version for libgui
+Subject: [PATCH 22/28] Add vendor version for libgui
 
 libstagefright_omx library need to be extended to vendor which
 is depenednet on libgui which is a vndk_private lib.

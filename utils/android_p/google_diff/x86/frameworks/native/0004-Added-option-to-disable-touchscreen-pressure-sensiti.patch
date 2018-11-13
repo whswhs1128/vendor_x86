@@ -1,7 +1,7 @@
-From d2fe14924a9223e9cc8edef5ed38654783e71baa Mon Sep 17 00:00:00 2001
+From 825c540748d54093608c76b37ac6f37954d99230 Mon Sep 17 00:00:00 2001
 From: Edward Peek <edwardpeek@gmail.com>
 Date: Wed, 4 Apr 2012 06:17:00 +1200
-Subject: [PATCH 04/25] Added option to disable touchscreen pressure
+Subject: [PATCH 04/28] Added option to disable touchscreen pressure
  sensitivity from idc files
 
 ---

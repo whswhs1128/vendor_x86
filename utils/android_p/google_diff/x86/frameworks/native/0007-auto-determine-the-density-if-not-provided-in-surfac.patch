@@ -1,7 +1,7 @@
-From 5ec6d82d7d4f44fe3937a9a83267f0d923e07bef Mon Sep 17 00:00:00 2001
+From dbea75e9bf718346b19a2be030533c2c99262162 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Oct 2014 15:39:53 +0800
-Subject: [PATCH 07/25] auto determine the density if not provided in
+Subject: [PATCH 07/28] auto determine the density if not provided in
  surfaceflinger
 
 We hope to support tablet UI for different resolutions.

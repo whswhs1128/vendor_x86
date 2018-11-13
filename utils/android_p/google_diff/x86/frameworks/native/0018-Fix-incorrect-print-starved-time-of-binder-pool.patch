@@ -1,7 +1,7 @@
-From 9a37f5733bdc6630f98a900c01a3e04c7625636d Mon Sep 17 00:00:00 2001
+From 3c1293f586262272f6c37238fe9b442c9b9f6c14 Mon Sep 17 00:00:00 2001
 From: yuanhuihui <yuanhuihui@xiaomi.com>
 Date: Wed, 25 Apr 2018 22:40:52 +0800
-Subject: [PATCH 19/25] Fix incorrect print starved time of binder pool
+Subject: [PATCH 18/28] Fix incorrect print starved time of binder pool
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

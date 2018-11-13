@@ -1,7 +1,7 @@
-From b6d5eaaf92e55bd1bfcaffa50e4aab556e52c636 Mon Sep 17 00:00:00 2001
+From 3df519cf5111c6190598395e89d6fc3414eb8f8c Mon Sep 17 00:00:00 2001
 From: "Kevin F. Haggerty" <haggertk@lineageos.org>
 Date: Sat, 25 Aug 2018 15:00:25 -0600
-Subject: [PATCH 21/25] libui: Allow extension of valid gralloc 1.0 buffer
+Subject: [PATCH 20/28] libui: Allow extension of valid gralloc 1.0 buffer
  usage bits
 
 * Change I7f4174581e24e361577640b9263514a168ed482d implemented

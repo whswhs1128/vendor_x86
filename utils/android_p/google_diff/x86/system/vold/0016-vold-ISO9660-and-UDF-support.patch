@@ -1,7 +1,7 @@
-From 7d0b6177b57b6c9605b8cb88072b1dfe2da41173 Mon Sep 17 00:00:00 2001
+From a99000c2eef028f3d7808feb44494a3dada81a6c Mon Sep 17 00:00:00 2001
 From: Luo Chunbo <luochunbo@jidemail.com>
 Date: Wed, 25 May 2016 16:16:48 +0800
-Subject: [PATCH 16/18] vold: ISO9660 and UDF support
+Subject: [PATCH 16/20] vold: ISO9660 and UDF support
 
 Ref: T7691
 

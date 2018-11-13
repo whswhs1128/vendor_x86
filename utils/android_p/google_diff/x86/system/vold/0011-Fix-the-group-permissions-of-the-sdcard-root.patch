@@ -1,7 +1,7 @@
-From 7c611b801423bb3d044526c13064e6d728fa63b8 Mon Sep 17 00:00:00 2001
+From c4efa28e8e18018caf1133dd6ccf36e672216415 Mon Sep 17 00:00:00 2001
 From: Jani Lusikka <jani.lusikka@gmail.com>
 Date: Fri, 25 Mar 2016 20:12:15 +0200
-Subject: [PATCH 11/18] Fix the group permissions of the sdcard root.
+Subject: [PATCH 11/20] Fix the group permissions of the sdcard root.
 
 If the root is not writable, we cannot create new files or folders there.
 

@@ -1,7 +1,7 @@
-From 5ee872434c08f4e137eb86197f0b49c3705b5670 Mon Sep 17 00:00:00 2001
+From e4e9ac78c7d4459b7cb2f8faa816ced9ba80ac9e Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm@cyngn.com>
 Date: Wed, 4 Nov 2015 15:44:44 -0800
-Subject: [PATCH 07/18] vold: Support internal storage partitions
+Subject: [PATCH 07/20] vold: Support internal storage partitions
 
  * Support nonremovable disks and expose a nonremovable flag in the
    DiskCreated message.

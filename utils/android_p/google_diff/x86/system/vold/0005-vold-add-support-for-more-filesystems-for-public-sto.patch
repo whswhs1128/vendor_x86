@@ -1,7 +1,7 @@
-From 928c7a6ca88bc1781aaeee0ed6e34609368fe643 Mon Sep 17 00:00:00 2001
+From daf81ee777e05e20195c49bfb1d1c923c83aa458 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Tue, 27 Oct 2015 22:52:37 -0500
-Subject: [PATCH 05/18] vold: add support for more filesystems for public
+Subject: [PATCH 05/20] vold: add support for more filesystems for public
  storage
 
 * Add exfat and ntfs support based off f2fs and ported to use

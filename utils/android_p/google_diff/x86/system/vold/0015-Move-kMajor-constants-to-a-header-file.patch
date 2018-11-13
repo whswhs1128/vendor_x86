@@ -1,7 +1,7 @@
-From e0c4c3ac4827605d8d41b5dee606a6ba68e86142 Mon Sep 17 00:00:00 2001
+From 10386e3b4ab8070fa72639f0b99c96b272b5a2ac Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 25 Mar 2017 00:13:45 +0800
-Subject: [PATCH 15/18] Move kMajor* constants to a header file
+Subject: [PATCH 15/20] Move kMajor* constants to a header file
 
 Currently each cpp defines its own kMajor* that can't be shared.
 Move the kMajor* to a header to avoid duplicate definitions.

@@ -1,7 +1,7 @@
-From 0832d883aaf3dd68af0ed8a38002167b30662c3b Mon Sep 17 00:00:00 2001
+From d14a6f9524f1a76094197c78f9d1cd2a8c149a8a Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm@cyngn.com>
 Date: Thu, 5 Nov 2015 11:20:54 -0800
-Subject: [PATCH 08/18] vold: Honor mount options for ext4/f2fs partitions
+Subject: [PATCH 08/20] vold: Honor mount options for ext4/f2fs partitions
 
  * Save mount options and fstype for DiskPartition objects
  * Pass mount options and fstype to PublicVolume ctor

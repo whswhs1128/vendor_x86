@@ -1,7 +1,7 @@
-From 7a614b0070cc6e6840214115e8a9de5c5a726863 Mon Sep 17 00:00:00 2001
+From 1473d6fcdde0b1f4dae6b38075e15e5e181c8786 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Tue, 14 Aug 2018 20:54:08 +0200
-Subject: [PATCH 02/18] Create vendor_de. This is done by /init.rc on
+Subject: [PATCH 02/20] Create vendor_de. This is done by /init.rc on
  system-as-root device
 
 ---

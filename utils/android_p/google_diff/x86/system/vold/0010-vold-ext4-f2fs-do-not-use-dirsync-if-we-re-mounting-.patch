@@ -1,7 +1,7 @@
-From a5d502c68fe59f92ed7c652024364f98e9bce377 Mon Sep 17 00:00:00 2001
+From a9fa1d9fb7a6315755dcacc847c0114127032103 Mon Sep 17 00:00:00 2001
 From: Sam Mortimer <sam@mortimer.me.uk>
 Date: Fri, 27 Nov 2015 15:27:03 -0800
-Subject: [PATCH 10/18] vold ext4/f2fs: do not use dirsync if we're mounting
+Subject: [PATCH 10/20] vold ext4/f2fs: do not use dirsync if we're mounting
  adopted storage
 
 Change-Id: I6f8ca75385c2d4080b1430c0b6545b61e6632e2c

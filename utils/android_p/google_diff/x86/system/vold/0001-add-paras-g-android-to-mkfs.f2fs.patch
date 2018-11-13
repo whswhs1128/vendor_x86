@@ -1,7 +1,7 @@
-From 7a403674b04b8484b274d54493459f571e736257 Mon Sep 17 00:00:00 2001
+From 7b56f7aea3c7a04926f5ada420eb72c488f7cf57 Mon Sep 17 00:00:00 2001
 From: Zhiwei Li <zhiwei.li@intel.com>
 Date: Mon, 3 Sep 2018 15:36:29 +0800
-Subject: [PATCH 01/18] add paras -g android to mkfs.f2fs
+Subject: [PATCH 01/20] add paras -g android to mkfs.f2fs
 
 Change-Id: I4dd2cfc3a1869f88dba522ed986e15aee2ff94ba
 ---

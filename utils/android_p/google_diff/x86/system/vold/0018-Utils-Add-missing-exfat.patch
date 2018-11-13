@@ -1,7 +1,7 @@
-From 95538fa7632bee68596edabbeb9ff68f83c4d8ba Mon Sep 17 00:00:00 2001
+From 5cbab12de97884355790b635d45d20f3b8ee9b3c Mon Sep 17 00:00:00 2001
 From: xyyx <xyyx@mail.ru>
 Date: Sun, 30 Sep 2018 12:49:36 +0800
-Subject: [PATCH 18/18] Utils: Add missing exfat
+Subject: [PATCH 18/20] Utils: Add missing exfat
 
 Change-Id: I7c7d9ae2782e9410208e5a504c7e45e7fd00da8d
 Signed-off-by: VenkatVishalV <venkatvishal124@gmail.com>

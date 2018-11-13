@@ -1,7 +1,7 @@
-From 92feca775237d138110442c70814a95246a9d55b Mon Sep 17 00:00:00 2001
+From 141d2dbfc062a186d62a0e18922b0e4cf7deea9f Mon Sep 17 00:00:00 2001
 From: Jaegeuk Kim <jaegeuk@google.com>
 Date: Thu, 2 Aug 2018 12:41:45 -0700
-Subject: [PATCH 14/18] secdiscard: should pin_file to avoid moving blocks in
+Subject: [PATCH 14/20] secdiscard: should pin_file to avoid moving blocks in
  F2FS
 
 This file should avoid F2FS GC, since it directly access block device based

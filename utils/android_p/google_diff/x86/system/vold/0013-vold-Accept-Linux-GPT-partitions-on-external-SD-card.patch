@@ -1,7 +1,7 @@
-From f4692a7abfdd80ac0d545141bd222aaaef3e07a7 Mon Sep 17 00:00:00 2001
+From 0966f36861939078cf4b66736f5e09a765d81553 Mon Sep 17 00:00:00 2001
 From: lambdadroid <lambdadroid@gmail.com>
 Date: Sat, 6 Jan 2018 14:48:44 +0100
-Subject: [PATCH 13/18] vold: Accept Linux GPT partitions on external SD cards
+Subject: [PATCH 13/20] vold: Accept Linux GPT partitions on external SD cards
 
 ext4/f2fs partitions are usually created using the Linux partition
 type on GUID partition tables, which is not recognized by vold.

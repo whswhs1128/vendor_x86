@@ -1,0 +1,48 @@
+From c8580ac86001917f8328c74800953b9255aa7ecd Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 12 Nov 2018 18:50:13 -0500
+Subject: [PATCH 20/20] vold3: check supported filesystem modules
+
+If there is a filesystem module of the requested type,
+it should be considered supported.
+
+Note the kernel will auto load the filesystem module
+on mounting by modprobe.
+
+Change-Id: Ic1b2f25d0cfabc6650025ba4e56d0eecf1050e86
+---
+ Utils.cpp | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index fdf9e1f..841effb 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -26,6 +26,7 @@
+ #include <android-base/stringprintf.h>
+ #include <cutils/fs.h>
+ #include <logwrap/logwrap.h>
++#include <cutils/probe_module.h>
+ #include <private/android_filesystem_config.h>
+ 
+ #include <mutex>
+@@ -565,7 +566,15 @@ bool IsFilesystemSupported(const std::string& fsType) {
+     supported.append("fuse\tntfs\n"
+                      "fuse\texfat\n");
+ 
+-    return supported.find(fsType + "\n") != std::string::npos;
++    if (supported.find(fsType + "\n") != std::string::npos) {
++        return true;
++    }
++
++    // Check if there is a filesystem module available
++    char fs[PATH_MAX];
++    get_default_mod_path(fs);
++    supported = StringPrintf("%skernel/fs/%s", fs, fsType.c_str());
++    return !access(supported.c_str(), F_OK);
+ }
+ 
+ status_t WipeBlockDevice(const std::string& path) {
+-- 
+2.17.1
+

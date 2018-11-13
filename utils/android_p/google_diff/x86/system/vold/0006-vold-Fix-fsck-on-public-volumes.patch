@@ -1,7 +1,7 @@
-From 5ee7c003cde0700b56726aff7ebff5804d60728a Mon Sep 17 00:00:00 2001
+From cd06a2c0bb593c4e4e789a70bb42db12e5b6ad87 Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mikeioannina@gmail.com>
 Date: Sun, 6 Dec 2015 23:53:55 +0200
-Subject: [PATCH 06/18] vold: Fix fsck on public volumes
+Subject: [PATCH 06/20] vold: Fix fsck on public volumes
 
 * Fsck was hitting a neverallow on public volumes not formatted in vfat
   because it was always using the trusted context

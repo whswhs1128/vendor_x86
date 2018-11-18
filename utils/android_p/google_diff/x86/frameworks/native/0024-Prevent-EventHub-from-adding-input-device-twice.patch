@@ -1,4 +1,4 @@
-From 0339b2facbaa0ca17e4f7a52d68c28c1bd7f5f34 Mon Sep 17 00:00:00 2001
+From 023341f483918bdd9857579d990213c1c169789d Mon Sep 17 00:00:00 2001
 From: Daniel Leung <daniel.leung@intel.com>
 Date: Thu, 13 Sep 2012 13:43:41 -0700
 Subject: [PATCH 24/28] Prevent EventHub from adding input device twice

@@ -1,4 +1,4 @@
-From 3e7195dff368595777eded1f1c5292a7d4789a2b Mon Sep 17 00:00:00 2001
+From b6e66489f1a02eb285b1fe853a7f6c63847c691e Mon Sep 17 00:00:00 2001
 From: "Wang, Yue A" <yue.a.wang@intel.com>
 Date: Tue, 21 Jan 2014 17:42:13 +0800
 Subject: [PATCH 27/28] SurfaceFlinger: disable VSync thread if no clients

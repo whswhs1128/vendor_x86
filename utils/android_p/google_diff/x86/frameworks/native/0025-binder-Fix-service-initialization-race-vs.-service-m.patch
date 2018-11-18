@@ -1,4 +1,4 @@
-From f2834b91c7eac6731c1e68304d7d0a596aa12102 Mon Sep 17 00:00:00 2001
+From c23a23bc0daf899e38f9ee82d7d79c88419f537d Mon Sep 17 00:00:00 2001
 From: Andy Ross <andy.ross@windriver.com>
 Date: Tue, 19 Feb 2013 14:39:34 -0800
 Subject: [PATCH 25/28] binder: Fix service initialization race vs. service

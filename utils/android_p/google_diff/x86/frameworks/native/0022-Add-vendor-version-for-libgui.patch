@@ -1,4 +1,4 @@
-From 543ccc26145faff541216653613b42b9b0ce59f7 Mon Sep 17 00:00:00 2001
+From 37cfe1d7bedd34782fbbefecec9005db57302376 Mon Sep 17 00:00:00 2001
 From: Vinay Verma <vvinay@codeaurora.org>
 Date: Tue, 12 Jun 2018 18:04:44 +0530
 Subject: [PATCH 22/28] Add vendor version for libgui
@@ -13,8 +13,7 @@ Change-Id: I777eebffc405c8bb74aab270e9f272c806501458
 Signed-off-by: Sipun Ku Mahanta <sipunkumar85@gmail.com>
 ---
  libs/gui/Android.bp | 28 +++++++++++++++++++---------
- libs/ui/Android.bp  |  2 +-
- 2 files changed, 20 insertions(+), 10 deletions(-)
+ 1 file changed, 19 insertions(+), 9 deletions(-)
 
 diff --git a/libs/gui/Android.bp b/libs/gui/Android.bp
 index 73f2147deb..af0e15a1e9 100644
@@ -74,19 +73,6 @@ index 73f2147deb..af0e15a1e9 100644
 +}
 +
  subdirs = ["tests"]
-diff --git a/libs/ui/Android.bp b/libs/ui/Android.bp
-index 25c353a519..bf774b3f8f 100644
---- a/libs/ui/Android.bp
-+++ b/libs/ui/Android.bp
-@@ -47,7 +47,7 @@ cc_library_shared {
-     ],
- 
-     product_variables: {
--        lineage: {
-+        superior: {
-             additional_gralloc_10_usage_bits: {
-                 cppflags: ["-DADDNL_GRALLOC_10_USAGE_BITS=%s"],
-             },
 -- 
 2.17.1
 

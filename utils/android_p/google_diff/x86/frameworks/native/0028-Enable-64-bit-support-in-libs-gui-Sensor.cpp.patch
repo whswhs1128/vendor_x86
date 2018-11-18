@@ -1,4 +1,4 @@
-From 65a3a4369d2e73ea1b960ef264f05bfb7a345f5b Mon Sep 17 00:00:00 2001
+From 14dce1082f698ca8e9dc4fd6d26b8adf124eec25 Mon Sep 17 00:00:00 2001
 From: Byron Gardner <byron.gardner@intel.com>
 Date: Mon, 3 Nov 2014 15:54:28 -0800
 Subject: [PATCH 28/28] Enable 64-bit support in libs/gui/Sensor.cpp

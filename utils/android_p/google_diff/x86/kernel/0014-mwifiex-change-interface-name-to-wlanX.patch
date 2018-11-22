@@ -1,7 +1,7 @@
 From 3992b9191a84756e13f9d31725a1919cecf18b5a Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 10 Jun 2016 10:50:15 +0800
-Subject: [PATCH 14/30] mwifiex: change interface name to wlanX
+Subject: [PATCH 14/31] mwifiex: change interface name to wlanX
 
 The other name doesn't work well in android.
 ---

@@ -1,7 +1,7 @@
 From ef93204cec3661975961a3296d4a15ed6a9c3dfd Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 22 Nov 2016 00:15:55 +0800
-Subject: [PATCH 27/30] x86: add defconfigs for android-x86
+Subject: [PATCH 27/31] x86: add defconfigs for android-x86
 
 ---
  arch/x86/configs/android-x86_64_defconfig | 7121 ++++++++++++++++++++

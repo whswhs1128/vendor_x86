@@ -1,7 +1,7 @@
 From fc2cec2154710e24a119daaec94d1a29a01deb36 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Thu, 1 Dec 2016 08:00:39 +0100
-Subject: [PATCH 29/30] Revert "[kbuild] handle exports in lib-y objects
+Subject: [PATCH 29/31] Revert "[kbuild] handle exports in lib-y objects
  reliably"
 
 This reverts commit 7f2084fa55e6cb61f61b4224d4a8bafaeee55f9f

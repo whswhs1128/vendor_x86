@@ -1,7 +1,7 @@
 From 0d29aead1d2598fd1ef85d16c18aa467f9354b25 Mon Sep 17 00:00:00 2001
 From: meijjaa <jjmeijer88@gmail.com>
 Date: Wed, 4 Nov 2015 22:48:22 +0100
-Subject: [PATCH 01/30] x86/intel: force tsc to be reliable on Baytrail
+Subject: [PATCH 01/31] x86/intel: force tsc to be reliable on Baytrail
 
 ---
  arch/x86/kernel/cpu/intel.c | 2 ++

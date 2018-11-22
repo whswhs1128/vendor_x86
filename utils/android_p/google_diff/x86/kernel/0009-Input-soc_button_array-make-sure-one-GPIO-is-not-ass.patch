@@ -1,7 +1,7 @@
 From c44c27b78198f96dd42c4938b3317653c76a2fb5 Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:51 +0200
-Subject: [PATCH 09/30] Input - soc_button_array: make sure one GPIO is not
+Subject: [PATCH 09/31] Input - soc_button_array: make sure one GPIO is not
  assigned twice
 
 The Surface 3 declares twice the GPIO as GpioInt and GpioIo in its

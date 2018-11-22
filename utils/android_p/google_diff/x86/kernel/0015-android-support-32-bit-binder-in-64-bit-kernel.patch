@@ -1,7 +1,7 @@
 From ca4c716d048e323d971821bbe8e963d732b37781 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 3 Apr 2015 02:41:10 +0800
-Subject: [PATCH 15/30] android: support 32-bit binder in 64-bit kernel
+Subject: [PATCH 15/31] android: support 32-bit binder in 64-bit kernel
 
 ---
  drivers/android/Kconfig | 6 +++---

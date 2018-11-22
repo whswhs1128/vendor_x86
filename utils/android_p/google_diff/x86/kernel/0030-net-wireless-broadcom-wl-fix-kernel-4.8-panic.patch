@@ -1,7 +1,7 @@
 From 7883e0b35c1a3bdad0e9c886cf3af96fa83371e3 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 8 Jul 2017 10:57:15 +0200
-Subject: [PATCH 30/30] net: wireless: broadcom: wl: fix kernel >= 4.8 panic
+Subject: [PATCH 30/31] net: wireless: broadcom: wl: fix kernel >= 4.8 panic
 
 linux-recent.patch was ok up till kernel 4.7
 with kernel 4.8 (and 4.9) new changes are critical to avoid crash

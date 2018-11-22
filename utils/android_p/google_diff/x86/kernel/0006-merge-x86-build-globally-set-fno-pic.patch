@@ -1,7 +1,7 @@
 From d4c7151c96994bedf780f7980d8bbf43bdbdbfe5 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 17 Oct 2015 00:33:13 +0800
-Subject: [PATCH 06/30] merge: x86, build: globally set -fno-pic
+Subject: [PATCH 06/31] merge: x86, build: globally set -fno-pic
 
 cherry-pick of e3bd23 from lollipop-x86's kernel-4.0 branch
 

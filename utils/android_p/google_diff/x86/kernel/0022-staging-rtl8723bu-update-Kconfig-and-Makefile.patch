@@ -1,7 +1,7 @@
 From 07f61c4334f25f571f5255f2d2e30acd49aea8ee Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 1 Oct 2016 17:29:44 +0200
-Subject: [PATCH 22/30] staging: rtl8723bu update Kconfig and Makefile
+Subject: [PATCH 22/31] staging: rtl8723bu update Kconfig and Makefile
 
 ---
  drivers/staging/Kconfig  | 2 ++

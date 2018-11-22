@@ -1,7 +1,7 @@
 From 4422b1c345dde65b7233e829d9f6be76c3cb1303 Mon Sep 17 00:00:00 2001
 From: meijjaa <jjmeijer88@gmail.com>
 Date: Thu, 5 Nov 2015 00:15:10 +0100
-Subject: [PATCH 04/30] Stop power_supply log flood
+Subject: [PATCH 04/31] Stop power_supply log flood
 
 ---
  drivers/power/supply/power_supply_sysfs.c | 16 ++++++++--------

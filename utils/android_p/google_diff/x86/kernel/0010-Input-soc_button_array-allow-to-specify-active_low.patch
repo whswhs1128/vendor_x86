@@ -1,7 +1,7 @@
 From a9da2b2e09ce31666d0a3c9c940c50fbf79ec909 Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:52 +0200
-Subject: [PATCH 10/30] Input - soc_button_array: allow to specify active_low
+Subject: [PATCH 10/31] Input - soc_button_array: allow to specify active_low
 
 The Surface 3 has the "Windows" key active high, and not low. We need
 a way to specify it in the description.

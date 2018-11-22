@@ -1,7 +1,7 @@
 From 4133824eaf1bcdd988b60008bf97cc26dcdc5316 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 4 Sep 2016 14:30:12 +0200
-Subject: [PATCH 17/30] x86/vdso: fix a build break on CONFIG_FUNCTION_TRACER=y
+Subject: [PATCH 17/31] x86/vdso: fix a build break on CONFIG_FUNCTION_TRACER=y
 
 The -mfentry must be filtered out, otherwise it causes the error:
 

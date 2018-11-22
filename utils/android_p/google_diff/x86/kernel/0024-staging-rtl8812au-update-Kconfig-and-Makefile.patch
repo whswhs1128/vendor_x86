@@ -1,7 +1,7 @@
 From e641b1f1e406eee54fa5092004ccb86ed4c031e1 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 1 Oct 2016 20:13:43 +0200
-Subject: [PATCH 24/30] staging: rtl8812au update Kconfig and Makefile
+Subject: [PATCH 24/31] staging: rtl8812au update Kconfig and Makefile
 
 ---
  drivers/staging/Kconfig  | 2 ++

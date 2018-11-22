@@ -1,7 +1,7 @@
 From 18e01f13f1bd30c9db125e666df852c5d4859e8a Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 30 Oct 2016 16:39:13 +0800
-Subject: [PATCH 26/30] shmem: enable user xattr for tmpfs
+Subject: [PATCH 26/31] shmem: enable user xattr for tmpfs
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

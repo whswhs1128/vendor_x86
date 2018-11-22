@@ -1,7 +1,7 @@
 From 2d137f40d02614079c7ef3579ad3739cbfa84b07 Mon Sep 17 00:00:00 2001
 From: Robert Mazur <robert.mazur.mazur@gmail.com>
 Date: Tue, 23 Dec 2014 07:51:17 +0100
-Subject: [PATCH 25/30] SSSE3 emulation for invalid opcode
+Subject: [PATCH 25/31] SSSE3 emulation for invalid opcode
 
 Use SSEPlus reference implementation of SSSE3 instructions.
 For CPUs without SSSE3 support.

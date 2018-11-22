@@ -1,7 +1,7 @@
 From d70f8691e100974d5d2bd57c4774a68b84973ea7 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 23 Jan 2014 10:47:22 +0800
-Subject: [PATCH 13/30] usbnet: [TEMP HACK] force the interface name to ethX
+Subject: [PATCH 13/31] usbnet: [TEMP HACK] force the interface name to ethX
 
 Currently the android framework only recognizes ethX as the
 Ethernet interface name.

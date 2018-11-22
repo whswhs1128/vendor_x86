@@ -1,7 +1,7 @@
 From 4956bd86bee3ba5938e9b654b2377f2d2ce3926e Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 18 Dec 2016 10:48:35 +0100
-Subject: [PATCH 28/30] wireless: broadcom: wl: update linux_sta driver url
+Subject: [PATCH 28/31] wireless: broadcom: wl: update linux_sta driver url
 
 Fixes building error due to non existing former url
 ---

@@ -1,7 +1,7 @@
 From 4415ce3d863c653f6a9a93f35b7ebe00a5e3be08 Mon Sep 17 00:00:00 2001
 From: meijjaa <jjmeijer88@gmail.com>
 Date: Wed, 4 Nov 2015 22:52:29 +0100
-Subject: [PATCH 03/30] baytrail defconfig added
+Subject: [PATCH 03/31] baytrail defconfig added
 
 ---
  arch/x86/configs/baytrail_defconfig | 6551 +++++++++++++++++++++++++++

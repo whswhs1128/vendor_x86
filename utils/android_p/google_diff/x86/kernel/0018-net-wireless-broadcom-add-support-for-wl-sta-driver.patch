@@ -1,7 +1,7 @@
 From 82b3c6615a2ac0a03b039c94d33fec58879b579f Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 4 Jun 2016 00:12:35 +0200
-Subject: [PATCH 18/30] net: wireless: broadcom: add support for wl sta driver
+Subject: [PATCH 18/31] net: wireless: broadcom: add support for wl sta driver
 
 Porting of support for Broadcom wl driver 6.30.223.271
 

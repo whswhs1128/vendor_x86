@@ -1,7 +1,7 @@
 From ba0500313096fac8a230b64063b208a070f32f7e Mon Sep 17 00:00:00 2001
 From: meijjaa <jjmeijer88@gmail.com>
 Date: Wed, 4 Nov 2015 22:50:45 +0100
-Subject: [PATCH 02/30] drm: disable permission check
+Subject: [PATCH 02/31] drm: disable permission check
 
 ---
  drivers/gpu/drm/drm_ioctl.c | 25 -------------------------

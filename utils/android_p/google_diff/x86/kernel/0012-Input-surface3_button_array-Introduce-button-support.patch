@@ -1,7 +1,7 @@
 From a22947b8d9c78715c351f914fa23cb7f5ebd9b2f Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:54 +0200
-Subject: [PATCH 12/30] Input - surface3_button_array: Introduce button support
+Subject: [PATCH 12/31] Input - surface3_button_array: Introduce button support
  for the Surface 3
 
 The Surface 3 is not following the ACPI spec for PNP0C40, but nearly.

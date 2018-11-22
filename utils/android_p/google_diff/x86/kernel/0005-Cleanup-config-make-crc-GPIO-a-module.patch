@@ -1,7 +1,7 @@
 From 5e4853654dc36077f95ec2ef92be4bf6bb1912dd Mon Sep 17 00:00:00 2001
 From: meijjaa <jjmeijer88@gmail.com>
 Date: Thu, 5 Nov 2015 20:28:15 +0100
-Subject: [PATCH 05/30] Cleanup config, make crc GPIO a module
+Subject: [PATCH 05/31] Cleanup config, make crc GPIO a module
 
 ---
  arch/x86/configs/baytrail_defconfig | 223 ++++++++++++++--------------

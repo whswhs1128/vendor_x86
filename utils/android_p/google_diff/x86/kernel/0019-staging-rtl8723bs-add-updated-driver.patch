@@ -1,7 +1,7 @@
 From 18e54c1092b47db2a59f30764ff4de647697e208 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 1 Oct 2016 16:11:02 +0200
-Subject: [PATCH 19/30] staging: rtl8723bs: add updated driver
+Subject: [PATCH 19/31] staging: rtl8723bs: add updated driver
 
 Added from https://github.com/hadess/rtl8723bs.git
 commit 275ece719635a9304d75ccaa6ce994e87774cb54

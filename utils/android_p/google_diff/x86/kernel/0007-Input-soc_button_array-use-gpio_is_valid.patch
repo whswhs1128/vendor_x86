@@ -1,7 +1,7 @@
 From f99631d69f1f05c800212fd1e6d35701a20b9ad8 Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:49 +0200
-Subject: [PATCH 07/30] Input - soc_button_array: use gpio_is_valid()
+Subject: [PATCH 07/31] Input - soc_button_array: use gpio_is_valid()
 
 gpio_keys will later use gpio_is_valid(). To match the actual
 behavior, we should use it here too.

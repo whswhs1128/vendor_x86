@@ -1,7 +1,7 @@
 From 70dc1ccd5a94dde5bb9f30fa658754de9c05925c Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:53 +0200
-Subject: [PATCH 11/30] Input - soc_button_array: export part of the internals
+Subject: [PATCH 11/31] Input - soc_button_array: export part of the internals
 
 The MS Surfaces are not directly using the PNP0C40 device for the buttons
 but instead a MSHW0028. This one is bound on a I2C bus and so we need to

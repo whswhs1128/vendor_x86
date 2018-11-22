@@ -1,7 +1,7 @@
 From fef3d898a4555b7221b6c3869e1f35c3fb96d329 Mon Sep 17 00:00:00 2001
 From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
 Date: Fri, 13 May 2016 18:05:50 +0200
-Subject: [PATCH 08/30] Input - soc_button_array: bail out earlier if
+Subject: [PATCH 08/31] Input - soc_button_array: bail out earlier if
  gpiod_count is null
 
 The PNP0C40 device of the Surface 3 doesn't have any GPIO attached to it.

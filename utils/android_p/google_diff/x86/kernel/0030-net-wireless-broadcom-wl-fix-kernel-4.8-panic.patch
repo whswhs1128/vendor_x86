@@ -1,0 +1,88 @@
+From 7883e0b35c1a3bdad0e9c886cf3af96fa83371e3 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 8 Jul 2017 10:57:15 +0200
+Subject: [PATCH 30/30] net: wireless: broadcom: wl: fix kernel >= 4.8 panic
+
+linux-recent.patch was ok up till kernel 4.7
+with kernel 4.8 (and 4.9) new changes are critical to avoid crash
+
+build.mk is modified to apply incremental patch linux-48.patch
+copied from https://aur.archlinux.org/cgit/aur.git/tree/?h=broadcom-wl
+
+Reference: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=839629
+---
+ drivers/net/wireless/broadcom/wl/build.mk     |  3 +-
+ .../net/wireless/broadcom/wl/linux-48.patch   | 48 +++++++++++++++++++
+ 2 files changed, 50 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/net/wireless/broadcom/wl/linux-48.patch
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index 56f66ba33b550..8ec61f8cb61ca 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -10,6 +10,7 @@ $(WL_SRC):
+ $(WL_PATH)/Makefile : $(WL_SRC) $(wildcard $(WL_PATH)/*.patch) $(WL_ARCH_CHANGED) $(KERNEL_ARCH_CHANGED)
+ 	$(hide) tar zxf $< -C $(@D) --overwrite && \
+ 		patch -p1 -d $(@D) -i wl.patch && \
+-		patch -p1 -d $(@D) -i linux-recent.patch
++		patch -p1 -d $(@D) -i linux-recent.patch && \
++		patch -p1 -d $(@D) -i linux-48.patch
+ 
+ $(INSTALLED_KERNEL_TARGET): $(if $(WL_ENABLED),$(WL_PATH)/Makefile)
+diff --git a/drivers/net/wireless/broadcom/wl/linux-48.patch b/drivers/net/wireless/broadcom/wl/linux-48.patch
+new file mode 100644
+index 0000000000000..9626f245c2619
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/linux-48.patch
+@@ -0,0 +1,48 @@
++--- a/src/wl/sys/wl_cfg80211_hybrid.c	2016-10-03 10:53:55.588036464 +0200
+++++ b/src/wl/sys/wl_cfg80211_hybrid.c	2016-10-03 10:54:11.911695944 +0200
++@@ -2394,8 +2394,15 @@
++ 	s32 err = 0;
++ 
++ 	if (wl->scan_request) {
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+++		struct cfg80211_scan_info info = {
+++			.aborted = true
+++		};
++ 		WL_DBG(("%s: Aborting scan\n", __FUNCTION__));
+++		cfg80211_scan_done(wl->scan_request, &info);
+++#else
++ 		cfg80211_scan_done(wl->scan_request, true);     
+++#endif
++ 		wl->scan_request = NULL;
++ 	}
++ 
++@@ -2496,7 +2503,14 @@
++ 
++ scan_done_out:
++ 	if (wl->scan_request) {
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+++		struct cfg80211_scan_info info = {
+++			.aborted = false
+++		};
+++		cfg80211_scan_done(wl->scan_request, &info);
+++#else
++ 		cfg80211_scan_done(wl->scan_request, false);
+++#endif
++ 		wl->scan_request = NULL;
++ 	}
++ 	rtnl_unlock();
++@@ -2921,7 +2935,14 @@
++ 	s32 err = 0;
++ 
++ 	if (wl->scan_request) {
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+++		struct cfg80211_scan_info info = {
+++			.aborted = true
+++		};
+++		cfg80211_scan_done(wl->scan_request, &info);
+++#else
++ 		cfg80211_scan_done(wl->scan_request, true);	
+++#endif
++ 		wl->scan_request = NULL;
++ 	}
++ 
+-- 
+2.17.1
+

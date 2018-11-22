@@ -1,0 +1,43 @@
+From d4c7151c96994bedf780f7980d8bbf43bdbdbfe5 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 17 Oct 2015 00:33:13 +0800
+Subject: [PATCH 06/30] merge: x86, build: globally set -fno-pic
+
+cherry-pick of e3bd23 from lollipop-x86's kernel-4.0 branch
+
+Android toolchain enables -fpic by default.
+We never want this for 32-bit and 64-bit kernels
+and it will break the build.
+---
+ arch/x86/Makefile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 2d449337a3605..9906cc8acb655 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -49,6 +49,10 @@ endif
+ KBUILD_CFLAGS += -mno-sse -mno-mmx -mno-sse2 -mno-3dnow
+ KBUILD_CFLAGS += $(call cc-option,-mno-avx,)
+ 
++# Never want PIC in x86 kernel, prevent breakage with GCC built
++# with nonstandard options
++KBUILD_CFLAGS += -fno-pic
++
+ ifeq ($(CONFIG_X86_32),y)
+         BITS := 32
+         UTS_MACHINE := i386
+@@ -60,10 +64,6 @@ ifeq ($(CONFIG_X86_32),y)
+ 
+         KBUILD_CFLAGS += -msoft-float -mregparm=3 -freg-struct-return
+ 
+-        # Never want PIC in a 32-bit kernel, prevent breakage with GCC built
+-        # with nonstandard options
+-        KBUILD_CFLAGS += -fno-pic
+-
+         # prevent gcc from keeping the stack 16 byte aligned
+         KBUILD_CFLAGS += $(call cc-option,-mpreferred-stack-boundary=2)
+ 
+-- 
+2.17.1
+

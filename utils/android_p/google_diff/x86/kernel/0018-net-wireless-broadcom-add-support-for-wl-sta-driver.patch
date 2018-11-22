@@ -1,0 +1,191 @@
+From 82b3c6615a2ac0a03b039c94d33fec58879b579f Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 4 Jun 2016 00:12:35 +0200
+Subject: [PATCH 18/30] net: wireless: broadcom: add support for wl sta driver
+
+Porting of support for Broadcom wl driver 6.30.223.271
+
+Since kernel 4.6 wireless drivers folders are organized per Vendor;
+wl folder will sit in drivers/net/wireless/broadcom/
+
+linux-recent.patch required specific changes for kernel 4.7
+local paths in {wl,linux-recent}.patch are aligned for simplicity,
+so they can be applied by build.mk with the same command: patch -p1
+
+build.mk was originally extracted from build/core/tasks/kernel.mk
+---
+ drivers/net/wireless/broadcom/Kconfig         |  1 +
+ drivers/net/wireless/broadcom/Makefile        |  2 +
+ drivers/net/wireless/broadcom/wl/.gitignore   |  3 ++
+ drivers/net/wireless/broadcom/wl/Kconfig      | 11 +++++
+ drivers/net/wireless/broadcom/wl/build.mk     | 15 ++++++
+ .../wireless/broadcom/wl/linux-recent.patch   | 30 ++++++++++++
+ drivers/net/wireless/broadcom/wl/wl.patch     | 48 +++++++++++++++++++
+ 7 files changed, 110 insertions(+)
+ create mode 100644 drivers/net/wireless/broadcom/wl/.gitignore
+ create mode 100644 drivers/net/wireless/broadcom/wl/Kconfig
+ create mode 100644 drivers/net/wireless/broadcom/wl/build.mk
+ create mode 100644 drivers/net/wireless/broadcom/wl/linux-recent.patch
+ create mode 100644 drivers/net/wireless/broadcom/wl/wl.patch
+
+diff --git a/drivers/net/wireless/broadcom/Kconfig b/drivers/net/wireless/broadcom/Kconfig
+index d3651ceb5046c..111558efb62e9 100644
+--- a/drivers/net/wireless/broadcom/Kconfig
++++ b/drivers/net/wireless/broadcom/Kconfig
+@@ -14,5 +14,6 @@ if WLAN_VENDOR_BROADCOM
+ source "drivers/net/wireless/broadcom/b43/Kconfig"
+ source "drivers/net/wireless/broadcom/b43legacy/Kconfig"
+ source "drivers/net/wireless/broadcom/brcm80211/Kconfig"
++source "drivers/net/wireless/broadcom/wl/Kconfig"
+ 
+ endif # WLAN_VENDOR_BROADCOM
+diff --git a/drivers/net/wireless/broadcom/Makefile b/drivers/net/wireless/broadcom/Makefile
+index 9d5ac95710c30..591ebe41ea373 100644
+--- a/drivers/net/wireless/broadcom/Makefile
++++ b/drivers/net/wireless/broadcom/Makefile
+@@ -3,3 +3,5 @@ obj-$(CONFIG_B43LEGACY)		+= b43legacy/
+ 
+ obj-$(CONFIG_BRCMFMAC)	+= brcm80211/
+ obj-$(CONFIG_BRCMSMAC)	+= brcm80211/
++
++obj-$(CONFIG_WL)	+= wl/
+diff --git a/drivers/net/wireless/broadcom/wl/.gitignore b/drivers/net/wireless/broadcom/wl/.gitignore
+new file mode 100644
+index 0000000000000..6d0d05ee80968
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/.gitignore
+@@ -0,0 +1,3 @@
++Makefile
++lib
++src
+diff --git a/drivers/net/wireless/broadcom/wl/Kconfig b/drivers/net/wireless/broadcom/wl/Kconfig
+new file mode 100644
+index 0000000000000..8838660bd78a5
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/Kconfig
+@@ -0,0 +1,11 @@
++config WL
++	tristate "Broadcom 802.11a/b/g/n hybrid device driver"
++	depends on PCI && CFG80211
++	select MAC80211
++	select LIB80211
++	select LIB80211_CRYPT_TKIP
++	---help---
++	  This module adds support for Broadcom 802.11a/b/g/n hybrid Networking Device Driver.
++
++	  This driver can be built as a module (recommended) that will be called "wl".
++	  If unsure, say M.
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+new file mode 100644
+index 0000000000000..61d1e306a2006
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -0,0 +1,15 @@
++# parts of build/core/tasks/kernel.mk
++
++WL_ENABLED := $(if $(wildcard $(WL_PATH)),$(shell grep ^CONFIG_WL=[my] $(KERNEL_CONFIG_FILE)))
++WL_ARCH_CHANGED := $(if $(shell file $(WL_PATH)/lib/wlc_hybrid.o_shipped | grep -s $(if $(filter x86,$(TARGET_KERNEL_ARCH)),80386,x86-64)),,FORCE)
++WL_SRC := $(WL_PATH)/hybrid-v35$(if $(filter x86,$(TARGET_KERNEL_ARCH)),,_64)-nodebug-pcoem-6_30_223_271.tar.gz
++$(WL_SRC):
++	@echo Downloading $(@F)...
++	$(hide) curl http://www.broadcom.com/docs/linux_sta/$(@F) > $@
++
++$(WL_PATH)/Makefile : $(WL_SRC) $(wildcard $(WL_PATH)/*.patch) $(WL_ARCH_CHANGED) $(KERNEL_ARCH_CHANGED)
++	$(hide) tar zxf $< -C $(@D) --overwrite && \
++		patch -p1 -d $(@D) -i wl.patch && \
++		patch -p1 -d $(@D) -i linux-recent.patch
++
++$(INSTALLED_KERNEL_TARGET): $(if $(WL_ENABLED),$(WL_PATH)/Makefile)
+diff --git a/drivers/net/wireless/broadcom/wl/linux-recent.patch b/drivers/net/wireless/broadcom/wl/linux-recent.patch
+new file mode 100644
+index 0000000000000..fe23756a3edf2
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/linux-recent.patch
+@@ -0,0 +1,30 @@
++--- a/src/shared/linux_osl.c
+++++ b/src/shared/linux_osl.c
++@@ -932,7 +932,11 @@
++ 	uint cycles;
++ 
++ #if defined(__i386__)
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
+++	cycles = (u32)rdtsc();
+++#else
++ 	rdtscl(cycles);
+++#endif
++ #else
++ 	cycles = 0;
++ #endif
++--- a/src/wl/sys/wl_cfg80211_hybrid.c
+++++ b/src/wl/sys/wl_cfg80211_hybrid.c
++@@ -235,6 +235,13 @@
++ };
++ #endif				
++ 
+++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+++#define ieee80211_band nl80211_band
+++#define IEEE80211_BAND_2GHZ NL80211_BAND_2GHZ
+++#define IEEE80211_BAND_5GHZ NL80211_BAND_5GHZ
+++#define IEEE80211_NUM_BANDS NUM_NL80211_BANDS
+++#endif
+++
++ #define CHAN2G(_channel, _freq, _flags) {			\
++ 	.band			= IEEE80211_BAND_2GHZ,		\
++ 	.center_freq		= (_freq),			\
+diff --git a/drivers/net/wireless/broadcom/wl/wl.patch b/drivers/net/wireless/broadcom/wl/wl.patch
+new file mode 100644
+index 0000000000000..e18f4159acc75
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/wl.patch
+@@ -0,0 +1,48 @@
++--- a/Makefile
+++++ b/Makefile
++@@ -145,7 +145,7 @@
++ EXTRA_CFLAGS       += -I$(src)/src/shared/bcmwifi/include
++ #EXTRA_CFLAGS       += -DBCMDBG_ASSERT
++ 
++-EXTRA_LDFLAGS      := $(src)/lib/wlc_hybrid.o_shipped
+++EXTRA_LDFLAGS      := $(srctree)/$(src)/lib/wlc_hybrid.o_shipped
++ 
++ KBASE              ?= /lib/modules/`uname -r`
++ KBUILD_DIR         ?= $(KBASE)/build
++--- a/src/wl/sys/wl_linux.c
+++++ b/src/wl/sys/wl_linux.c
++@@ -217,7 +217,7 @@
++ #define to_str(s) #s
++ #define quote_str(s) to_str(s)
++ 
++-#define BRCM_WLAN_IFNAME eth%d
+++#define BRCM_WLAN_IFNAME wlan%d
++ 
++ static char intf_name[IFNAMSIZ] = quote_str(BRCM_WLAN_IFNAME);
++ 
++--- a/src/wl/sys/wl_linux.c
+++++ b/src/wl/sys/wl_linux.c
++@@ -2053,8 +2053,8 @@ wl_osl_pcie_rc(struct wl_info *wl, uint op, int param)
++ void
++ wl_dump_ver(wl_info_t *wl, struct bcmstrbuf *b)
++ {
++-	bcm_bprintf(b, "wl%d: %s %s version %s\n", wl->pub->unit,
++-		__DATE__, __TIME__, EPI_VERSION_STR);
+++	bcm_bprintf(b, "wl%d: version %s\n", wl->pub->unit,
+++		EPI_VERSION_STR);
++ }
++ 
++ #if defined(BCMDBG)
++--- a/src/wl/sys/wl_linux.c
+++++ b/src/wl/sys/wl_linux.c
++@@ -2165,8 +2165,8 @@ wl_start(struct sk_buff *skb, struct net_device *dev)
++ 	wlif = WL_DEV_IF(dev);
++ 	wl = WL_INFO(dev);
++ 
+++	skb->prev = NULL;
++ 	if (WL_ALL_PASSIVE_ENAB(wl) || (WL_RTR() && WL_CONFIG_SMP())) {
++-		skb->prev = NULL;
++ 
++ 		TXQ_LOCK(wl);
++ 
++
+-- 
+2.17.1
+

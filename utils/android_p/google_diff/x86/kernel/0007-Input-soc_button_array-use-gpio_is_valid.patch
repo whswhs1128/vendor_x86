@@ -1,0 +1,37 @@
+From f99631d69f1f05c800212fd1e6d35701a20b9ad8 Mon Sep 17 00:00:00 2001
+From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+Date: Fri, 13 May 2016 18:05:49 +0200
+Subject: [PATCH 07/30] Input - soc_button_array: use gpio_is_valid()
+
+gpio_keys will later use gpio_is_valid(). To match the actual
+behavior, we should use it here too.
+
+Signed-off-by: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+---
+ drivers/input/misc/soc_button_array.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/misc/soc_button_array.c b/drivers/input/misc/soc_button_array.c
+index c14b82709b0f0..bbd433c4a5aa9 100644
+--- a/drivers/input/misc/soc_button_array.c
++++ b/drivers/input/misc/soc_button_array.c
+@@ -17,6 +17,7 @@
+ #include <linux/acpi.h>
+ #include <linux/gpio/consumer.h>
+ #include <linux/gpio_keys.h>
++#include <linux/gpio.h>
+ #include <linux/platform_device.h>
+ 
+ /*
+@@ -92,7 +93,7 @@ soc_button_device_create(struct platform_device *pdev,
+ 			continue;
+ 
+ 		gpio = soc_button_lookup_gpio(&pdev->dev, info->acpi_index);
+-		if (gpio < 0)
++		if (!gpio_is_valid(gpio))
+ 			continue;
+ 
+ 		gpio_keys[n_buttons].type = info->event_type;
+-- 
+2.17.1
+

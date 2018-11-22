@@ -1,0 +1,96 @@
+From fc2cec2154710e24a119daaec94d1a29a01deb36 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 1 Dec 2016 08:00:39 +0100
+Subject: [PATCH 29/30] Revert "[kbuild] handle exports in lib-y objects
+ reliably"
+
+This reverts commit 7f2084fa55e6cb61f61b4224d4a8bafaeee55f9f
+in order to avoid kernel building error.
+
+Conflict in scripts/Makefile.build was resoved manually
+---
+ arch/ia64/hp/sim/boot/Makefile |  2 +-
+ arch/ia64/lib/Makefile         |  8 +++++---
+ scripts/Makefile.build         | 23 -----------------------
+ 3 files changed, 6 insertions(+), 27 deletions(-)
+
+diff --git a/arch/ia64/hp/sim/boot/Makefile b/arch/ia64/hp/sim/boot/Makefile
+index df6e9968c8454..2e805e0cc5605 100644
+--- a/arch/ia64/hp/sim/boot/Makefile
++++ b/arch/ia64/hp/sim/boot/Makefile
+@@ -33,5 +33,5 @@ $(obj)/vmlinux.bin: vmlinux FORCE
+ LDFLAGS_bootloader = -static -T
+ 
+ $(obj)/bootloader: $(src)/bootloader.lds $(obj)/bootloader.o $(obj)/boot_head.o $(obj)/fw-emu.o \
+-                   lib/lib.a arch/ia64/lib/lib.a FORCE
++                   lib/lib.a arch/ia64/lib/built-in.o arch/ia64/lib/lib.a FORCE
+ 	$(call if_changed,ld)
+diff --git a/arch/ia64/lib/Makefile b/arch/ia64/lib/Makefile
+index 1f3d3877618fd..98771e2a78afd 100644
+--- a/arch/ia64/lib/Makefile
++++ b/arch/ia64/lib/Makefile
+@@ -2,15 +2,17 @@
+ # Makefile for ia64-specific library routines..
+ #
+ 
+-lib-y := io.o __divsi3.o __udivsi3.o __modsi3.o __umodsi3.o		\
++obj-y := io.o
++
++lib-y := __divsi3.o __udivsi3.o __modsi3.o __umodsi3.o			\
+ 	__divdi3.o __udivdi3.o __moddi3.o __umoddi3.o			\
+ 	checksum.o clear_page.o csum_partial_copy.o			\
+ 	clear_user.o strncpy_from_user.o strlen_user.o strnlen_user.o	\
+ 	flush.o ip_fast_csum.o do_csum.o				\
+ 	memset.o strlen.o xor.o
+ 
+-lib-$(CONFIG_ITANIUM)	+= copy_page.o copy_user.o memcpy.o
+-lib-$(CONFIG_MCKINLEY)	+= copy_page_mck.o memcpy_mck.o
++obj-$(CONFIG_ITANIUM)	+= copy_page.o copy_user.o memcpy.o
++obj-$(CONFIG_MCKINLEY)	+= copy_page_mck.o memcpy_mck.o
+ lib-$(CONFIG_PERFMON)	+= carta_random.o
+ 
+ AFLAGS___divdi3.o	=
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index 7675d11ee65e6..7459a62303e1b 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -81,7 +81,6 @@ endif
+ 
+ ifneq ($(strip $(lib-y) $(lib-m) $(lib-)),)
+ lib-target := $(obj)/lib.a
+-obj-y += $(obj)/lib-ksyms.o
+ endif
+ 
+ ifneq ($(strip $(obj-y) $(obj-m) $(obj-) $(subdir-m) $(lib-target)),)
+@@ -477,28 +476,6 @@ $(lib-target): $(lib-y) FORCE
+ 	$(call if_changed,link_l_target)
+ 
+ targets += $(lib-target)
+-
+-dummy-object = $(obj)/.lib_exports.o
+-ksyms-lds = $(dot-target).lds
+-ifdef CONFIG_HAVE_UNDERSCORE_SYMBOL_PREFIX
+-ref_prefix = EXTERN(_
+-else
+-ref_prefix = EXTERN(
+-endif
+-
+-quiet_cmd_export_list = EXPORTS $@
+-cmd_export_list = $(OBJDUMP) -h $< | \
+-	sed -ne '/___ksymtab/{s/.*+/$(ref_prefix)/;s/ .*/)/;p}' >$(ksyms-lds);\
+-	rm -f $(dummy-object);\
+-	$(AR) rcs$(KBUILD_ARFLAGS) $(dummy-object);\
+-	$(LD) $(ld_flags) -r -o $@ -T $(ksyms-lds) $(dummy-object);\
+-	rm $(dummy-object) $(ksyms-lds)
+-
+-$(obj)/lib-ksyms.o: $(lib-target) FORCE
+-	$(call if_changed,export_list)
+-
+-targets += $(obj)/lib-ksyms.o
+-
+ endif
+ 
+ #
+-- 
+2.17.1
+

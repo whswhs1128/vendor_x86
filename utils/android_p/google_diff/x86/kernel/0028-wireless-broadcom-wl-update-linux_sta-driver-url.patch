@@ -1,0 +1,26 @@
+From 4956bd86bee3ba5938e9b654b2377f2d2ce3926e Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 18 Dec 2016 10:48:35 +0100
+Subject: [PATCH 28/30] wireless: broadcom: wl: update linux_sta driver url
+
+Fixes building error due to non existing former url
+---
+ drivers/net/wireless/broadcom/wl/build.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index 61d1e306a2006..56f66ba33b550 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -5,7 +5,7 @@ WL_ARCH_CHANGED := $(if $(shell file $(WL_PATH)/lib/wlc_hybrid.o_shipped | grep
+ WL_SRC := $(WL_PATH)/hybrid-v35$(if $(filter x86,$(TARGET_KERNEL_ARCH)),,_64)-nodebug-pcoem-6_30_223_271.tar.gz
+ $(WL_SRC):
+ 	@echo Downloading $(@F)...
+-	$(hide) curl http://www.broadcom.com/docs/linux_sta/$(@F) > $@
++	$(hide) curl https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/$(@F) > $@
+ 
+ $(WL_PATH)/Makefile : $(WL_SRC) $(wildcard $(WL_PATH)/*.patch) $(WL_ARCH_CHANGED) $(KERNEL_ARCH_CHANGED)
+ 	$(hide) tar zxf $< -C $(@D) --overwrite && \
+-- 
+2.17.1
+

@@ -1,0 +1,38 @@
+From 07f61c4334f25f571f5255f2d2e30acd49aea8ee Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 1 Oct 2016 17:29:44 +0200
+Subject: [PATCH 22/30] staging: rtl8723bu update Kconfig and Makefile
+
+---
+ drivers/staging/Kconfig  | 2 ++
+ drivers/staging/Makefile | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
+index 1df4561927550..c749f3a9a182d 100644
+--- a/drivers/staging/Kconfig
++++ b/drivers/staging/Kconfig
+@@ -42,6 +42,8 @@ source "drivers/staging/rtl8188eu/Kconfig"
+ 
+ source "drivers/staging/rtl8723bs/Kconfig"
+ 
++source "drivers/staging/rtl8723bu/Kconfig"
++
+ source "drivers/staging/rts5208/Kconfig"
+ 
+ source "drivers/staging/octeon/Kconfig"
+diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
+index 0871029d27c85..4c8cdadad0acc 100644
+--- a/drivers/staging/Makefile
++++ b/drivers/staging/Makefile
+@@ -10,6 +10,7 @@ obj-$(CONFIG_RTL8192E)		+= rtl8192e/
+ obj-$(CONFIG_R8712U)		+= rtl8712/
+ obj-$(CONFIG_R8188EU)		+= rtl8188eu/
+ obj-$(CONFIG_RTL8723BS)		+= rtl8723bs/
++obj-$(CONFIG_RTL8723BU)		+= rtl8723bu/
+ obj-$(CONFIG_RTS5208)		+= rts5208/
+ obj-$(CONFIG_NETLOGIC_XLR_NET)	+= netlogic/
+ obj-$(CONFIG_OCTEON_ETHERNET)	+= octeon/
+-- 
+2.17.1
+

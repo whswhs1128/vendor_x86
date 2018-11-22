@@ -1,0 +1,43 @@
+From 054c793fdab88733755303d2834efa90d917e909 Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Mon, 6 Aug 2018 17:00:18 -0700
+Subject: [PATCH 1/6] build-tools: Remove aosp history bring in pies tools
+
+Change-Id: I7e05b192c8164e8ba4cfd15c694d5fe196926725
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+
+Conflicts:
+	build-prebuilts.sh
+	manifest.xml
+---
+ build-prebuilts.sh | 1 -
+ manifest.xml       | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/build-prebuilts.sh b/build-prebuilts.sh
+index 6e2673d..62c9905 100755
+--- a/build-prebuilts.sh
++++ b/build-prebuilts.sh
+@@ -45,7 +45,6 @@ EOF
+         bpfmt
+         ckati
+         ckati_stamp_dump
+-        flex
+         makeparallel
+         ninja
+         soong_zip
+diff --git a/manifest.xml b/manifest.xml
+index 4aacbe7..8e1e9ca 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -38,7 +38,6 @@
+   <project name="platform/external/clang" path="external/clang" revision="4083c7505ffbdec9338f19e1288043efa87b9694" upstream="master" />
+   <project name="platform/external/compiler-rt" path="external/compiler-rt" revision="754fd3d334cf667e65c9642f175326cd07922983" upstream="master" />
+   <project name="platform/external/dagger2" path="external/dagger2" revision="aa6a6e2682aed0d5bb483baa37a04357af0ea918" upstream="master" />
+-  <project name="platform/external/flex" path="external/flex" revision="f7ef90467cb960cee378cce41238418809c86329" upstream="master" />
+   <project name="platform/external/googletest" path="external/googletest" revision="23f59843dbc16e86d0451123c55243c5f3fdbc33" upstream="master" />
+   <project name="platform/external/libcxx" path="external/libcxx" revision="02ad8ad9214145f918020b17fb9a0f0d3f86dd46" upstream="master" />
+   <project name="platform/external/libcxxabi" path="external/libcxxabi" revision="2eddfdfc541f691d49a425d037aa5d4f32ef22dd" upstream="master" />
+-- 
+2.17.1
+

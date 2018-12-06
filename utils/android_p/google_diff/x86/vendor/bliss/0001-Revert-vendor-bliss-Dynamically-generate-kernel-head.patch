@@ -1,4 +1,4 @@
-From 888bb5dc8fc32695fad6cf00e77f62b8f8848ae9 Mon Sep 17 00:00:00 2001
+From 65090c4c140fd5b530a5c2932f4d28f74cf2b251 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Sat, 1 Dec 2018 17:26:15 -0500
 Subject: [PATCH] Revert "vendor/bliss: Dynamically generate kernel headers

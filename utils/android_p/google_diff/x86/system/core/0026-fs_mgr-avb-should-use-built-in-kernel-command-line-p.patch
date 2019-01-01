@@ -1,7 +1,7 @@
-From c8790009e93ae0413751bb312c0786db3fb5a1c9 Mon Sep 17 00:00:00 2001
+From f56caca4646ceb3b6c4c13e26d1cbe6cef40c832 Mon Sep 17 00:00:00 2001
 From: Mark Salyzyn <salyzyn@google.com>
 Date: Wed, 6 Jun 2018 13:51:16 -0700
-Subject: [PATCH 26/30] fs_mgr: avb should use built-in kernel command line
+Subject: [PATCH 26/31] fs_mgr: avb should use built-in kernel command line
  parser
 
 Switch from open-coded parsing of /proc/cmdline to built-in

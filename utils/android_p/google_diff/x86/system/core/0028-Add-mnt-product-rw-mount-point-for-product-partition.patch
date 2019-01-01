@@ -1,7 +1,7 @@
-From 490eae9dda27a4abc8a3e8d695915bc4915d676c Mon Sep 17 00:00:00 2001
+From da22d9d27642370278a219531f2c9e37b184ce57 Mon Sep 17 00:00:00 2001
 From: Bowgo Tsai <bowgotsai@google.com>
 Date: Fri, 29 Jun 2018 10:15:34 +0800
-Subject: [PATCH 28/30] Add /mnt/product rw mount point for product partitions.
+Subject: [PATCH 28/31] Add /mnt/product rw mount point for product partitions.
 
 1. init creates /mnt/product used to mount product-specific rw partitions.
 2. If a device tree fstab entry for early mount specifies a mount point

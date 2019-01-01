@@ -1,7 +1,7 @@
-From 7b56f7aea3c7a04926f5ada420eb72c488f7cf57 Mon Sep 17 00:00:00 2001
+From d582971a84c479a913141559f85306f685a3a832 Mon Sep 17 00:00:00 2001
 From: Zhiwei Li <zhiwei.li@intel.com>
 Date: Mon, 3 Sep 2018 15:36:29 +0800
-Subject: [PATCH 01/20] add paras -g android to mkfs.f2fs
+Subject: [PATCH] add paras -g android to mkfs.f2fs
 
 Change-Id: I4dd2cfc3a1869f88dba522ed986e15aee2ff94ba
 ---
@@ -9,10 +9,10 @@ Change-Id: I4dd2cfc3a1869f88dba522ed986e15aee2ff94ba
  1 file changed, 3 insertions(+)
 
 diff --git a/fs/F2fs.cpp b/fs/F2fs.cpp
-index f24fd91..3352770 100644
+index e0ead65..b239b0b 100644
 --- a/fs/F2fs.cpp
 +++ b/fs/F2fs.cpp
-@@ -78,6 +78,9 @@ status_t Format(const std::string& source) {
+@@ -101,6 +101,9 @@ status_t Format(const std::string& source) {
      cmd.push_back("-f");
      cmd.push_back("-d1");
  

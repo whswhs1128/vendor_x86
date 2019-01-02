@@ -1,0 +1,54 @@
+From 1334b7632a1396645469b02ea1295a0f6570031f Mon Sep 17 00:00:00 2001
+From: Jackeagle <jackeagle102@gmail.com>
+Date: Wed, 19 Dec 2018 17:02:10 +0100
+Subject: [PATCH 6/8] Revert "vold: Move QCOM HW FDE inclusion under Bliss
+ namespace"
+
+This reverts commit 7e913d5ed26c4edbd7c3542143dfe118b0e4a3ea.
+---
+ Android.bp | 22 +++++++++-------------
+ 1 file changed, 9 insertions(+), 13 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 5c63498..416b493 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -140,15 +140,13 @@ cc_library_static {
+                 "libarcobbvolume",
+             ],
+         },
+-        bliss: {
+-           device_support_hwfde: {
+-               cflags: ["-DCONFIG_HW_DISK_ENCRYPTION"],
+-               header_libs: ["libcryptfs_hw_headers"],
+-               shared_libs: ["libcryptfs_hw"],
+-           },
+-           device_support_hwfde_perf: {
+-               cflags: ["-DCONFIG_HW_DISK_ENCRYPT_PERF"],
+-           },
++        device_support_hwfde: {
++            cflags: ["-DCONFIG_HW_DISK_ENCRYPTION"],
++            header_libs: ["libcryptfs_hw_headers"],
++            shared_libs: ["libcryptfs_hw"],
++        },
++        device_support_hwfde_perf: {
++            cflags: ["-DCONFIG_HW_DISK_ENCRYPT_PERF"],
+         },
+     },
+ }
+@@ -169,10 +167,8 @@ cc_binary {
+                 "libarcobbvolume",
+             ],
+         },
+-        bliss: {
+-           device_support_hwfde: {
+-               shared_libs: ["libcryptfs_hw"],
+-           },
++        device_support_hwfde: {
++            shared_libs: ["libcryptfs_hw"],
+         },
+     },
+     init_rc: [
+-- 
+2.17.1
+

@@ -1,0 +1,68 @@
+From 2e68002532ea6759d0be6f37c419a946d844ca55 Mon Sep 17 00:00:00 2001
+From: lambdadroid <lambdadroid@gmail.com>
+Date: Wed, 9 Jan 2019 19:57:09 +0100
+Subject: [PATCH 2/2] i915: Avoid using Y-tiling for framebuffers for now
+
+---
+ cros_gralloc/gralloc0/gralloc0.cc | 2 +-
+ drv.h                             | 1 +
+ drv_priv.h                        | 3 ++-
+ i915.c                            | 3 +++
+ 4 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/cros_gralloc/gralloc0/gralloc0.cc b/cros_gralloc/gralloc0/gralloc0.cc
+index df1f62c..60e8956 100644
+--- a/cros_gralloc/gralloc0/gralloc0.cc
++++ b/cros_gralloc/gralloc0/gralloc0.cc
+@@ -57,7 +57,7 @@ static uint64_t gralloc0_convert_usage(int usage)
+ 		/* HWC wants to use display hardware, but can defer to OpenGL. */
+ 		use_flags |= BO_USE_SCANOUT | BO_USE_TEXTURE;
+ 	if (usage & GRALLOC_USAGE_HW_FB)
+-		use_flags |= BO_USE_NONE;
++		use_flags |= BO_USE_FRAMEBUFFER;
+ 	if (usage & GRALLOC_USAGE_EXTERNAL_DISP)
+ 		/*
+ 		 * This flag potentially covers external display for the normal drivers (i915,
+diff --git a/drv.h b/drv.h
+index d27e845..f73ba3d 100644
+--- a/drv.h
++++ b/drv.h
+@@ -38,6 +38,7 @@ extern "C" {
+ #define BO_USE_RENDERSCRIPT		(1ull << 16)
+ #define BO_USE_TEXTURE			(1ull << 17)
+ #define BO_USE_HW_VIDEO_DECODER		(1ull << 18)
++#define BO_USE_FRAMEBUFFER		(1ull << 19)
+ 
+ 
+ /* Map flags */
+diff --git a/drv_priv.h b/drv_priv.h
+index d1369f0..e7ba037 100644
+--- a/drv_priv.h
++++ b/drv_priv.h
+@@ -79,7 +79,8 @@ struct backend {
+ // clang-format off
+ #define BO_USE_RENDER_MASK BO_USE_LINEAR | BO_USE_PROTECTED | BO_USE_RENDERING | \
+ 	                   BO_USE_RENDERSCRIPT | BO_USE_SW_READ_OFTEN | BO_USE_SW_WRITE_OFTEN | \
+-                           BO_USE_SW_READ_RARELY | BO_USE_SW_WRITE_RARELY | BO_USE_TEXTURE
++                           BO_USE_SW_READ_RARELY | BO_USE_SW_WRITE_RARELY | BO_USE_TEXTURE | \
++                               BO_USE_FRAMEBUFFER
+ 
+ #define BO_USE_TEXTURE_MASK BO_USE_LINEAR | BO_USE_PROTECTED | BO_USE_RENDERSCRIPT | \
+ 	                    BO_USE_SW_READ_OFTEN | BO_USE_SW_WRITE_OFTEN | \
+diff --git a/i915.c b/i915.c
+index 43e72c2..9c88027 100644
+--- a/i915.c
++++ b/i915.c
+@@ -176,6 +176,9 @@ static int i915_add_combinations(struct driver *drv)
+ 			     ARRAY_SIZE(tileable_texture_source_formats), &metadata,
+ 			     texture_use_flags);
+ 
++	/* TODO: Y tiling does not seem to work for framebuffers */
++	render_use_flags &= ~BO_USE_FRAMEBUFFER;
++
+ 	metadata.tiling = I915_TILING_Y;
+ 	metadata.priority = 3;
+ 	metadata.modifier = I915_FORMAT_MOD_Y_TILED;
+-- 
+2.17.1
+

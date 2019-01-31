@@ -1,0 +1,71 @@
+From b94b8a623ec3b5e576e8e0c5e97af2b69e9aa041 Mon Sep 17 00:00:00 2001
+From: Larry Finger <Larry.Finger@lwfinger.net>
+Date: Fri, 26 Oct 2018 13:18:46 -0500
+Subject: [PATCH 41/80] staging: rtl8723bu: Fix builds on kernels through 4.20
+
+Signed-off-by: Larry Finger <Larry.Finger@lwfinger.net>
+---
+ drivers/staging/rtl8723bu/include/wifi.h          |  2 ++
+ drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c |  6 +++++-
+ drivers/staging/rtl8723bu/os_dep/os_intfs.c       | 13 ++++++++-----
+ 3 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/staging/rtl8723bu/include/wifi.h b/drivers/staging/rtl8723bu/include/wifi.h
+index 815f7236bdfc0..5dc32eba82155 100644
+--- a/drivers/staging/rtl8723bu/include/wifi.h
++++ b/drivers/staging/rtl8723bu/include/wifi.h
+@@ -828,7 +828,9 @@ typedef enum _HT_CAP_AMPDU_FACTOR {
+  * According to IEEE802.11n spec size varies from 8K to 64K (in powers of 2)
+  */
+ #define IEEE80211_MIN_AMPDU_BUF 0x8
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
+ #define IEEE80211_MAX_AMPDU_BUF 0x40
++#endif
+ 
+ 
+ /* Spatial Multiplexing Power Save Modes */
+diff --git a/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c b/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
+index 55aff5838032e..79962398b01e2 100644
+--- a/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
++++ b/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
+@@ -353,7 +353,11 @@ static int rtw_ieee80211_channel_to_frequency(int chan, int band)
+ 
+ static u64 rtw_get_systime_us(void)
+ {
+-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,39))
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
++	ktime_t ts;
++	ts = ktime_get_boottime();
++	return ts / 1000;
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39))
+ 	struct timespec ts;
+ 	get_monotonic_boottime(&ts);
+ 	return ((u64)ts.tv_sec*1000000) + ts.tv_nsec / 1000;
+diff --git a/drivers/staging/rtl8723bu/os_dep/os_intfs.c b/drivers/staging/rtl8723bu/os_dep/os_intfs.c
+index 44cd53b6f11a9..5f48718a13a69 100644
+--- a/drivers/staging/rtl8723bu/os_dep/os_intfs.c
++++ b/drivers/staging/rtl8723bu/os_dep/os_intfs.c
+@@ -581,12 +581,15 @@ static unsigned int rtw_classify8021d(struct sk_buff *skb)
+ }
+ 
+ static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
++			    ,struct net_device *sb_dev
++                            ,select_queue_fallback_t fallback
++#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
++ 			    ,void *unused
++                             ,select_queue_fallback_t fallback
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
+ 			, void *accel_priv
+-#endif // kernle >= 3.13
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
+-			, select_queue_fallback_t fallback
+-#endif // kernel >= 3.14
++#endif
+ 	)
+ {
+ 	_adapter	*padapter = rtw_netdev_priv(dev);
+-- 
+2.17.1
+

@@ -1,0 +1,29 @@
+From 0d0794ed6ce01a3dc8e246b8f1ab49cc83077558 Mon Sep 17 00:00:00 2001
+From: GuneetAtwal <guneetatwal@gmail.com>
+Date: Sat, 1 Sep 2018 21:14:06 +0530
+Subject: [PATCH 48/70] staging:iio:adc: drop assign iio_info.driver_module
+
+The equivalent of this is now done via macro magic when
+the relevant register call is made.  The actual structure
+element will shortly go away.
+
+Signed-off-by: GuneetAtwal <guneetatwal@gmail.com>
+---
+ drivers/iio/light/cm3218x.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/iio/light/cm3218x.c b/drivers/iio/light/cm3218x.c
+index cc63b75b9eac8..5945fd4bf789b 100644
+--- a/drivers/iio/light/cm3218x.c
++++ b/drivers/iio/light/cm3218x.c
+@@ -656,7 +656,6 @@ static const struct attribute_group cm3218x_attribute_group = {
+ };
+ 
+ static const struct iio_info cm3218x_info = {
+-	.driver_module		= THIS_MODULE,
+ 	.read_raw		= &cm3218x_read_raw,
+ 	.write_raw		= &cm3218x_write_raw,
+ 	.attrs			= &cm3218x_attribute_group,
+-- 
+2.17.1
+

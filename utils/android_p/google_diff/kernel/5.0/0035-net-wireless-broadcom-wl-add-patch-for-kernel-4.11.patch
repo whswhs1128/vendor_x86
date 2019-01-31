@@ -1,0 +1,89 @@
+From 37c1cf306bbc7e1c7c2f6cd079ee1d221050b086 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 2 Jul 2017 14:14:24 +0200
+Subject: [PATCH 35/80] net: wireless: broadcom: wl: add patch for kernel 4.11
+
+build.mk is modified to apply incremental patch linux-411.patch
+copied from https://aur.archlinux.org/cgit/aur.git/tree/?h=broadcom-wl
+
+Porting of 5224162 "add linux411.patch created by wichmannpas"
+---
+ drivers/net/wireless/broadcom/wl/build.mk     |  3 +-
+ .../net/wireless/broadcom/wl/linux-411.patch  | 52 +++++++++++++++++++
+ 2 files changed, 54 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/net/wireless/broadcom/wl/linux-411.patch
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index dd7914923d264..006bf0230f358 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -12,6 +12,7 @@ $(WL_LIB): $(WL_SRC) $(wildcard $(WL_PATH)/*.patch)
+ 		rm -rf $@ && mv $(@D)/lib $@ && touch $@ && \
+ 		patch -p1 -d $(@D) -i wl.patch && \
+ 		patch -p1 -d $(@D) -i linux-recent.patch && \
+-		patch -p1 -d $(@D) -i linux-48.patch
++		patch -p1 -d $(@D) -i linux-48.patch && \
++		patch -p1 -d $(@D) -i linux-411.patch
+ 
+ $(INSTALLED_KERNEL_TARGET): $(if $(WL_ENABLED),$(WL_LIB))
+diff --git a/drivers/net/wireless/broadcom/wl/linux-411.patch b/drivers/net/wireless/broadcom/wl/linux-411.patch
+new file mode 100644
+index 0000000000000..a779f8c84cfdb
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/linux-411.patch
+@@ -0,0 +1,52 @@
++diff --git a/src/wl/sys/wl_cfg80211_hybrid.c b/src/wl/sys/wl_cfg80211_hybrid.c
++index a9671e2..da36405 100644
++--- a/src/wl/sys/wl_cfg80211_hybrid.c
+++++ b/src/wl/sys/wl_cfg80211_hybrid.c
++@@ -30,6 +30,9 @@
++ #include <linux/kthread.h>
++ #include <linux/netdevice.h>
++ #include <linux/ieee80211.h>
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+++#include <linux/sched/signal.h>
+++#endif
++ #include <net/cfg80211.h>
++ #include <linux/nl80211.h>
++ #include <net/rtnetlink.h>
++diff --git a/src/wl/sys/wl_linux.c b/src/wl/sys/wl_linux.c
++index 489c9f5..f8278ad 100644
++--- a/src/wl/sys/wl_linux.c
+++++ b/src/wl/sys/wl_linux.c
++@@ -117,6 +117,9 @@ int wl_found = 0;
++ 
++ typedef struct priv_link {
++ 	wl_if_t *wlif;
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+++	unsigned long last_rx;
+++#endif
++ } priv_link_t;
++ 
++ #define WL_DEV_IF(dev)          ((wl_if_t*)((priv_link_t*)DEV_PRIV(dev))->wlif)
++@@ -2450,6 +2453,9 @@ wl_monitor(wl_info_t *wl, wl_rxsts_t *rxsts, void *p)
++ {
++ 	struct sk_buff *oskb = (struct sk_buff *)p;
++ 	struct sk_buff *skb;
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+++	priv_link_t *priv_link;
+++#endif
++ 	uchar *pdata;
++ 	uint len;
++ 
++@@ -2916,7 +2922,13 @@ wl_monitor(wl_info_t *wl, wl_rxsts_t *rxsts, void *p)
++ 	if (skb == NULL) return;
++ 
++ 	skb->dev = wl->monitor_dev;
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+++	priv_link = MALLOC(wl->osh, sizeof(priv_link_t));
+++	priv_link = netdev_priv(skb->dev);
+++	priv_link->last_rx = jiffies;
+++#else
++ 	skb->dev->last_rx = jiffies;
+++#endif
++ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
++ 	skb_reset_mac_header(skb);
++ #else
+-- 
+2.17.1
+

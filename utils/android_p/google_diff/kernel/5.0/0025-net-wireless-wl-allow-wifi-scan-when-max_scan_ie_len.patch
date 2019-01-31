@@ -1,0 +1,34 @@
+From b51bd493ee723497801511ecfd96b5e4d6ef509c Mon Sep 17 00:00:00 2001
+From: Ma Jian <majian@jidemail.com>
+Date: Tue, 2 Aug 2016 14:53:13 +0800
+Subject: [PATCH 25/80] net: wireless: wl: allow wifi scan when max_scan_ie_len
+ is zero
+
+NO_REF_TASK
+Tested: with max_scan_ie_len patch in wl, this kernel should work with
+ACER ES1
+
+Change-Id: I3eecdaac1fd4962aa69289a13bdb72f3e3284456
+---
+ net/wireless/nl80211.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/net/wireless/nl80211.c b/net/wireless/nl80211.c
+index 5e49492d5911d..27a2f753e0651 100644
+--- a/net/wireless/nl80211.c
++++ b/net/wireless/nl80211.c
+@@ -7209,7 +7209,10 @@ static int nl80211_trigger_scan(struct sk_buff *skb, struct genl_info *info)
+ 	else
+ 		ie_len = 0;
+ 
+-	if (ie_len > wiphy->max_scan_ie_len) {
++	// @jide
++	// some driver doesn't set max_scan_ie_len, it causes the device cannot
++	// scan network. so we made the check only if max_scan_ie_len is non zero
++	if (wiphy->max_scan_ie_len > 0 && ie_len > wiphy->max_scan_ie_len) {
+ 		err = -EINVAL;
+ 		goto unlock;
+ 	}
+-- 
+2.17.1
+

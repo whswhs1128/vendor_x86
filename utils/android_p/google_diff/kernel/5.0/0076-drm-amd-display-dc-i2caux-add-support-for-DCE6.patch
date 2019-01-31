@@ -1,0 +1,1580 @@
+From 4a8068035e31ce49af8f6f7d276b5bc769f269da Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 5 Oct 2018 22:56:37 +0200
+Subject: [PATCH 76/80] drm/amd/display: dc/i2caux: add support for DCE6
+
+DCE6 targets are added replicating existing DCE8 implementation.
+---
+ .../gpu/drm/amd/display/dc/i2caux/Makefile    |  12 +
+ .../dc/i2caux/dce60/i2c_hw_engine_dce60.c     | 875 ++++++++++++++++++
+ .../dc/i2caux/dce60/i2c_hw_engine_dce60.h     |  54 ++
+ .../dc/i2caux/dce60/i2c_sw_engine_dce60.c     | 173 ++++
+ .../dc/i2caux/dce60/i2c_sw_engine_dce60.h     |  43 +
+ .../display/dc/i2caux/dce60/i2caux_dce60.c    | 284 ++++++
+ .../display/dc/i2caux/dce60/i2caux_dce60.h    |  38 +
+ .../gpu/drm/amd/display/dc/i2caux/i2caux.c    |  10 +
+ 8 files changed, 1489 insertions(+)
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.c
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.h
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.c
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.h
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.c
+ create mode 100644 drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.h
+
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/Makefile b/drivers/gpu/drm/amd/display/dc/i2caux/Makefile
+index 352885cb4d076..80f58a3578796 100644
+--- a/drivers/gpu/drm/amd/display/dc/i2caux/Makefile
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/Makefile
+@@ -30,6 +30,18 @@ AMD_DAL_I2CAUX = $(addprefix $(AMDDALPATH)/dc/i2caux/,$(I2CAUX))
+ 
+ AMD_DISPLAY_FILES += $(AMD_DAL_I2CAUX)
+ 
++###############################################################################
++# DCE 6x family
++###############################################################################
++ifdef CONFIG_DRM_AMD_DC_SI
++I2CAUX_DCE60 = i2caux_dce60.o i2c_hw_engine_dce60.o \
++	i2c_sw_engine_dce60.o
++
++AMD_DAL_I2CAUX_DCE60 = $(addprefix $(AMDDALPATH)/dc/i2caux/dce60/,$(I2CAUX_DCE60))
++
++AMD_DISPLAY_FILES += $(AMD_DAL_I2CAUX_DCE60)
++endif
++
+ ###############################################################################
+ # DCE 8x family
+ ###############################################################################
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.c b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.c
+new file mode 100644
+index 0000000000000..a945e00ce913a
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.c
+@@ -0,0 +1,875 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#include "dm_services.h"
++
++/*
++ * Pre-requisites: headers required by header of this unit
++ */
++#include "include/i2caux_interface.h"
++#include "../engine.h"
++#include "../i2c_engine.h"
++#include "../i2c_hw_engine.h"
++#include "../i2c_generic_hw_engine.h"
++/*
++ * Header of this unit
++ */
++
++#include "i2c_hw_engine_dce60.h"
++
++/*
++ * Post-requisites: headers required by this unit
++ */
++
++#include "dce/dce_6_0_d.h"
++#include "dce/dce_6_0_sh_mask.h"
++/*
++ * This unit
++ */
++
++enum dc_i2c_status {
++	DC_I2C_STATUS__DC_I2C_STATUS_IDLE,
++	DC_I2C_STATUS__DC_I2C_STATUS_USED_BY_SW,
++	DC_I2C_STATUS__DC_I2C_STATUS_USED_BY_HW
++};
++
++enum dc_i2c_arbitration {
++	DC_I2C_ARBITRATION__DC_I2C_SW_PRIORITY_NORMAL,
++	DC_I2C_ARBITRATION__DC_I2C_SW_PRIORITY_HIGH
++};
++
++enum {
++	/* No timeout in HW
++	 * (timeout implemented in SW by querying status) */
++	I2C_SETUP_TIME_LIMIT = 255,
++	I2C_HW_BUFFER_SIZE = 144
++};
++
++/*
++ * @brief
++ * Cast 'struct i2c_hw_engine *'
++ * to 'struct i2c_hw_engine_dce60 *'
++ */
++#define FROM_I2C_HW_ENGINE(ptr) \
++	container_of((ptr), struct i2c_hw_engine_dce60, base)
++
++/*
++ * @brief
++ * Cast pointer to 'struct i2c_engine *'
++ * to pointer to 'struct i2c_hw_engine_dce60 *'
++ */
++#define FROM_I2C_ENGINE(ptr) \
++	FROM_I2C_HW_ENGINE(container_of((ptr), struct i2c_hw_engine, base))
++
++/*
++ * @brief
++ * Cast pointer to 'struct engine *'
++ * to 'pointer to struct i2c_hw_engine_dce60 *'
++ */
++#define FROM_ENGINE(ptr) \
++	FROM_I2C_ENGINE(container_of((ptr), struct i2c_engine, base))
++
++static void disable_i2c_hw_engine(
++	struct i2c_hw_engine_dce60 *engine)
++{
++	const uint32_t addr = engine->addr.DC_I2C_DDCX_SETUP;
++	uint32_t value = 0;
++
++	struct dc_context *ctx = NULL;
++
++	ctx = engine->base.base.base.ctx;
++
++	value = dm_read_reg(ctx, addr);
++
++	set_reg_field_value(
++		value,
++		0,
++		DC_I2C_DDC1_SETUP,
++		DC_I2C_DDC1_ENABLE);
++
++	dm_write_reg(ctx, addr, value);
++}
++
++static void release_engine(
++	struct engine *engine)
++{
++	struct i2c_hw_engine_dce60 *hw_engine = FROM_ENGINE(engine);
++
++	struct i2c_engine *base = NULL;
++	bool safe_to_reset;
++	uint32_t value = 0;
++
++	base = &hw_engine->base.base;
++
++	/* Restore original HW engine speed */
++
++	base->funcs->set_speed(base, hw_engine->base.original_speed);
++
++	/* Release I2C */
++	{
++		value = dm_read_reg(engine->ctx, mmDC_I2C_ARBITRATION);
++
++		set_reg_field_value(
++				value,
++				1,
++				DC_I2C_ARBITRATION,
++				DC_I2C_SW_DONE_USING_I2C_REG);
++
++		dm_write_reg(engine->ctx, mmDC_I2C_ARBITRATION, value);
++	}
++
++	/* Reset HW engine */
++	{
++		uint32_t i2c_sw_status = 0;
++
++		value = dm_read_reg(engine->ctx, mmDC_I2C_SW_STATUS);
++
++		i2c_sw_status = get_reg_field_value(
++				value,
++				DC_I2C_SW_STATUS,
++				DC_I2C_SW_STATUS);
++		/* if used by SW, safe to reset */
++		safe_to_reset = (i2c_sw_status == 1);
++	}
++	{
++		value = dm_read_reg(engine->ctx, mmDC_I2C_CONTROL);
++
++		if (safe_to_reset)
++			set_reg_field_value(
++				value,
++				1,
++				DC_I2C_CONTROL,
++				DC_I2C_SOFT_RESET);
++
++		set_reg_field_value(
++			value,
++			1,
++			DC_I2C_CONTROL,
++			DC_I2C_SW_STATUS_RESET);
++
++		dm_write_reg(engine->ctx, mmDC_I2C_CONTROL, value);
++	}
++
++	/* HW I2c engine - clock gating feature */
++	if (!hw_engine->engine_keep_power_up_count)
++		disable_i2c_hw_engine(hw_engine);
++}
++
++static void destruct(
++	struct i2c_hw_engine_dce60 *engine)
++{
++	dal_i2c_hw_engine_destruct(&engine->base);
++}
++
++static void destroy(
++	struct i2c_engine **i2c_engine)
++{
++	struct i2c_hw_engine_dce60 *engine = FROM_I2C_ENGINE(*i2c_engine);
++
++	destruct(engine);
++
++	kfree(engine);
++
++	*i2c_engine = NULL;
++}
++
++static bool setup_engine(
++	struct i2c_engine *i2c_engine)
++{
++	uint32_t value = 0;
++	struct i2c_hw_engine_dce60 *engine = FROM_I2C_ENGINE(i2c_engine);
++
++	/* Program pin select */
++	{
++		const uint32_t addr = mmDC_I2C_CONTROL;
++
++		value = dm_read_reg(i2c_engine->base.ctx, addr);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_GO);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SOFT_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SEND_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SW_STATUS_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_TRANSACTION_COUNT);
++
++		set_reg_field_value(
++			value,
++			engine->engine_id,
++			DC_I2C_CONTROL,
++			DC_I2C_DDC_SELECT);
++
++		dm_write_reg(i2c_engine->base.ctx, addr, value);
++	}
++
++	/* Program time limit */
++	{
++		const uint32_t addr = engine->addr.DC_I2C_DDCX_SETUP;
++
++		value = dm_read_reg(i2c_engine->base.ctx, addr);
++
++		set_reg_field_value(
++			value,
++			I2C_SETUP_TIME_LIMIT,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_TIME_LIMIT);
++
++		set_reg_field_value(
++			value,
++			1,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_ENABLE);
++
++		dm_write_reg(i2c_engine->base.ctx, addr, value);
++	}
++
++	/* Program HW priority
++	 * set to High - interrupt software I2C at any time
++	 * Enable restart of SW I2C that was interrupted by HW
++	 * disable queuing of software while I2C is in use by HW */
++	{
++		value = dm_read_reg(i2c_engine->base.ctx,
++				mmDC_I2C_ARBITRATION);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_ARBITRATION,
++			DC_I2C_NO_QUEUED_SW_GO);
++
++		set_reg_field_value(
++			value,
++			DC_I2C_ARBITRATION__DC_I2C_SW_PRIORITY_NORMAL,
++			DC_I2C_ARBITRATION,
++			DC_I2C_SW_PRIORITY);
++
++		dm_write_reg(i2c_engine->base.ctx,
++				mmDC_I2C_ARBITRATION, value);
++	}
++
++	return true;
++}
++
++static uint32_t get_speed(
++	const struct i2c_engine *i2c_engine)
++{
++	const struct i2c_hw_engine_dce60 *engine = FROM_I2C_ENGINE(i2c_engine);
++
++	const uint32_t addr = engine->addr.DC_I2C_DDCX_SPEED;
++
++	uint32_t pre_scale = 0;
++
++	uint32_t value = dm_read_reg(i2c_engine->base.ctx, addr);
++
++	pre_scale = get_reg_field_value(
++			value,
++			DC_I2C_DDC1_SPEED,
++			DC_I2C_DDC1_PRESCALE);
++
++	/* [anaumov] it seems following is unnecessary */
++	/*ASSERT(value.bits.DC_I2C_DDC1_PRESCALE);*/
++
++	return pre_scale ?
++		engine->reference_frequency / pre_scale :
++		engine->base.default_speed;
++}
++
++static void set_speed(
++	struct i2c_engine *i2c_engine,
++	uint32_t speed)
++{
++	struct i2c_hw_engine_dce60 *engine = FROM_I2C_ENGINE(i2c_engine);
++
++	if (speed) {
++		const uint32_t addr = engine->addr.DC_I2C_DDCX_SPEED;
++
++		uint32_t value = dm_read_reg(i2c_engine->base.ctx, addr);
++
++		set_reg_field_value(
++			value,
++			engine->reference_frequency / speed,
++			DC_I2C_DDC1_SPEED,
++			DC_I2C_DDC1_PRESCALE);
++
++		set_reg_field_value(
++			value,
++			2,
++			DC_I2C_DDC1_SPEED,
++			DC_I2C_DDC1_THRESHOLD);
++
++		dm_write_reg(i2c_engine->base.ctx, addr, value);
++	}
++}
++
++static inline void reset_hw_engine(struct engine *engine)
++{
++	uint32_t value = dm_read_reg(engine->ctx, mmDC_I2C_CONTROL);
++
++	set_reg_field_value(
++		value,
++		1,
++		DC_I2C_CONTROL,
++		DC_I2C_SOFT_RESET);
++
++	set_reg_field_value(
++		value,
++		1,
++		DC_I2C_CONTROL,
++		DC_I2C_SW_STATUS_RESET);
++
++	dm_write_reg(engine->ctx, mmDC_I2C_CONTROL, value);
++}
++
++static bool is_hw_busy(struct engine *engine)
++{
++	uint32_t i2c_sw_status = 0;
++
++	uint32_t value = dm_read_reg(engine->ctx, mmDC_I2C_SW_STATUS);
++
++	i2c_sw_status = get_reg_field_value(
++			value,
++			DC_I2C_SW_STATUS,
++			DC_I2C_SW_STATUS);
++
++	if (i2c_sw_status == DC_I2C_STATUS__DC_I2C_STATUS_IDLE)
++		return false;
++
++	reset_hw_engine(engine);
++
++	value = dm_read_reg(engine->ctx, mmDC_I2C_SW_STATUS);
++
++	i2c_sw_status = get_reg_field_value(
++			value,
++			DC_I2C_SW_STATUS,
++			DC_I2C_SW_STATUS);
++
++	return i2c_sw_status != DC_I2C_STATUS__DC_I2C_STATUS_IDLE;
++}
++
++/*
++ * @brief
++ * DC_GPIO_DDC MM register offsets
++ */
++static const uint32_t transaction_addr[] = {
++	mmDC_I2C_TRANSACTION0,
++	mmDC_I2C_TRANSACTION1,
++	mmDC_I2C_TRANSACTION2,
++	mmDC_I2C_TRANSACTION3
++};
++
++static bool process_transaction(
++	struct i2c_hw_engine_dce60 *engine,
++	struct i2c_request_transaction_data *request)
++{
++	uint32_t length = request->length;
++	uint8_t *buffer = request->data;
++
++	bool last_transaction = false;
++	uint32_t value = 0;
++
++	struct dc_context *ctx = NULL;
++
++	ctx = engine->base.base.base.ctx;
++
++	{
++		const uint32_t addr =
++			transaction_addr[engine->transaction_count];
++
++		value = dm_read_reg(ctx, addr);
++
++		set_reg_field_value(
++			value,
++			1,
++			DC_I2C_TRANSACTION0,
++			DC_I2C_STOP_ON_NACK0);
++
++		set_reg_field_value(
++			value,
++			1,
++			DC_I2C_TRANSACTION0,
++			DC_I2C_START0);
++
++		if ((engine->transaction_count == 3) ||
++		(request->action == I2CAUX_TRANSACTION_ACTION_I2C_WRITE) ||
++		(request->action & I2CAUX_TRANSACTION_ACTION_I2C_READ)) {
++
++			set_reg_field_value(
++				value,
++				1,
++				DC_I2C_TRANSACTION0,
++				DC_I2C_STOP0);
++
++			last_transaction = true;
++		} else
++			set_reg_field_value(
++				value,
++				0,
++				DC_I2C_TRANSACTION0,
++				DC_I2C_STOP0);
++
++		set_reg_field_value(
++			value,
++			(0 != (request->action &
++					I2CAUX_TRANSACTION_ACTION_I2C_READ)),
++			DC_I2C_TRANSACTION0,
++			DC_I2C_RW0);
++
++		set_reg_field_value(
++			value,
++			length,
++			DC_I2C_TRANSACTION0,
++			DC_I2C_COUNT0);
++
++		dm_write_reg(ctx, addr, value);
++	}
++
++	/* Write the I2C address and I2C data
++	 * into the hardware circular buffer, one byte per entry.
++	 * As an example, the 7-bit I2C slave address for CRT monitor
++	 * for reading DDC/EDID information is 0b1010001.
++	 * For an I2C send operation, the LSB must be programmed to 0;
++	 * for I2C receive operation, the LSB must be programmed to 1. */
++
++	{
++		value = 0;
++
++		set_reg_field_value(
++			value,
++			false,
++			DC_I2C_DATA,
++			DC_I2C_DATA_RW);
++
++		set_reg_field_value(
++			value,
++			request->address,
++			DC_I2C_DATA,
++			DC_I2C_DATA);
++
++		if (engine->transaction_count == 0) {
++			set_reg_field_value(
++				value,
++				0,
++				DC_I2C_DATA,
++				DC_I2C_INDEX);
++
++			/*enable index write*/
++			set_reg_field_value(
++				value,
++				1,
++				DC_I2C_DATA,
++				DC_I2C_INDEX_WRITE);
++		}
++
++		dm_write_reg(ctx, mmDC_I2C_DATA, value);
++
++		if (!(request->action & I2CAUX_TRANSACTION_ACTION_I2C_READ)) {
++
++			set_reg_field_value(
++				value,
++				0,
++				DC_I2C_DATA,
++				DC_I2C_INDEX_WRITE);
++
++			while (length) {
++
++				set_reg_field_value(
++					value,
++					*buffer++,
++					DC_I2C_DATA,
++					DC_I2C_DATA);
++
++				dm_write_reg(ctx, mmDC_I2C_DATA, value);
++				--length;
++			}
++		}
++	}
++
++	++engine->transaction_count;
++	engine->buffer_used_bytes += length + 1;
++
++	return last_transaction;
++}
++
++static void execute_transaction(
++	struct i2c_hw_engine_dce60 *engine)
++{
++	uint32_t value = 0;
++	struct dc_context *ctx = NULL;
++
++	ctx = engine->base.base.base.ctx;
++
++	{
++		const uint32_t addr = engine->addr.DC_I2C_DDCX_SETUP;
++
++		value = dm_read_reg(ctx, addr);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_DATA_DRIVE_EN);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_CLK_DRIVE_EN);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_DATA_DRIVE_SEL);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_INTRA_TRANSACTION_DELAY);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_DDC1_SETUP,
++			DC_I2C_DDC1_INTRA_BYTE_DELAY);
++
++		dm_write_reg(ctx, addr, value);
++	}
++
++	{
++		const uint32_t addr = mmDC_I2C_CONTROL;
++
++		value = dm_read_reg(ctx, addr);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SOFT_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SW_STATUS_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_SEND_RESET);
++
++		set_reg_field_value(
++			value,
++			0,
++			DC_I2C_CONTROL,
++			DC_I2C_GO);
++
++		set_reg_field_value(
++			value,
++			engine->transaction_count - 1,
++			DC_I2C_CONTROL,
++			DC_I2C_TRANSACTION_COUNT);
++
++		dm_write_reg(ctx, addr, value);
++	}
++
++	/* start I2C transfer */
++	{
++		const uint32_t addr = mmDC_I2C_CONTROL;
++
++		value	= dm_read_reg(ctx, addr);
++
++		set_reg_field_value(
++			value,
++			1,
++			DC_I2C_CONTROL,
++			DC_I2C_GO);
++
++		dm_write_reg(ctx, addr, value);
++	}
++
++	/* all transactions were executed and HW buffer became empty
++	 * (even though it actually happens when status becomes DONE) */
++	engine->transaction_count = 0;
++	engine->buffer_used_bytes = 0;
++}
++
++static void submit_channel_request(
++	struct i2c_engine *engine,
++	struct i2c_request_transaction_data *request)
++{
++	request->status = I2C_CHANNEL_OPERATION_SUCCEEDED;
++
++	if (!process_transaction(FROM_I2C_ENGINE(engine), request))
++		return;
++
++	if (is_hw_busy(&engine->base)) {
++		request->status = I2C_CHANNEL_OPERATION_ENGINE_BUSY;
++		return;
++	}
++
++	execute_transaction(FROM_I2C_ENGINE(engine));
++}
++
++static void process_channel_reply(
++	struct i2c_engine *engine,
++	struct i2c_reply_transaction_data *reply)
++{
++	uint32_t length = reply->length;
++	uint8_t *buffer = reply->data;
++
++	uint32_t value = 0;
++
++	/*set index*/
++	set_reg_field_value(
++		value,
++		length - 1,
++		DC_I2C_DATA,
++		DC_I2C_INDEX);
++
++	set_reg_field_value(
++		value,
++		1,
++		DC_I2C_DATA,
++		DC_I2C_DATA_RW);
++
++	set_reg_field_value(
++		value,
++		1,
++		DC_I2C_DATA,
++		DC_I2C_INDEX_WRITE);
++
++	dm_write_reg(engine->base.ctx, mmDC_I2C_DATA, value);
++
++	while (length) {
++		/* after reading the status,
++		 * if the I2C operation executed successfully
++		 * (i.e. DC_I2C_STATUS_DONE = 1) then the I2C controller
++		 * should read data bytes from I2C circular data buffer */
++
++		value = dm_read_reg(engine->base.ctx, mmDC_I2C_DATA);
++
++		*buffer++ = get_reg_field_value(
++				value,
++				DC_I2C_DATA,
++				DC_I2C_DATA);
++
++		--length;
++	}
++}
++
++static enum i2c_channel_operation_result get_channel_status(
++	struct i2c_engine *engine,
++	uint8_t *returned_bytes)
++{
++	uint32_t i2c_sw_status = 0;
++	uint32_t value = dm_read_reg(engine->base.ctx, mmDC_I2C_SW_STATUS);
++
++	i2c_sw_status = get_reg_field_value(
++			value,
++			DC_I2C_SW_STATUS,
++			DC_I2C_SW_STATUS);
++
++	if (i2c_sw_status == DC_I2C_STATUS__DC_I2C_STATUS_USED_BY_SW)
++		return I2C_CHANNEL_OPERATION_ENGINE_BUSY;
++	else if (value & DC_I2C_SW_STATUS__DC_I2C_SW_STOPPED_ON_NACK_MASK)
++		return I2C_CHANNEL_OPERATION_NO_RESPONSE;
++	else if (value & DC_I2C_SW_STATUS__DC_I2C_SW_TIMEOUT_MASK)
++		return I2C_CHANNEL_OPERATION_TIMEOUT;
++	else if (value & DC_I2C_SW_STATUS__DC_I2C_SW_ABORTED_MASK)
++		return I2C_CHANNEL_OPERATION_FAILED;
++	else if (value & DC_I2C_SW_STATUS__DC_I2C_SW_DONE_MASK)
++		return I2C_CHANNEL_OPERATION_SUCCEEDED;
++
++	/*
++	 * this is the case when HW used for communication, I2C_SW_STATUS
++	 * could be zero
++	 */
++	return I2C_CHANNEL_OPERATION_SUCCEEDED;
++}
++
++static uint32_t get_hw_buffer_available_size(
++	const struct i2c_hw_engine *engine)
++{
++	return I2C_HW_BUFFER_SIZE -
++		FROM_I2C_HW_ENGINE(engine)->buffer_used_bytes;
++}
++
++static uint32_t get_transaction_timeout(
++	const struct i2c_hw_engine *engine,
++	uint32_t length)
++{
++	uint32_t speed = engine->base.funcs->get_speed(&engine->base);
++
++	uint32_t period_timeout;
++	uint32_t num_of_clock_stretches;
++
++	if (!speed)
++		return 0;
++
++	period_timeout = (1000 * TRANSACTION_TIMEOUT_IN_I2C_CLOCKS) / speed;
++
++	num_of_clock_stretches = 1 + (length << 3) + 1;
++	num_of_clock_stretches +=
++		(FROM_I2C_HW_ENGINE(engine)->buffer_used_bytes << 3) +
++		(FROM_I2C_HW_ENGINE(engine)->transaction_count << 1);
++
++	return period_timeout * num_of_clock_stretches;
++}
++
++/*
++ * @brief
++ * DC_I2C_DDC1_SETUP MM register offsets
++ *
++ * @note
++ * The indices of this offset array are DDC engine IDs
++ */
++static const int32_t ddc_setup_offset[] = {
++
++	mmDC_I2C_DDC1_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 1 */
++	mmDC_I2C_DDC2_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 2 */
++	mmDC_I2C_DDC3_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 3 */
++	mmDC_I2C_DDC4_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 4 */
++	mmDC_I2C_DDC5_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 5 */
++	mmDC_I2C_DDC6_SETUP - mmDC_I2C_DDC1_SETUP, /* DDC Engine 6 */
++	mmDC_I2C_DDCVGA_SETUP - mmDC_I2C_DDC1_SETUP /* DDC Engine 7 */
++};
++
++/*
++ * @brief
++ * DC_I2C_DDC1_SPEED MM register offsets
++ *
++ * @note
++ * The indices of this offset array are DDC engine IDs
++ */
++static const int32_t ddc_speed_offset[] = {
++	mmDC_I2C_DDC1_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 1 */
++	mmDC_I2C_DDC2_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 2 */
++	mmDC_I2C_DDC3_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 3 */
++	mmDC_I2C_DDC4_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 4 */
++	mmDC_I2C_DDC5_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 5 */
++	mmDC_I2C_DDC6_SPEED - mmDC_I2C_DDC1_SPEED, /* DDC Engine 6 */
++	mmDC_I2C_DDCVGA_SPEED - mmDC_I2C_DDC1_SPEED /* DDC Engine 7 */
++};
++
++static const struct i2c_engine_funcs i2c_engine_funcs = {
++	.destroy = destroy,
++	.get_speed = get_speed,
++	.set_speed = set_speed,
++	.setup_engine = setup_engine,
++	.submit_channel_request = submit_channel_request,
++	.process_channel_reply = process_channel_reply,
++	.get_channel_status = get_channel_status,
++	.acquire_engine = dal_i2c_hw_engine_acquire_engine,
++};
++
++static const struct engine_funcs engine_funcs = {
++	.release_engine = release_engine,
++	.get_engine_type = dal_i2c_hw_engine_get_engine_type,
++	.acquire = dal_i2c_engine_acquire,
++	.submit_request = dal_i2c_hw_engine_submit_request,
++};
++
++static const struct i2c_hw_engine_funcs i2c_hw_engine_funcs = {
++	.get_hw_buffer_available_size =
++		get_hw_buffer_available_size,
++	.get_transaction_timeout =
++		get_transaction_timeout,
++	.wait_on_operation_result =
++		dal_i2c_hw_engine_wait_on_operation_result,
++};
++
++static void construct(
++	struct i2c_hw_engine_dce60 *engine,
++	const struct i2c_hw_engine_dce60_create_arg *arg)
++{
++	dal_i2c_hw_engine_construct(&engine->base, arg->ctx);
++
++	engine->base.base.base.funcs = &engine_funcs;
++	engine->base.base.funcs = &i2c_engine_funcs;
++	engine->base.funcs = &i2c_hw_engine_funcs;
++	engine->base.default_speed = arg->default_speed;
++	engine->addr.DC_I2C_DDCX_SETUP =
++		mmDC_I2C_DDC1_SETUP + ddc_setup_offset[arg->engine_id];
++	engine->addr.DC_I2C_DDCX_SPEED =
++		mmDC_I2C_DDC1_SPEED + ddc_speed_offset[arg->engine_id];
++
++	engine->engine_id = arg->engine_id;
++	engine->reference_frequency = arg->reference_frequency;
++	engine->buffer_used_bytes = 0;
++	engine->transaction_count = 0;
++	engine->engine_keep_power_up_count = 1;
++}
++
++struct i2c_engine *dal_i2c_hw_engine_dce60_create(
++	const struct i2c_hw_engine_dce60_create_arg *arg)
++{
++	struct i2c_hw_engine_dce60 *engine;
++
++	if (!arg) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	if ((arg->engine_id >= sizeof(ddc_setup_offset) / sizeof(int32_t)) ||
++	    (arg->engine_id >= sizeof(ddc_speed_offset) / sizeof(int32_t)) ||
++	    !arg->reference_frequency) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	engine = kzalloc(sizeof(struct i2c_hw_engine_dce60), GFP_KERNEL);
++
++	if (!engine) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	construct(engine, arg);
++	return &engine->base.base;
++}
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.h b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.h
+new file mode 100644
+index 0000000000000..48954265133d9
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_hw_engine_dce60.h
+@@ -0,0 +1,54 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#ifndef __DAL_I2C_HW_ENGINE_DCE60_H__
++#define __DAL_I2C_HW_ENGINE_DCE60_H__
++
++struct i2c_hw_engine_dce60 {
++	struct i2c_hw_engine base;
++	struct {
++		uint32_t DC_I2C_DDCX_SETUP;
++		uint32_t DC_I2C_DDCX_SPEED;
++	} addr;
++	uint32_t engine_id;
++	/* expressed in kilohertz */
++	uint32_t reference_frequency;
++	/* number of bytes currently used in HW buffer */
++	uint32_t buffer_used_bytes;
++	/* number of pending transactions (before GO) */
++	uint32_t transaction_count;
++	uint32_t engine_keep_power_up_count;
++};
++
++struct i2c_hw_engine_dce60_create_arg {
++	uint32_t engine_id;
++	uint32_t reference_frequency;
++	uint32_t default_speed;
++	struct dc_context *ctx;
++};
++
++struct i2c_engine *dal_i2c_hw_engine_dce60_create(
++	const struct i2c_hw_engine_dce60_create_arg *arg);
++#endif
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.c b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.c
+new file mode 100644
+index 0000000000000..9830dc6698e01
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.c
+@@ -0,0 +1,173 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#include "dm_services.h"
++
++/*
++ * Pre-requisites: headers required by header of this unit
++ */
++#include "include/i2caux_interface.h"
++#include "../engine.h"
++#include "../i2c_engine.h"
++#include "../i2c_sw_engine.h"
++
++/*
++ * Header of this unit
++ */
++
++#include "i2c_sw_engine_dce60.h"
++
++/*
++ * Post-requisites: headers required by this unit
++ */
++
++#include "dce/dce_6_0_d.h"
++#include "dce/dce_6_0_sh_mask.h"
++
++/*
++ * This unit
++ */
++
++static const uint32_t ddc_hw_status_addr[] = {
++	mmDC_I2C_DDC1_HW_STATUS,
++	mmDC_I2C_DDC2_HW_STATUS,
++	mmDC_I2C_DDC3_HW_STATUS,
++	mmDC_I2C_DDC4_HW_STATUS,
++	mmDC_I2C_DDC5_HW_STATUS,
++	mmDC_I2C_DDC6_HW_STATUS,
++	mmDC_I2C_DDCVGA_HW_STATUS
++};
++
++/*
++ * @brief
++ * Cast 'struct i2c_sw_engine *'
++ * to 'struct i2c_sw_engine_dce60 *'
++ */
++#define FROM_I2C_SW_ENGINE(ptr) \
++	container_of((ptr), struct i2c_sw_engine_dce60, base)
++
++/*
++ * @brief
++ * Cast 'struct i2c_engine *'
++ * to 'struct i2c_sw_engine_dce60 *'
++ */
++#define FROM_I2C_ENGINE(ptr) \
++	FROM_I2C_SW_ENGINE(container_of((ptr), struct i2c_sw_engine, base))
++
++/*
++ * @brief
++ * Cast 'struct engine *'
++ * to 'struct i2c_sw_engine_dce60 *'
++ */
++#define FROM_ENGINE(ptr) \
++	FROM_I2C_ENGINE(container_of((ptr), struct i2c_engine, base))
++
++static void release_engine(
++	struct engine *engine)
++{
++
++}
++
++static void destruct(
++	struct i2c_sw_engine_dce60 *engine)
++{
++	dal_i2c_sw_engine_destruct(&engine->base);
++}
++
++static void destroy(
++	struct i2c_engine **engine)
++{
++	struct i2c_sw_engine_dce60 *sw_engine = FROM_I2C_ENGINE(*engine);
++
++	destruct(sw_engine);
++
++	kfree(sw_engine);
++
++	*engine = NULL;
++}
++
++static bool acquire_engine(
++	struct i2c_engine *engine,
++	struct ddc *ddc_handle)
++{
++	return dal_i2caux_i2c_sw_engine_acquire_engine(engine, ddc_handle);
++}
++
++static const struct i2c_engine_funcs i2c_engine_funcs = {
++	.acquire_engine = acquire_engine,
++	.destroy = destroy,
++	.get_speed = dal_i2c_sw_engine_get_speed,
++	.set_speed = dal_i2c_sw_engine_set_speed,
++	.setup_engine = dal_i2c_engine_setup_i2c_engine,
++	.submit_channel_request = dal_i2c_sw_engine_submit_channel_request,
++	.process_channel_reply = dal_i2c_engine_process_channel_reply,
++	.get_channel_status = dal_i2c_sw_engine_get_channel_status,
++};
++
++static const struct engine_funcs engine_funcs = {
++	.release_engine = release_engine,
++	.get_engine_type = dal_i2c_sw_engine_get_engine_type,
++	.acquire = dal_i2c_engine_acquire,
++	.submit_request = dal_i2c_sw_engine_submit_request,
++};
++
++static void construct(
++	struct i2c_sw_engine_dce60 *engine,
++	const struct i2c_sw_engine_dce60_create_arg *arg)
++{
++	struct i2c_sw_engine_create_arg arg_base;
++
++	arg_base.ctx = arg->ctx;
++	arg_base.default_speed = arg->default_speed;
++
++	dal_i2c_sw_engine_construct(&engine->base, &arg_base);
++
++	engine->base.base.base.funcs = &engine_funcs;
++	engine->base.base.funcs = &i2c_engine_funcs;
++	engine->base.default_speed = arg->default_speed;
++	engine->engine_id = arg->engine_id;
++}
++
++struct i2c_engine *dal_i2c_sw_engine_dce60_create(
++	const struct i2c_sw_engine_dce60_create_arg *arg)
++{
++	struct i2c_sw_engine_dce60 *engine;
++
++	if (!arg) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	engine = kzalloc(sizeof(struct i2c_sw_engine_dce60), GFP_KERNEL);
++
++	if (!engine) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	construct(engine, arg);
++	return &engine->base.base;
++}
++
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.h b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.h
+new file mode 100644
+index 0000000000000..5a65a5139e76d
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2c_sw_engine_dce60.h
+@@ -0,0 +1,43 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#ifndef __DAL_I2C_SW_ENGINE_DCE60_H__
++#define __DAL_I2C_SW_ENGINE_DCE60_H__
++
++struct i2c_sw_engine_dce60 {
++	struct i2c_sw_engine base;
++	uint32_t engine_id;
++};
++
++struct i2c_sw_engine_dce60_create_arg {
++	uint32_t engine_id;
++	uint32_t default_speed;
++	struct dc_context *ctx;
++};
++
++struct i2c_engine *dal_i2c_sw_engine_dce60_create(
++	const struct i2c_sw_engine_dce60_create_arg *arg);
++
++#endif
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.c b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.c
+new file mode 100644
+index 0000000000000..5aaa7cf83807a
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.c
+@@ -0,0 +1,284 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#include "dm_services.h"
++
++/*
++ * Pre-requisites: headers required by header of this unit
++ */
++#include "include/i2caux_interface.h"
++#include "../i2caux.h"
++
++/*
++ * Header of this unit
++ */
++
++#include "i2caux_dce60.h"
++
++/*
++ * Post-requisites: headers required by this unit
++ */
++
++#include "../engine.h"
++#include "../i2c_engine.h"
++#include "../i2c_sw_engine.h"
++#include "i2c_sw_engine_dce60.h"
++#include "../i2c_hw_engine.h"
++#include "i2c_hw_engine_dce60.h"
++#include "../i2c_generic_hw_engine.h"
++#include "../aux_engine.h"
++
++
++#include "../dce110/aux_engine_dce110.h"
++#include "../dce110/i2caux_dce110.h"
++
++#include "dce/dce_6_0_d.h"
++#include "dce/dce_6_0_sh_mask.h"
++
++
++/* set register offset */
++#define SR(reg_name)\
++	.reg_name = mm ## reg_name
++
++/* set register offset with instance */
++#define SRI(reg_name, block, id)\
++	.reg_name = mm ## block ## id ## _ ## reg_name
++
++#define aux_regs(id)\
++[id] = {\
++	AUX_COMMON_REG_LIST(id), \
++	.AUX_RESET_MASK = 0 \
++}
++
++static const struct dce110_aux_registers dce60_aux_regs[] = {
++		aux_regs(0),
++		aux_regs(1),
++		aux_regs(2),
++		aux_regs(3),
++		aux_regs(4),
++		aux_regs(5)
++};
++
++/*
++ * This unit
++ */
++
++#define FROM_I2C_AUX(ptr) \
++	container_of((ptr), struct i2caux_dce60, base)
++
++static void destruct(
++	struct i2caux_dce60 *i2caux_dce60)
++{
++	dal_i2caux_destruct(&i2caux_dce60->base);
++}
++
++static void destroy(
++	struct i2caux **i2c_engine)
++{
++	struct i2caux_dce60 *i2caux_dce60 = FROM_I2C_AUX(*i2c_engine);
++
++	destruct(i2caux_dce60);
++
++	kfree(i2caux_dce60);
++
++	*i2c_engine = NULL;
++}
++
++static struct i2c_engine *acquire_i2c_hw_engine(
++	struct i2caux *i2caux,
++	struct ddc *ddc)
++{
++	struct i2caux_dce60 *i2caux_dce60 = FROM_I2C_AUX(i2caux);
++
++	struct i2c_engine *engine = NULL;
++	bool non_generic;
++
++	if (!ddc)
++		return NULL;
++
++	if (ddc->hw_info.hw_supported) {
++		enum gpio_ddc_line line = dal_ddc_get_line(ddc);
++
++		if (line < GPIO_DDC_LINE_COUNT) {
++			non_generic = true;
++			engine = i2caux->i2c_hw_engines[line];
++		}
++	}
++
++	if (!engine) {
++		non_generic = false;
++		engine = i2caux->i2c_generic_hw_engine;
++	}
++
++	if (!engine)
++		return NULL;
++
++	if (non_generic) {
++		if (!i2caux_dce60->i2c_hw_buffer_in_use &&
++			engine->base.funcs->acquire(&engine->base, ddc)) {
++			i2caux_dce60->i2c_hw_buffer_in_use = true;
++			return engine;
++		}
++	} else {
++		if (engine->base.funcs->acquire(&engine->base, ddc))
++			return engine;
++	}
++
++	return NULL;
++}
++
++static void release_engine(
++	struct i2caux *i2caux,
++	struct engine *engine)
++{
++	if (engine->funcs->get_engine_type(engine) ==
++		I2CAUX_ENGINE_TYPE_I2C_DDC_HW)
++		FROM_I2C_AUX(i2caux)->i2c_hw_buffer_in_use = false;
++
++	dal_i2caux_release_engine(i2caux, engine);
++}
++
++static const enum gpio_ddc_line hw_ddc_lines[] = {
++	GPIO_DDC_LINE_DDC1,
++	GPIO_DDC_LINE_DDC2,
++	GPIO_DDC_LINE_DDC3,
++	GPIO_DDC_LINE_DDC4,
++	GPIO_DDC_LINE_DDC5,
++	GPIO_DDC_LINE_DDC6,
++	GPIO_DDC_LINE_DDC_VGA
++};
++
++static const enum gpio_ddc_line hw_aux_lines[] = {
++	GPIO_DDC_LINE_DDC1,
++	GPIO_DDC_LINE_DDC2,
++	GPIO_DDC_LINE_DDC3,
++	GPIO_DDC_LINE_DDC4,
++	GPIO_DDC_LINE_DDC5,
++	GPIO_DDC_LINE_DDC6
++};
++
++static const struct i2caux_funcs i2caux_funcs = {
++	.destroy = destroy,
++	.acquire_i2c_hw_engine = acquire_i2c_hw_engine,
++	.release_engine = release_engine,
++	.acquire_i2c_sw_engine = dal_i2caux_acquire_i2c_sw_engine,
++	.acquire_aux_engine = dal_i2caux_acquire_aux_engine,
++};
++
++static void construct(
++	struct i2caux_dce60 *i2caux_dce60,
++	struct dc_context *ctx)
++{
++	/* Entire family have I2C engine reference clock frequency
++	 * changed from XTALIN (27) to XTALIN/2 (13.5) */
++
++	struct i2caux *base = &i2caux_dce60->base;
++
++	uint32_t reference_frequency =
++		dal_i2caux_get_reference_clock(ctx->dc_bios) >> 1;
++
++	/*bool use_i2c_sw_engine = dal_adapter_service_is_feature_supported(as,
++		FEATURE_RESTORE_USAGE_I2C_SW_ENGINE);*/
++
++	/* Use SWI2C for dce8 currently, sicne we have bug with hwi2c */
++	bool use_i2c_sw_engine = true;
++
++	uint32_t i;
++
++	dal_i2caux_construct(base, ctx);
++
++	i2caux_dce60->base.funcs = &i2caux_funcs;
++	i2caux_dce60->i2c_hw_buffer_in_use = false;
++
++	/* Create I2C HW engines (HW + SW pairs)
++	 * for all lines which has assisted HW DDC
++	 * 'i' (loop counter) used as DDC/AUX engine_id */
++
++	i = 0;
++
++	do {
++		enum gpio_ddc_line line_id = hw_ddc_lines[i];
++
++		struct i2c_hw_engine_dce60_create_arg hw_arg;
++
++		if (use_i2c_sw_engine) {
++			struct i2c_sw_engine_dce60_create_arg sw_arg;
++
++			sw_arg.engine_id = i;
++			sw_arg.default_speed = base->default_i2c_sw_speed;
++			sw_arg.ctx = ctx;
++			base->i2c_sw_engines[line_id] =
++				dal_i2c_sw_engine_dce60_create(&sw_arg);
++		}
++
++		hw_arg.engine_id = i;
++		hw_arg.reference_frequency = reference_frequency;
++		hw_arg.default_speed = base->default_i2c_hw_speed;
++		hw_arg.ctx = ctx;
++
++		base->i2c_hw_engines[line_id] =
++			dal_i2c_hw_engine_dce60_create(&hw_arg);
++
++		++i;
++	} while (i < ARRAY_SIZE(hw_ddc_lines));
++
++	/* Create AUX engines for all lines which has assisted HW AUX
++	 * 'i' (loop counter) used as DDC/AUX engine_id */
++
++	i = 0;
++
++	do {
++		enum gpio_ddc_line line_id = hw_aux_lines[i];
++
++		struct aux_engine_dce110_init_data arg;
++
++		arg.engine_id = i;
++		arg.timeout_period = base->aux_timeout_period;
++		arg.ctx = ctx;
++		arg.regs = &dce60_aux_regs[i];
++
++		base->aux_engines[line_id] =
++			dal_aux_engine_dce110_create(&arg);
++
++		++i;
++	} while (i < ARRAY_SIZE(hw_aux_lines));
++
++	/* TODO Generic I2C SW and HW */
++}
++
++struct i2caux *dal_i2caux_dce60_create(
++	struct dc_context *ctx)
++{
++	struct i2caux_dce60 *i2caux_dce60 =
++		kzalloc(sizeof(struct i2caux_dce60), GFP_KERNEL);
++
++	if (!i2caux_dce60) {
++		BREAK_TO_DEBUGGER();
++		return NULL;
++	}
++
++	construct(i2caux_dce60, ctx);
++	return &i2caux_dce60->base;
++}
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.h b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.h
+new file mode 100644
+index 0000000000000..819b5ccbf977f
+--- /dev/null
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/dce60/i2caux_dce60.h
+@@ -0,0 +1,38 @@
++/*
++ * Copyright 2012-15 Advanced Micro Devices, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ * OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * Authors: AMD
++ *
++ */
++
++#ifndef __DAL_I2C_AUX_DCE60_H__
++#define __DAL_I2C_AUX_DCE60_H__
++
++struct i2caux_dce60 {
++	struct i2caux base;
++	/* indicate the I2C HW circular buffer is in use */
++	bool i2c_hw_buffer_in_use;
++};
++
++struct i2caux *dal_i2caux_dce60_create(
++	struct dc_context *ctx);
++
++#endif
+diff --git a/drivers/gpu/drm/amd/display/dc/i2caux/i2caux.c b/drivers/gpu/drm/amd/display/dc/i2caux/i2caux.c
+index 1ad6e49102ff1..72f5c6d3dee57 100644
+--- a/drivers/gpu/drm/amd/display/dc/i2caux/i2caux.c
++++ b/drivers/gpu/drm/amd/display/dc/i2caux/i2caux.c
+@@ -49,6 +49,10 @@
+  * This unit
+  */
+ 
++#if defined(CONFIG_DRM_AMD_DC_SI)
++#include "dce60/i2caux_dce60.h"
++#endif
++
+ #include "dce80/i2caux_dce80.h"
+ 
+ #include "dce100/i2caux_dce100.h"
+@@ -78,6 +82,12 @@ struct i2caux *dal_i2caux_create(
+ 	}
+ 
+ 	switch (ctx->dce_version) {
++#if defined(CONFIG_DRM_AMD_DC_SI)
++	case DCE_VERSION_6_0:
++	case DCE_VERSION_6_1:
++	case DCE_VERSION_6_4:
++		return dal_i2caux_dce60_create(ctx);
++#endif
+ 	case DCE_VERSION_8_0:
+ 	case DCE_VERSION_8_1:
+ 	case DCE_VERSION_8_3:
+-- 
+2.17.1
+

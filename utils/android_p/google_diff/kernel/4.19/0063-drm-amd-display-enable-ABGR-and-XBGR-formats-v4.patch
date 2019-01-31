@@ -1,0 +1,43 @@
+From bee95616076cdfec1bddf1d8c5e80f03bc89da61 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 14 Jul 2018 14:24:04 +0200
+Subject: [PATCH 63/70] drm/amd/display: enable ABGR and XBGR formats (v4)
+
+SURFACE_PIXEL_FORMAT_GRPH_ABGR8888 is supported in amd/display/dc/dc_hw_types.h
+and the necessary crossbars register controls to swap red and blue channels
+are already implemented in drm/amd/display/dc/dce/dce_mem_input.c
+
+(v4) Logic to handle new formats is added only in amdgpu_dm module.
+
+Signed-off-by: Mauro Rossi <issor.oruam@gmail.com>
+---
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+index 6903fe6c894ba..46846eea65237 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+@@ -2011,6 +2011,10 @@ static int fill_plane_attributes_from_fb(struct amdgpu_device *adev,
+ 	case DRM_FORMAT_ABGR2101010:
+ 		plane_state->format = SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010;
+ 		break;
++	case DRM_FORMAT_XBGR8888:
++	case DRM_FORMAT_ABGR8888:
++		plane_state->format = SURFACE_PIXEL_FORMAT_GRPH_ABGR8888;
++		break;
+ 	case DRM_FORMAT_NV21:
+ 		plane_state->format = SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr;
+ 		break;
+@@ -3314,6 +3318,8 @@ static const uint32_t rgb_formats[] = {
+ 	DRM_FORMAT_XBGR2101010,
+ 	DRM_FORMAT_ARGB2101010,
+ 	DRM_FORMAT_ABGR2101010,
++	DRM_FORMAT_XBGR8888,
++	DRM_FORMAT_ABGR8888,
+ };
+ 
+ static const uint32_t yuv_formats[] = {
+-- 
+2.17.1
+

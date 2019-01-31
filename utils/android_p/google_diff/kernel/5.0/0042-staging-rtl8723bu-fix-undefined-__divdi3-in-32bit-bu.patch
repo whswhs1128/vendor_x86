@@ -1,0 +1,37 @@
+From 948b74ddc88ae544913e09815b90c635e9207672 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Tue, 6 Nov 2018 01:06:38 +0100
+Subject: [PATCH 42/80] staging: rtl8723bu: fix undefined __divdi3 in 32bit
+ builds
+
+Fix the following building error in 32bit builds by using do_div()
+
+ERROR: "__divdi3" [drivers/staging/rtl8723bu/8723bu.ko] undefined!
+
+The code causing the issue was identified doing:
+objdump -x output to find the offset of __divdi3
+objdump -d output to find the surroundings of __divdi3 call
+
+The problem was in rtw_get_systime_us() function
+
+Signed-off-by: Mauro Rossi <issor.oruam@gmail.com>
+---
+ drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c b/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
+index 79962398b01e2..50f8f3c1d3fcb 100644
+--- a/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
++++ b/drivers/staging/rtl8723bu/os_dep/ioctl_cfg80211.c
+@@ -356,7 +356,7 @@ static u64 rtw_get_systime_us(void)
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
+ 	ktime_t ts;
+ 	ts = ktime_get_boottime();
+-	return ts / 1000;
++	return do_div(ts, 1000);
+ #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39))
+ 	struct timespec ts;
+ 	get_monotonic_boottime(&ts);
+-- 
+2.17.1
+

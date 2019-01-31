@@ -1,0 +1,49 @@
+From e0e7e38760cf4ea4daf7c28c8bc841c043f59a34 Mon Sep 17 00:00:00 2001
+From: Larry Finger <Larry.Finger@lwfinger.net>
+Date: Tue, 4 Sep 2018 08:09:40 -0500
+Subject: [PATCH 47/80] staging: rtl8812au: Fix compile errors for kernel 4.20
+
+Signed-off-by: Larry Finger <Larry.Finger@lwfinger.net>
+---
+ drivers/staging/rtl8812au/include/wifi.h    | 3 ++-
+ drivers/staging/rtl8812au/os_dep/os_intfs.c | 9 ++++++++-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/staging/rtl8812au/include/wifi.h b/drivers/staging/rtl8812au/include/wifi.h
+index 6452f6a5c1601..c6b187d2a770c 100644
+--- a/drivers/staging/rtl8812au/include/wifi.h
++++ b/drivers/staging/rtl8812au/include/wifi.h
+@@ -842,8 +842,9 @@ typedef enum _HT_CAP_AMPDU_FACTOR {
+  * According to IEEE802.11n spec size varies from 8K to 64K (in powers of 2)
+  */
+ #define IEEE80211_MIN_AMPDU_BUF 0x8
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 20, 0))
+ #define IEEE80211_MAX_AMPDU_BUF 0x40
+-
++#endif
+ 
+ /* Spatial Multiplexing Power Save Modes */
+ #define WLAN_HT_CAP_SM_PS_STATIC		0
+diff --git a/drivers/staging/rtl8812au/os_dep/os_intfs.c b/drivers/staging/rtl8812au/os_dep/os_intfs.c
+index 4f69b80a15c39..eb4ee8a86096f 100644
+--- a/drivers/staging/rtl8812au/os_dep/os_intfs.c
++++ b/drivers/staging/rtl8812au/os_dep/os_intfs.c
+@@ -972,7 +972,14 @@ static unsigned int rtw_classify8021d(struct sk_buff *skb)
+ 	return dscp >> 5;
+ }
+ 
+-static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv, select_queue_fallback_t fallback)
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
++static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
++			    struct net_device *sb_dev,
++			    select_queue_fallback_t fallback)
++#else
++static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb,
++			    void *accel_priv, select_queue_fallback_t fallback)
++#endif
+ {
+ 	_adapter	*padapter = rtw_netdev_priv(dev);
+ 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+-- 
+2.17.1
+

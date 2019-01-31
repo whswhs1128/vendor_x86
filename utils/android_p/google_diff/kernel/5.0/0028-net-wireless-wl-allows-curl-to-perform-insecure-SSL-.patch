@@ -1,0 +1,26 @@
+From c1a1cf40702a82f653f4301a0d875449c2e84d05 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 7 Mar 2017 19:27:29 +0800
+Subject: [PATCH 28/80] net: wireless: wl: allows curl to perform insecure SSL
+ connections
+
+---
+ drivers/net/wireless/broadcom/wl/build.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index c8eac94a30ca5..9bd9c68f6f9f9 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -5,7 +5,7 @@ WL_SRC := $(WL_PATH)/hybrid-v35$(if $(filter x86,$(TARGET_KERNEL_ARCH)),,_64)-no
+ WL_LIB := $(WL_PATH)/lib$(if $(filter x86,$(TARGET_KERNEL_ARCH)),32,64)
+ $(WL_SRC):
+ 	@echo Downloading $(@F)...
+-	$(hide) curl https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/$(@F) > $@
++	$(hide) curl -k https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/$(@F) > $@
+ 
+ $(WL_LIB): $(WL_SRC) $(wildcard $(WL_PATH)/*.patch)
+ 	$(hide) tar zxf $< -C $(@D) --overwrite -m && \
+-- 
+2.17.1
+

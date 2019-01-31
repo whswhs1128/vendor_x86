@@ -1,0 +1,25 @@
+From 64d526c177e35b64a4b25af76416c9e6df5d1863 Mon Sep 17 00:00:00 2001
+From: Jake Day <jake@ninebysix.com>
+Date: Sun, 10 Dec 2017 13:15:23 -0500
+Subject: [PATCH 25/70] fix for reseting mwifiex module
+
+---
+ drivers/net/wireless/marvell/mwifiex/init.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/init.c b/drivers/net/wireless/marvell/mwifiex/init.c
+index 673e89dff0b54..6888ea531bb8c 100644
+--- a/drivers/net/wireless/marvell/mwifiex/init.c
++++ b/drivers/net/wireless/marvell/mwifiex/init.c
+@@ -60,7 +60,7 @@ static void wakeup_timer_fn(struct timer_list *t)
+ 	adapter->hw_status = MWIFIEX_HW_STATUS_RESET;
+ 	mwifiex_cancel_all_pending_cmd(adapter);
+ 
+-	if (adapter->if_ops.card_reset && !adapter->hs_activated)
++	if (adapter->if_ops.card_reset)
+ 		adapter->if_ops.card_reset(adapter);
+ }
+ 
+-- 
+2.17.1
+

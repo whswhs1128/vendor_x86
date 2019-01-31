@@ -1,0 +1,722 @@
+From 8ed2caa795a722ef65dbb04a6542820b7a8f8f33 Mon Sep 17 00:00:00 2001
+From: GuneetAtwal <guneetatwal@gmail.com>
+Date: Fri, 31 Aug 2018 16:28:09 +0530
+Subject: [PATCH 58/70] Revert "media: uvcvideo: Add a metadata device node"
+
+This reverts commit 088ead25524583e2200aa99111bea2f66a86545a.
+
+Signed-off-by: GuneetAtwal <guneetatwal@gmail.com>
+---
+ drivers/media/usb/uvc/Makefile       |   2 +-
+ drivers/media/usb/uvc/uvc_driver.c   |  15 +--
+ drivers/media/usb/uvc/uvc_isight.c   |   2 +-
+ drivers/media/usb/uvc/uvc_metadata.c | 179 ---------------------------
+ drivers/media/usb/uvc/uvc_queue.c    |  44 ++-----
+ drivers/media/usb/uvc/uvc_video.c    | 146 +++-------------------
+ drivers/media/usb/uvc/uvcvideo.h     |  19 +--
+ include/uapi/linux/uvcvideo.h        |  26 ----
+ 8 files changed, 31 insertions(+), 402 deletions(-)
+ delete mode 100644 drivers/media/usb/uvc/uvc_metadata.c
+
+diff --git a/drivers/media/usb/uvc/Makefile b/drivers/media/usb/uvc/Makefile
+index 4f9eee4f81ab6..a4fe5b5d533fd 100644
+--- a/drivers/media/usb/uvc/Makefile
++++ b/drivers/media/usb/uvc/Makefile
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ uvcvideo-objs  := uvc_driver.o uvc_queue.o uvc_v4l2.o uvc_video.o uvc_ctrl.o \
+-		  uvc_status.o uvc_isight.o uvc_debugfs.o uvc_metadata.o
++		  uvc_status.o uvc_isight.o uvc_debugfs.o
+ ifeq ($(CONFIG_MEDIA_CONTROLLER),y)
+ uvcvideo-objs  += uvc_entity.o
+ endif
+diff --git a/drivers/media/usb/uvc/uvc_driver.c b/drivers/media/usb/uvc/uvc_driver.c
+index d46dc432456c4..1ad0ce9a49688 100644
+--- a/drivers/media/usb/uvc/uvc_driver.c
++++ b/drivers/media/usb/uvc/uvc_driver.c
+@@ -1881,7 +1881,6 @@ static void uvc_unregister_video(struct uvc_device *dev)
+ 			continue;
+ 
+ 		video_unregister_device(&stream->vdev);
+-		video_unregister_device(&stream->meta.vdev);
+ 
+ 		uvc_debugfs_cleanup_stream(stream);
+ 	}
+@@ -1927,9 +1926,6 @@ int uvc_register_video_device(struct uvc_device *dev,
+ 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
+ 		vdev->device_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING;
+ 		break;
+-	case V4L2_BUF_TYPE_META_CAPTURE:
+-		vdev->device_caps = V4L2_CAP_META_CAPTURE | V4L2_CAP_STREAMING;
+-		break;
+ 	}
+ 
+ 	strlcpy(vdev->name, dev->name, sizeof(vdev->name));
+@@ -1965,8 +1961,7 @@ static int uvc_register_video(struct uvc_device *dev,
+ 	}
+ 
+ 	if (stream->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+-		stream->chain->caps |= V4L2_CAP_VIDEO_CAPTURE
+-			| V4L2_CAP_META_CAPTURE;
++		stream->chain->caps |= V4L2_CAP_VIDEO_CAPTURE;
+ 	else
+ 		stream->chain->caps |= V4L2_CAP_VIDEO_OUTPUT;
+ 
+@@ -2004,11 +1999,6 @@ static int uvc_register_terms(struct uvc_device *dev,
+ 		if (ret < 0)
+ 			return ret;
+ 
+-		/* Register a metadata node, but ignore a possible failure,
+-		 * complete registration of video nodes anyway.
+-		 */
+-		uvc_meta_register(stream);
+-
+ 		term->vdev = &stream->vdev;
+ 	}
+ 
+@@ -2043,7 +2033,6 @@ static int uvc_register_chains(struct uvc_device *dev)
+ 
+ struct uvc_device_info {
+ 	u32	quirks;
+-	u32	meta_format;
+ };
+ 
+ static int uvc_probe(struct usb_interface *intf,
+@@ -2082,8 +2071,6 @@ static int uvc_probe(struct usb_interface *intf,
+ 	dev->intfnum = intf->cur_altsetting->desc.bInterfaceNumber;
+ 	dev->quirks = (uvc_quirks_param == -1)
+ 		    ? quirks : uvc_quirks_param;
+-	if (info)
+-		dev->meta_format = info->meta_format;
+ 
+ 	if (udev->product != NULL)
+ 		strlcpy(dev->name, udev->product, sizeof(dev->name));
+diff --git a/drivers/media/usb/uvc/uvc_isight.c b/drivers/media/usb/uvc/uvc_isight.c
+index 81e6f2187bfb0..c8ab33c3259fc 100644
+--- a/drivers/media/usb/uvc/uvc_isight.c
++++ b/drivers/media/usb/uvc/uvc_isight.c
+@@ -100,7 +100,7 @@ static int isight_decode(struct uvc_video_queue *queue, struct uvc_buffer *buf,
+ }
+ 
+ void uvc_video_decode_isight(struct urb *urb, struct uvc_streaming *stream,
+-			struct uvc_buffer *buf, struct uvc_buffer *meta_buf)
++		struct uvc_buffer *buf)
+ {
+ 	int ret, i;
+ 
+diff --git a/drivers/media/usb/uvc/uvc_metadata.c b/drivers/media/usb/uvc/uvc_metadata.c
+deleted file mode 100644
+index cd1aec19cc5b5..0000000000000
+--- a/drivers/media/usb/uvc/uvc_metadata.c
++++ /dev/null
+@@ -1,179 +0,0 @@
+-/*
+- *      uvc_metadata.c  --  USB Video Class driver - Metadata handling
+- *
+- *      Copyright (C) 2016
+- *          Guennadi Liakhovetski (guennadi.liakhovetski@intel.com)
+- *
+- *      This program is free software; you can redistribute it and/or modify
+- *      it under the terms of the GNU General Public License as published by
+- *      the Free Software Foundation; either version 2 of the License, or
+- *      (at your option) any later version.
+- */
+-
+-#include <linux/kernel.h>
+-#include <linux/list.h>
+-#include <linux/module.h>
+-#include <linux/usb.h>
+-#include <linux/videodev2.h>
+-
+-#include <media/v4l2-ioctl.h>
+-#include <media/videobuf2-v4l2.h>
+-#include <media/videobuf2-vmalloc.h>
+-
+-#include "uvcvideo.h"
+-
+-/* -----------------------------------------------------------------------------
+- * V4L2 ioctls
+- */
+-
+-static int uvc_meta_v4l2_querycap(struct file *file, void *fh,
+-				  struct v4l2_capability *cap)
+-{
+-	struct v4l2_fh *vfh = file->private_data;
+-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+-	struct uvc_video_chain *chain = stream->chain;
+-
+-	strlcpy(cap->driver, "uvcvideo", sizeof(cap->driver));
+-	strlcpy(cap->card, vfh->vdev->name, sizeof(cap->card));
+-	usb_make_path(stream->dev->udev, cap->bus_info, sizeof(cap->bus_info));
+-	cap->capabilities = V4L2_CAP_DEVICE_CAPS | V4L2_CAP_STREAMING
+-			  | chain->caps;
+-
+-	return 0;
+-}
+-
+-static int uvc_meta_v4l2_get_format(struct file *file, void *fh,
+-				    struct v4l2_format *format)
+-{
+-	struct v4l2_fh *vfh = file->private_data;
+-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+-	struct v4l2_meta_format *fmt = &format->fmt.meta;
+-
+-	if (format->type != vfh->vdev->queue->type)
+-		return -EINVAL;
+-
+-	memset(fmt, 0, sizeof(*fmt));
+-
+-	fmt->dataformat = stream->meta.format;
+-	fmt->buffersize = UVC_METATADA_BUF_SIZE;
+-
+-	return 0;
+-}
+-
+-static int uvc_meta_v4l2_try_format(struct file *file, void *fh,
+-				    struct v4l2_format *format)
+-{
+-	struct v4l2_fh *vfh = file->private_data;
+-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+-	struct uvc_device *dev = stream->dev;
+-	struct v4l2_meta_format *fmt = &format->fmt.meta;
+-	u32 fmeta = fmt->dataformat;
+-
+-	if (format->type != vfh->vdev->queue->type)
+-		return -EINVAL;
+-
+-	memset(fmt, 0, sizeof(*fmt));
+-
+-	fmt->dataformat = fmeta == dev->meta_format ? fmeta : V4L2_META_FMT_UVC;
+-	fmt->buffersize = UVC_METATADA_BUF_SIZE;
+-
+-	return 0;
+-}
+-
+-static int uvc_meta_v4l2_set_format(struct file *file, void *fh,
+-				    struct v4l2_format *format)
+-{
+-	struct v4l2_fh *vfh = file->private_data;
+-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+-	struct v4l2_meta_format *fmt = &format->fmt.meta;
+-	int ret;
+-
+-	ret = uvc_meta_v4l2_try_format(file, fh, format);
+-	if (ret < 0)
+-		return ret;
+-
+-	/*
+-	 * We could in principle switch at any time, also during streaming.
+-	 * Metadata buffers would still be perfectly parseable, but it's more
+-	 * consistent and cleaner to disallow that.
+-	 */
+-	mutex_lock(&stream->mutex);
+-
+-	if (uvc_queue_allocated(&stream->queue))
+-		ret = -EBUSY;
+-	else
+-		stream->meta.format = fmt->dataformat;
+-
+-	mutex_unlock(&stream->mutex);
+-
+-	return ret;
+-}
+-
+-static int uvc_meta_v4l2_enum_formats(struct file *file, void *fh,
+-				      struct v4l2_fmtdesc *fdesc)
+-{
+-	struct v4l2_fh *vfh = file->private_data;
+-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+-	struct uvc_device *dev = stream->dev;
+-	u32 index = fdesc->index;
+-
+-	if (fdesc->type != vfh->vdev->queue->type ||
+-	    index > 1U || (index && !dev->meta_format))
+-		return -EINVAL;
+-
+-	memset(fdesc, 0, sizeof(*fdesc));
+-
+-	fdesc->type = vfh->vdev->queue->type;
+-	fdesc->index = index;
+-	fdesc->pixelformat = index ? dev->meta_format : V4L2_META_FMT_UVC;
+-
+-	return 0;
+-}
+-
+-static const struct v4l2_ioctl_ops uvc_meta_ioctl_ops = {
+-	.vidioc_querycap		= uvc_meta_v4l2_querycap,
+-	.vidioc_g_fmt_meta_cap		= uvc_meta_v4l2_get_format,
+-	.vidioc_s_fmt_meta_cap		= uvc_meta_v4l2_set_format,
+-	.vidioc_try_fmt_meta_cap	= uvc_meta_v4l2_try_format,
+-	.vidioc_enum_fmt_meta_cap	= uvc_meta_v4l2_enum_formats,
+-	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
+-	.vidioc_querybuf		= vb2_ioctl_querybuf,
+-	.vidioc_qbuf			= vb2_ioctl_qbuf,
+-	.vidioc_dqbuf			= vb2_ioctl_dqbuf,
+-	.vidioc_create_bufs		= vb2_ioctl_create_bufs,
+-	.vidioc_prepare_buf		= vb2_ioctl_prepare_buf,
+-	.vidioc_streamon		= vb2_ioctl_streamon,
+-	.vidioc_streamoff		= vb2_ioctl_streamoff,
+-};
+-
+-/* -----------------------------------------------------------------------------
+- * V4L2 File Operations
+- */
+-
+-static const struct v4l2_file_operations uvc_meta_fops = {
+-	.owner = THIS_MODULE,
+-	.unlocked_ioctl = video_ioctl2,
+-	.open = v4l2_fh_open,
+-	.release = vb2_fop_release,
+-	.poll = vb2_fop_poll,
+-	.mmap = vb2_fop_mmap,
+-};
+-
+-int uvc_meta_register(struct uvc_streaming *stream)
+-{
+-	struct uvc_device *dev = stream->dev;
+-	struct video_device *vdev = &stream->meta.vdev;
+-	struct uvc_video_queue *queue = &stream->meta.queue;
+-
+-	stream->meta.format = V4L2_META_FMT_UVC;
+-
+-	/*
+-	 * The video interface queue uses manual locking and thus does not set
+-	 * the queue pointer. Set it manually here.
+-	 */
+-	vdev->queue = &queue->queue;
+-
+-	return uvc_register_video_device(dev, stream, vdev, queue,
+-					 V4L2_BUF_TYPE_META_CAPTURE,
+-					 &uvc_meta_fops, &uvc_meta_ioctl_ops);
+-}
+diff --git a/drivers/media/usb/uvc/uvc_queue.c b/drivers/media/usb/uvc/uvc_queue.c
+index fecccb5e76282..692c463f14f76 100644
+--- a/drivers/media/usb/uvc/uvc_queue.c
++++ b/drivers/media/usb/uvc/uvc_queue.c
+@@ -79,19 +79,8 @@ static int uvc_queue_setup(struct vb2_queue *vq,
+ 			   unsigned int sizes[], struct device *alloc_devs[])
+ {
+ 	struct uvc_video_queue *queue = vb2_get_drv_priv(vq);
+-	struct uvc_streaming *stream;
+-	unsigned int size;
+-
+-	switch (vq->type) {
+-	case V4L2_BUF_TYPE_META_CAPTURE:
+-		size = UVC_METATADA_BUF_SIZE;
+-		break;
+-
+-	default:
+-		stream = uvc_queue_to_stream(queue);
+-		size = stream->ctrl.dwMaxVideoFrameSize;
+-		break;
+-	}
++	struct uvc_streaming *stream = uvc_queue_to_stream(queue);
++	unsigned size = stream->ctrl.dwMaxVideoFrameSize;
+ 
+ 	/*
+ 	 * When called with plane sizes, validate them. The driver supports
+@@ -125,7 +114,7 @@ static int uvc_buffer_prepare(struct vb2_buffer *vb)
+ 	buf->error = 0;
+ 	buf->mem = vb2_plane_vaddr(vb, 0);
+ 	buf->length = vb2_plane_size(vb, 0);
+-	if (vb->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
++	if (vb->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+ 		buf->bytesused = 0;
+ 	else
+ 		buf->bytesused = vb2_get_plane_payload(vb, 0);
+@@ -188,10 +177,10 @@ static int uvc_start_streaming(struct vb2_queue *vq, unsigned int count)
+ static void uvc_stop_streaming(struct vb2_queue *vq)
+ {
+ 	struct uvc_video_queue *queue = vb2_get_drv_priv(vq);
++	struct uvc_streaming *stream = uvc_queue_to_stream(queue);
+ 	unsigned long flags;
+ 
+-	if (vq->type != V4L2_BUF_TYPE_META_CAPTURE)
+-		uvc_video_enable(uvc_queue_to_stream(queue), 0);
++	uvc_video_enable(stream, 0);
+ 
+ 	spin_lock_irqsave(&queue->irqlock, flags);
+ 	uvc_queue_return_buffers(queue, UVC_BUF_STATE_ERROR);
+@@ -209,39 +198,20 @@ static const struct vb2_ops uvc_queue_qops = {
+ 	.stop_streaming = uvc_stop_streaming,
+ };
+ 
+-static const struct vb2_ops uvc_meta_queue_qops = {
+-	.queue_setup = uvc_queue_setup,
+-	.buf_prepare = uvc_buffer_prepare,
+-	.buf_queue = uvc_buffer_queue,
+-	.wait_prepare = vb2_ops_wait_prepare,
+-	.wait_finish = vb2_ops_wait_finish,
+-	.stop_streaming = uvc_stop_streaming,
+-};
+-
+ int uvc_queue_init(struct uvc_video_queue *queue, enum v4l2_buf_type type,
+ 		    int drop_corrupted)
+ {
+ 	int ret;
+ 
+ 	queue->queue.type = type;
+-	queue->queue.io_modes = VB2_MMAP | VB2_USERPTR;
++	queue->queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
+ 	queue->queue.drv_priv = queue;
+ 	queue->queue.buf_struct_size = sizeof(struct uvc_buffer);
++	queue->queue.ops = &uvc_queue_qops;
+ 	queue->queue.mem_ops = &vb2_vmalloc_memops;
+ 	queue->queue.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC
+ 		| V4L2_BUF_FLAG_TSTAMP_SRC_SOE;
+ 	queue->queue.lock = &queue->mutex;
+-
+-	switch (type) {
+-	case V4L2_BUF_TYPE_META_CAPTURE:
+-		queue->queue.ops = &uvc_meta_queue_qops;
+-		break;
+-	default:
+-		queue->queue.io_modes |= VB2_DMABUF;
+-		queue->queue.ops = &uvc_queue_qops;
+-		break;
+-	}
+-
+ 	ret = vb2_queue_init(&queue->queue);
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/media/usb/uvc/uvc_video.c b/drivers/media/usb/uvc/uvc_video.c
+index 86a99f461fd8a..4fffa0ee4481c 100644
+--- a/drivers/media/usb/uvc/uvc_video.c
++++ b/drivers/media/usb/uvc/uvc_video.c
+@@ -1171,85 +1171,6 @@ static int uvc_video_encode_data(struct uvc_streaming *stream,
+ 	return nbytes;
+ }
+ 
+-/* ------------------------------------------------------------------------
+- * Metadata
+- */
+-
+-/*
+- * Additionally to the payload headers we also want to provide the user with USB
+- * Frame Numbers and system time values. The resulting buffer is thus composed
+- * of blocks, containing a 64-bit timestamp in  nanoseconds, a 16-bit USB Frame
+- * Number, and a copy of the payload header.
+- *
+- * Ideally we want to capture all payload headers for each frame. However, their
+- * number is unknown and unbound. We thus drop headers that contain no vendor
+- * data and that either contain no SCR value or an SCR value identical to the
+- * previous header.
+- */
+-static void uvc_video_decode_meta(struct uvc_streaming *stream,
+-				  struct uvc_buffer *meta_buf,
+-				  const u8 *mem, unsigned int length)
+-{
+-	struct uvc_meta_buf *meta;
+-	size_t len_std = 2;
+-	bool has_pts, has_scr;
+-	unsigned long flags;
+-	unsigned int sof;
+-	ktime_t time;
+-	const u8 *scr;
+-
+-	if (!meta_buf || length == 2)
+-		return;
+-
+-	if (meta_buf->length - meta_buf->bytesused <
+-	    length + sizeof(meta->ns) + sizeof(meta->sof)) {
+-		meta_buf->error = 1;
+-		return;
+-	}
+-
+-	has_pts = mem[1] & UVC_STREAM_PTS;
+-	has_scr = mem[1] & UVC_STREAM_SCR;
+-
+-	if (has_pts) {
+-		len_std += 4;
+-		scr = mem + 6;
+-	} else {
+-		scr = mem + 2;
+-	}
+-
+-	if (has_scr)
+-		len_std += 6;
+-
+-	if (stream->meta.format == V4L2_META_FMT_UVC)
+-		length = len_std;
+-
+-	if (length == len_std && (!has_scr ||
+-				  !memcmp(scr, stream->clock.last_scr, 6)))
+-		return;
+-
+-	meta = (struct uvc_meta_buf *)((u8 *)meta_buf->mem + meta_buf->bytesused);
+-	local_irq_save(flags);
+-	time = uvc_video_get_time();
+-	sof = usb_get_current_frame_number(stream->dev->udev);
+-	local_irq_restore(flags);
+-	put_unaligned(ktime_to_ns(time), &meta->ns);
+-	put_unaligned(sof, &meta->sof);
+-
+-	if (has_scr)
+-		memcpy(stream->clock.last_scr, scr, 6);
+-
+-	memcpy(&meta->length, mem, length);
+-	meta_buf->bytesused += length + sizeof(meta->ns) + sizeof(meta->sof);
+-
+-	uvc_trace(UVC_TRACE_FRAME,
+-		  "%s(): t-sys %lluns, SOF %u, len %u, flags 0x%x, PTS %u, STC %u frame SOF %u\n",
+-		  __func__, ktime_to_ns(time), meta->sof, meta->length,
+-		  meta->flags,
+-		  has_pts ? *(u32 *)meta->buf : 0,
+-		  has_scr ? *(u32 *)scr : 0,
+-		  has_scr ? *(u32 *)(scr + 4) & 0x7ff : 0);
+-}
+-
+ /* ------------------------------------------------------------------------
+  * URB handling
+  */
+@@ -1269,30 +1190,8 @@ static void uvc_video_validate_buffer(const struct uvc_streaming *stream,
+  * Completion handler for video URBs.
+  */
+ 
+-static void uvc_video_next_buffers(struct uvc_streaming *stream,
+-		struct uvc_buffer **video_buf, struct uvc_buffer **meta_buf)
+-{
+-	uvc_video_validate_buffer(stream, *video_buf);
+-
+-	if (*meta_buf) {
+-		struct vb2_v4l2_buffer *vb2_meta = &(*meta_buf)->buf;
+-		const struct vb2_v4l2_buffer *vb2_video = &(*video_buf)->buf;
+-
+-		vb2_meta->sequence = vb2_video->sequence;
+-		vb2_meta->field = vb2_video->field;
+-		vb2_meta->vb2_buf.timestamp = vb2_video->vb2_buf.timestamp;
+-
+-		(*meta_buf)->state = UVC_BUF_STATE_READY;
+-		if (!(*meta_buf)->error)
+-			(*meta_buf)->error = (*video_buf)->error;
+-		*meta_buf = uvc_queue_next_buffer(&stream->meta.queue,
+-						  *meta_buf);
+-	}
+-	*video_buf = uvc_queue_next_buffer(&stream->queue, *video_buf);
+-}
+-
+ static void uvc_video_decode_isoc(struct urb *urb, struct uvc_streaming *stream,
+-			struct uvc_buffer *buf, struct uvc_buffer *meta_buf)
++	struct uvc_buffer *buf)
+ {
+ 	u8 *mem;
+ 	int ret, i;
+@@ -1312,15 +1211,18 @@ static void uvc_video_decode_isoc(struct urb *urb, struct uvc_streaming *stream,
+ 		do {
+ 			ret = uvc_video_decode_start(stream, buf, mem,
+ 				urb->iso_frame_desc[i].actual_length);
+-			if (ret == -EAGAIN)
+-				uvc_video_next_buffers(stream, &buf, &meta_buf);
++				
++			if (ret == -EAGAIN) {
++				uvc_video_validate_buffer(stream, buf);
++				buf = uvc_queue_next_buffer(&stream->queue,
++							    buf);
++			}
++
+ 		} while (ret == -EAGAIN);
+ 
+ 		if (ret < 0)
+ 			continue;
+ 
+-		uvc_video_decode_meta(stream, meta_buf, mem, ret);
+-
+ 		/* Decode the payload data. */
+ 		uvc_video_decode_data(stream, buf, mem + ret,
+ 			urb->iso_frame_desc[i].actual_length - ret);
+@@ -1329,13 +1231,15 @@ static void uvc_video_decode_isoc(struct urb *urb, struct uvc_streaming *stream,
+ 		uvc_video_decode_end(stream, buf, mem,
+ 			urb->iso_frame_desc[i].actual_length);
+ 
+-		if (buf->state == UVC_BUF_STATE_READY)
+-			uvc_video_next_buffers(stream, &buf, &meta_buf);
++		if (buf->state == UVC_BUF_STATE_READY) {
++			uvc_video_validate_buffer(stream, buf);
++			buf = uvc_queue_next_buffer(&stream->queue, buf);
++		}
+ 	}
+ }
+ 
+ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
+-			struct uvc_buffer *buf, struct uvc_buffer *meta_buf)
++	struct uvc_buffer *buf)
+ {
+ 	u8 *mem;
+ 	int len, ret;
+@@ -1358,7 +1262,8 @@ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
+ 		do {
+ 			ret = uvc_video_decode_start(stream, buf, mem, len);
+ 			if (ret == -EAGAIN)
+-				uvc_video_next_buffers(stream, &buf, &meta_buf);
++				buf = uvc_queue_next_buffer(&stream->queue,
++							    buf);
+ 		} while (ret == -EAGAIN);
+ 
+ 		/* If an error occurred skip the rest of the payload. */
+@@ -1368,8 +1273,6 @@ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
+ 			memcpy(stream->bulk.header, mem, ret);
+ 			stream->bulk.header_size = ret;
+ 
+-			uvc_video_decode_meta(stream, meta_buf, mem, ret);
+-
+ 			mem += ret;
+ 			len -= ret;
+ 		}
+@@ -1393,7 +1296,7 @@ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
+ 			uvc_video_decode_end(stream, buf, stream->bulk.header,
+ 				stream->bulk.payload_size);
+ 			if (buf->state == UVC_BUF_STATE_READY)
+-				uvc_video_next_buffers(stream, &buf, &meta_buf);
++				uvc_queue_next_buffer(&stream->queue, buf);
+ 		}
+ 
+ 		stream->bulk.header_size = 0;
+@@ -1403,7 +1306,7 @@ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
+ }
+ 
+ static void uvc_video_encode_bulk(struct urb *urb, struct uvc_streaming *stream,
+-	struct uvc_buffer *buf, struct uvc_buffer *meta_buf)
++	struct uvc_buffer *buf)
+ {
+ 	u8 *mem = urb->transfer_buffer;
+ 	int len = stream->urb_size, ret;
+@@ -1449,10 +1352,7 @@ static void uvc_video_complete(struct urb *urb)
+ {
+ 	struct uvc_streaming *stream = urb->context;
+ 	struct uvc_video_queue *queue = &stream->queue;
+-	struct uvc_video_queue *qmeta = &stream->meta.queue;
+-	struct vb2_queue *vb2_qmeta = stream->meta.vdev.queue;
+ 	struct uvc_buffer *buf = NULL;
+-	struct uvc_buffer *buf_meta = NULL;
+ 	unsigned long flags;
+ 	int ret;
+ 
+@@ -1471,8 +1371,6 @@ static void uvc_video_complete(struct urb *urb)
+ 	case -ECONNRESET:	/* usb_unlink_urb() called. */
+ 	case -ESHUTDOWN:	/* The endpoint is being disabled. */
+ 		uvc_queue_cancel(queue, urb->status == -ESHUTDOWN);
+-		if (vb2_qmeta)
+-			uvc_queue_cancel(qmeta, urb->status == -ESHUTDOWN);
+ 		return;
+ 	}
+ 
+@@ -1482,15 +1380,7 @@ static void uvc_video_complete(struct urb *urb)
+ 				       queue);
+ 	spin_unlock_irqrestore(&queue->irqlock, flags);
+ 
+-	if (vb2_qmeta) {
+-		spin_lock_irqsave(&qmeta->irqlock, flags);
+-		if (!list_empty(&qmeta->irqqueue))
+-			buf_meta = list_first_entry(&qmeta->irqqueue,
+-						    struct uvc_buffer, queue);
+-		spin_unlock_irqrestore(&qmeta->irqlock, flags);
+-	}
+-
+-	stream->decode(urb, stream, buf, buf_meta);
++	stream->decode(urb, stream, buf);
+ 
+ 	if ((ret = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
+ 		uvc_printk(KERN_ERR, "Failed to resubmit video URB (%d).\n",
+diff --git a/drivers/media/usb/uvc/uvcvideo.h b/drivers/media/usb/uvc/uvcvideo.h
+index e5f5d84f1d1d5..fbfba0db56b25 100644
+--- a/drivers/media/usb/uvc/uvcvideo.h
++++ b/drivers/media/usb/uvc/uvcvideo.h
+@@ -485,8 +485,6 @@ struct uvc_stats_stream {
+ 	unsigned int max_sof;		/* Maximum STC.SOF value */
+ };
+ 
+-#define UVC_METATADA_BUF_SIZE 1024
+-
+ struct uvc_streaming {
+ 	struct list_head list;
+ 	struct uvc_device *dev;
+@@ -518,13 +516,7 @@ struct uvc_streaming {
+ 	unsigned int frozen : 1;
+ 	struct uvc_video_queue queue;
+ 	void (*decode) (struct urb *urb, struct uvc_streaming *video,
+-			struct uvc_buffer *buf, struct uvc_buffer *meta_buf);
+-
+-	struct {
+-		struct video_device vdev;
+-		struct uvc_video_queue queue;
+-		u32 format;
+-	} meta;
++			struct uvc_buffer *buf);
+ 
+ 	/* Context data used by the bulk completion handler. */
+ 	struct {
+@@ -566,8 +558,6 @@ struct uvc_streaming {
+ 		u16 last_sof;
+ 		u16 sof_offset;
+ 
+-		u8 last_scr[6];
+-
+ 		spinlock_t lock;
+ 	} clock;
+ };
+@@ -576,8 +566,7 @@ struct uvc_device {
+ 	struct usb_device *udev;
+ 	struct usb_interface *intf;
+ 	unsigned long warnings;
+-	u32 quirks;
+-	u32 meta_format;
++	__u32 quirks;
+ 	int intfnum;
+ 	char name[32];
+ 
+@@ -738,7 +727,6 @@ int uvc_query_ctrl(struct uvc_device *dev, u8 query, u8 unit,
+ void uvc_video_clock_update(struct uvc_streaming *stream,
+ 			    struct vb2_v4l2_buffer *vbuf,
+ 			    struct uvc_buffer *buf);
+-int uvc_meta_register(struct uvc_streaming *stream);
+ 
+ int uvc_register_video_device(struct uvc_device *dev,
+ 			      struct uvc_streaming *stream,
+@@ -800,8 +788,7 @@ struct usb_host_endpoint *uvc_find_endpoint(struct usb_host_interface *alts,
+ 
+ /* Quirks support */
+ void uvc_video_decode_isight(struct urb *urb, struct uvc_streaming *stream,
+-			     struct uvc_buffer *buf,
+-			     struct uvc_buffer *meta_buf);
++		struct uvc_buffer *buf);
+ 
+ /* debugfs and statistics */
+ void uvc_debugfs_init(void);
+diff --git a/include/uapi/linux/uvcvideo.h b/include/uapi/linux/uvcvideo.h
+index f80f05b3c423f..0046e66aca239 100644
+--- a/include/uapi/linux/uvcvideo.h
++++ b/include/uapi/linux/uvcvideo.h
+@@ -70,30 +70,4 @@ struct uvc_xu_control_query {
+ #define UVCIOC_CTRL_MAP		_IOWR('u', 0x20, struct uvc_xu_control_mapping)
+ #define UVCIOC_CTRL_QUERY	_IOWR('u', 0x21, struct uvc_xu_control_query)
+ 
+-/*
+- * Metadata node
+- */
+-
+-/**
+- * struct uvc_meta_buf - metadata buffer building block
+- * @ns		- system timestamp of the payload in nanoseconds
+- * @sof		- USB Frame Number
+- * @length	- length of the payload header
+- * @flags	- payload header flags
+- * @buf		- optional device-specific header data
+- *
+- * UVC metadata nodes fill buffers with possibly multiple instances of this
+- * struct. The first two fields are added by the driver, they can be used for
+- * clock synchronisation. The rest is an exact copy of a UVC payload header.
+- * Only complete objects with complete buffers are included. Therefore it's
+- * always sizeof(meta->ts) + sizeof(meta->sof) + meta->length bytes large.
+- */
+-struct uvc_meta_buf {
+-	__u64 ns;
+-	__u16 sof;
+-	__u8 length;
+-	__u8 flags;
+-	__u8 buf[];
+-} __packed;
+-
+ #endif
+-- 
+2.17.1
+

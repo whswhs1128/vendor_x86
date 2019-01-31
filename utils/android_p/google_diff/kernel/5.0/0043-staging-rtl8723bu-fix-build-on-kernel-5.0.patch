@@ -1,0 +1,28 @@
+From 26a08d28ee043199ae4ce6a5d5a1b4ad0d547f6d Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 6 Jan 2019 22:32:24 +0100
+Subject: [PATCH 43/80] staging: rtl8723bu: fix build on kernel 5.0
+
+---
+ drivers/staging/rtl8723bu/os_dep/rtw_android.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/staging/rtl8723bu/os_dep/rtw_android.c b/drivers/staging/rtl8723bu/os_dep/rtw_android.c
+index b8fdb25ceb829..161837632b2f8 100644
+--- a/drivers/staging/rtl8723bu/os_dep/rtw_android.c
++++ b/drivers/staging/rtl8723bu/os_dep/rtw_android.c
+@@ -602,7 +602,11 @@ int rtw_android_priv_cmd(struct net_device *net, struct ifreq *ifr, int cmd)
+ 		goto exit;
+ 	}
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0))
++	if (!access_ok(priv_cmd.buf, priv_cmd.total_len)){
++#else
+ 	if (!access_ok(VERIFY_READ, priv_cmd.buf, priv_cmd.total_len)){
++#endif
+ 		DBG_871X("%s: failed to access memory\n", __FUNCTION__);
+ 		ret = -EFAULT;
+ 		goto exit;
+-- 
+2.17.1
+

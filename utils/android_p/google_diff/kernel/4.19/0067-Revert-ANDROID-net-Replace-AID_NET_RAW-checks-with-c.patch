@@ -1,0 +1,139 @@
+From a9c13b8e7b16eaf1b769839a4107f85eed2f0b3b Mon Sep 17 00:00:00 2001
+From: youling257 <youling257@gmail.com>
+Date: Thu, 6 Jul 2017 23:48:46 +0800
+Subject: [PATCH 67/70] Revert "ANDROID: net: Replace AID_NET_RAW checks with
+ capable(CAP_NET_RAW)."
+
+This reverts commit c003a30a16fe948ceceea88487e7afe45df6c123.
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ net/ipv4/af_inet.c  | 36 +++++++++++++++++++++++++-----------
+ net/ipv6/af_inet6.c | 36 +++++++++++++++++++++++++-----------
+ 2 files changed, 50 insertions(+), 22 deletions(-)
+
+diff --git a/net/ipv4/af_inet.c b/net/ipv4/af_inet.c
+index 32615ca1dd6fa..ef1275fcc0b81 100644
+--- a/net/ipv4/af_inet.c
++++ b/net/ipv4/af_inet.c
+@@ -125,16 +125,6 @@
+ 
+ #ifdef CONFIG_ANDROID_PARANOID_NETWORK
+ #include <linux/android_aid.h>
+-
+-static inline int current_has_network(void)
+-{
+-	return in_egroup_p(AID_INET) || capable(CAP_NET_RAW);
+-}
+-#else
+-static inline int current_has_network(void)
+-{
+-	return 1;
+-}
+ #endif
+ 
+ /* The inetsw table contains everything that inet_create needs to
+@@ -254,6 +244,29 @@ int inet_listen(struct socket *sock, int backlog)
+ }
+ EXPORT_SYMBOL(inet_listen);
+ 
++#ifdef CONFIG_ANDROID_PARANOID_NETWORK
++static inline int current_has_network(void)
++{
++	return (!current_euid() || in_egroup_p(AID_INET) ||
++		in_egroup_p(AID_NET_RAW));
++}
++static inline int current_has_cap(struct net *net, int cap)
++{
++	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
++		return 1;
++	return ns_capable(net->user_ns, cap);
++}
++# else
++static inline int current_has_network(void)
++{
++	return 1;
++}
++static inline int current_has_cap(struct net *net, int cap)
++{
++	return ns_capable(net->user_ns, cap);
++}
++#endif
++
+ /*
+  *	Create an inet socket.
+  */
+@@ -323,7 +336,8 @@ static int inet_create(struct net *net, struct socket *sock, int protocol,
+ 	}
+ 
+ 	err = -EPERM;
+-	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
++	if (sock->type == SOCK_RAW && !kern &&
++	    !current_has_cap(net, CAP_NET_RAW))
+ 		goto out_rcu_unlock;
+ 
+ 	sock->ops = answer->ops;
+diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
+index 6c330ed494b5f..e55548e568434 100644
+--- a/net/ipv6/af_inet6.c
++++ b/net/ipv6/af_inet6.c
+@@ -68,16 +68,6 @@
+ 
+ #ifdef CONFIG_ANDROID_PARANOID_NETWORK
+ #include <linux/android_aid.h>
+-
+-static inline int current_has_network(void)
+-{
+-	return in_egroup_p(AID_INET) || capable(CAP_NET_RAW);
+-}
+-#else
+-static inline int current_has_network(void)
+-{
+-	return 1;
+-}
+ #endif
+ 
+ #include "ip6_offload.h"
+@@ -121,6 +111,29 @@ static __inline__ struct ipv6_pinfo *inet6_sk_generic(struct sock *sk)
+ 	return (struct ipv6_pinfo *)(((u8 *)sk) + offset);
+ }
+ 
++#ifdef CONFIG_ANDROID_PARANOID_NETWORK
++static inline int current_has_network(void)
++{
++	return (!current_euid() || in_egroup_p(AID_INET) ||
++		in_egroup_p(AID_NET_RAW));
++}
++static inline int current_has_cap(struct net *net, int cap)
++{
++	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
++		return 1;
++	return ns_capable(net->user_ns, cap);
++}
++# else
++static inline int current_has_network(void)
++{
++	return 1;
++}
++static inline int current_has_cap(struct net *net, int cap)
++{
++	return ns_capable(net->user_ns, cap);
++}
++#endif
++
+ static int inet6_create(struct net *net, struct socket *sock, int protocol,
+ 			int kern)
+ {
+@@ -185,7 +198,8 @@ static int inet6_create(struct net *net, struct socket *sock, int protocol,
+ 	}
+ 
+ 	err = -EPERM;
+-	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
++	if (sock->type == SOCK_RAW && !kern &&
++	    !current_has_cap(net, CAP_NET_RAW))
+ 		goto out_rcu_unlock;
+ 
+ 	sock->ops = answer->ops;
+-- 
+2.17.1
+

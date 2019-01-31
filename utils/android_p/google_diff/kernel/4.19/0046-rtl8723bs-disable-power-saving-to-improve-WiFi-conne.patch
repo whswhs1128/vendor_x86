@@ -1,0 +1,27 @@
+From a04436ac37457e77fe94551467c8cdd7c4cec26a Mon Sep 17 00:00:00 2001
+From: GuneetAtwal <guneetatwal@gmail.com>
+Date: Wed, 25 Jul 2018 18:07:51 +0530
+Subject: [PATCH 46/70] rtl8723bs: disable power saving to improve WiFi
+ connectivity
+
+Signed-off-by: GuneetAtwal <guneetatwal@gmail.com>
+---
+ drivers/staging/rtl8723bs/os_dep/ioctl_cfg80211.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/staging/rtl8723bs/os_dep/ioctl_cfg80211.c b/drivers/staging/rtl8723bs/os_dep/ioctl_cfg80211.c
+index af2234798fa8e..0b139ec5edd94 100644
+--- a/drivers/staging/rtl8723bs/os_dep/ioctl_cfg80211.c
++++ b/drivers/staging/rtl8723bs/os_dep/ioctl_cfg80211.c
+@@ -2299,6 +2299,8 @@ static int cfg80211_rtw_set_power_mgmt(struct wiphy *wiphy,
+ 	struct adapter *padapter = (struct adapter *)rtw_netdev_priv(ndev);
+ 	struct rtw_wdev_priv *rtw_wdev_priv = adapter_wdev_data(padapter);
+ 
++	enabled = false;
++
+ 	DBG_871X(FUNC_NDEV_FMT" enabled:%u, timeout:%d\n", FUNC_NDEV_ARG(ndev),
+ 		enabled, timeout);
+ 
+-- 
+2.17.1
+

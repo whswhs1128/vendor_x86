@@ -1,0 +1,38 @@
+From 06161b2a3f2f81c7ecd98447720bf7c7b7c317c6 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 1 Oct 2016 20:13:43 +0200
+Subject: [PATCH 49/80] staging: rtl8812au update Kconfig and Makefile
+
+---
+ drivers/staging/Kconfig  | 2 ++
+ drivers/staging/Makefile | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
+index 91443e4d03cb5..83bc1753ea613 100644
+--- a/drivers/staging/Kconfig
++++ b/drivers/staging/Kconfig
+@@ -38,6 +38,8 @@ source "drivers/staging/rtl8723bs/Kconfig"
+ 
+ source "drivers/staging/rtl8723bu/Kconfig"
+ 
++source "drivers/staging/rtl8812au/Kconfig"
++
+ source "drivers/staging/rtl8712/Kconfig"
+ 
+ source "drivers/staging/rtl8188eu/Kconfig"
+diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
+index 9530fc0623a71..d498d52796a19 100644
+--- a/drivers/staging/Makefile
++++ b/drivers/staging/Makefile
+@@ -9,6 +9,7 @@ obj-$(CONFIG_RTL8192U)		+= rtl8192u/
+ obj-$(CONFIG_RTL8192E)		+= rtl8192e/
+ obj-$(CONFIG_RTL8723BS)		+= rtl8723bs/
+ obj-$(CONFIG_RTL8723BU)		+= rtl8723bu/
++obj-$(CONFIG_RTL8821AU)		+= rtl8812au/
+ obj-$(CONFIG_R8712U)		+= rtl8712/
+ obj-$(CONFIG_R8188EU)		+= rtl8188eu/
+ obj-$(CONFIG_R8822BE)		+= rtlwifi/
+-- 
+2.17.1
+

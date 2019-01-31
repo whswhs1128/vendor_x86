@@ -1,0 +1,60 @@
+From 2afa2c94aeb1c01f9168dac1d177143b934157bb Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Wed, 29 Nov 2017 00:52:37 +0100
+Subject: [PATCH 38/80] net: wireless: broadcom: wl: add patch for kernel 4.15
+
+build.mk is modified to apply incremental patch linux-415.patch
+which implements the use of timer_setup() instead of init_timer()
+for kernel 4.15 and later, thus avoiding following error:
+
+error: implicit declaration of function 'init_timer'
+
+similar problem arises for device/generic/common/tp_smapi/hdaps.c:782
+which requires to use timer_setup() instead of init_timer()
+for kernel 4.15 and later
+---
+ drivers/net/wireless/broadcom/wl/build.mk      |  3 ++-
+ .../net/wireless/broadcom/wl/linux-415.patch   | 18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/net/wireless/broadcom/wl/linux-415.patch
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index fd45612fb0eea..d6f2576e976e1 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -14,6 +14,7 @@ $(WL_LIB): $(WL_SRC) $(wildcard $(WL_PATH)/*.patch)
+ 		patch -p1 -d $(@D) -i linux-recent.patch && \
+ 		patch -p1 -d $(@D) -i linux-48.patch && \
+ 		patch -p1 -d $(@D) -i linux-411.patch && \
+-		patch -p1 -d $(@D) -i linux-412.patch
++		patch -p1 -d $(@D) -i linux-412.patch && \
++		patch -p1 -d $(@D) -i linux-415.patch
+ 
+ $(INSTALLED_KERNEL_TARGET): $(if $(WL_ENABLED),$(WL_LIB))
+diff --git a/drivers/net/wireless/broadcom/wl/linux-415.patch b/drivers/net/wireless/broadcom/wl/linux-415.patch
+new file mode 100644
+index 0000000000000..28797faafae0e
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/linux-415.patch
+@@ -0,0 +1,18 @@
++diff --git a/src/wl/sys/wl_linux.c b/src/wl/sys/wl_linux.c
++index 1270d6da22ba..ec120cf7d74c 100644
++--- a/src/wl/sys/wl_linux.c
+++++ b/src/wl/sys/wl_linux.c
++@@ -2355,9 +2355,13 @@ wl_init_timer(wl_info_t *wl, void (*fn)(void *arg), void *arg, const char *tname
++ 
++ 	bzero(t, sizeof(wl_timer_t));
++ 
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+++	timer_setup(&t->timer, wl_timer, 0);
+++#else
++ 	init_timer(&t->timer);
++ 	t->timer.data = (ulong) t;
++ 	t->timer.function = wl_timer;
+++#endif
++ 	t->wl = wl;
++ 	t->fn = fn;
++ 	t->arg = arg;
+-- 
+2.17.1
+

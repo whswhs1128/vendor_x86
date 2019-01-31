@@ -1,0 +1,60 @@
+From 4990d08006aa49f5446ce8e4f479b73750055246 Mon Sep 17 00:00:00 2001
+From: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+Date: Wed, 4 Jul 2018 13:09:47 +0200
+Subject: [PATCH 51/70] ACPICA: Adapt buffer length for Field Attrib Raw
+ Process in Ops Region
+
+Detected on the Surface 3:
+The MSHW0011 driver uses Field Attrib Raw Process to return information
+for the ACPI Battery. The DSDT declares a parameter of 2 though
+functions like _BST or _BIX require a much bigger out buffer.
+
+It looks like the incoming buffer has the requested size and we can
+work around the issue by using this input size as the output and
+parameters size.
+
+As mentioned by Stephen Just on the kernel bugzilla (comment 44):
+"Lv, after reading through 5.5.2.4.5.3 of the ACPI spec several times,
+it appears that AccessLength is ignored for AttribRawProcessBytes
+accesses - the access length is always specified by the user - and
+in fact, the example omits the AccessLength argument entirely.
+
+More specifically, comparing 5.5.2.4.5.3.9 and 5.5.2.4.5.3.10, it
+appears that the only difference between AttribRawProcessBytes and
+AttribRawBytes is that AttribRawProcessBytes does not seem to pay
+attention to AccessLength, and lets the driver deal with it."
+
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=106231
+
+Signed-off-by: Benjamin Tissoires <benjamin.tissoires@redhat.com>
+[hdegoede@redhat.com: Store buffer size in field.access_length, so that the
+ opregion handler can access it]
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+---
+ drivers/acpi/acpica/exfield.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/drivers/acpi/acpica/exfield.c b/drivers/acpi/acpica/exfield.c
+index b272c329d45db..b54a600035896 100644
+--- a/drivers/acpi/acpica/exfield.c
++++ b/drivers/acpi/acpica/exfield.c
+@@ -366,6 +366,16 @@ acpi_ex_write_data_to_field(union acpi_operand_object *source_desc,
+ 		} else if (obj_desc->field.region_obj->region.space_id ==
+ 			   ACPI_ADR_SPACE_GSBUS) {
+ 			accessor_type = obj_desc->field.attribute;
++
++			/*
++			 * AttribRawProcessBytes uses a variable length,
++			 * stored as in/out param inside the buffer,
++			 * which may use up to the entire buffer size.
++			 */
++			if (accessor_type == AML_FIELD_ATTRIB_RAW_PROCESS)
++				obj_desc->field.access_length =
++					source_desc->buffer.length - 2;
++
+ 			length =
+ 			    acpi_ex_get_serial_access_length(accessor_type,
+ 							     obj_desc->field.
+-- 
+2.17.1
+

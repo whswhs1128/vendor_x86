@@ -1,0 +1,38 @@
+From be1ee482a6b00671e04689793648576f16bb12b4 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Mon, 25 Jun 2018 00:59:22 +0200
+Subject: [PATCH 62/70] Revert "drm/amdgpu: Don't default to DC support for
+ Kaveri and older"
+
+This reverts commit d9fda248046ac035f18a6e663f2f9245b4bf9470.
+---
+ drivers/gpu/drm/amd/amdgpu/amdgpu_device.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+index 39bf2ce548c61..43c030459af7f 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+@@ -2251,18 +2251,10 @@ bool amdgpu_device_asic_has_dc_support(enum amd_asic_type asic_type)
+ 	switch (asic_type) {
+ #if defined(CONFIG_DRM_AMD_DC)
+ 	case CHIP_BONAIRE:
++	case CHIP_HAWAII:
+ 	case CHIP_KAVERI:
+ 	case CHIP_KABINI:
+ 	case CHIP_MULLINS:
+-		/*
+-		 * We have systems in the wild with these ASICs that require
+-		 * LVDS and VGA support which is not supported with DC.
+-		 *
+-		 * Fallback to the non-DC driver here by default so as not to
+-		 * cause regressions.
+-		 */
+-		return amdgpu_dc > 0;
+-	case CHIP_HAWAII:
+ 	case CHIP_CARRIZO:
+ 	case CHIP_STONEY:
+ 	case CHIP_POLARIS10:
+-- 
+2.17.1
+

@@ -1,0 +1,39 @@
+From e7c739e8dbd58108b4542f50d05a3ab34a9d9926 Mon Sep 17 00:00:00 2001
+From: GuneetAtwal <guneetatwal@gmail.com>
+Date: Sat, 12 Jan 2019 16:48:49 +0530
+Subject: [PATCH 59/70] staging: add rtl8723bu to the Kconfig and Makefile
+
+Signed-off-by: GuneetAtwal <guneetatwal@gmail.com>
+---
+ drivers/staging/Kconfig  | 2 ++
+ drivers/staging/Makefile | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/drivers/staging/Kconfig b/drivers/staging/Kconfig
+index 8151af7168b41..8355a5d41c03b 100644
+--- a/drivers/staging/Kconfig
++++ b/drivers/staging/Kconfig
+@@ -36,6 +36,8 @@ source "drivers/staging/rtl8192e/Kconfig"
+ 
+ source "drivers/staging/rtl8723bs/Kconfig"
+ 
++source "drivers/staging/rtl8723bu/Kconfig"
++
+ source "drivers/staging/rtl8712/Kconfig"
+ 
+ source "drivers/staging/rtl8188eu/Kconfig"
+diff --git a/drivers/staging/Makefile b/drivers/staging/Makefile
+index 812cec40a4a7b..bd0f2933c28cc 100644
+--- a/drivers/staging/Makefile
++++ b/drivers/staging/Makefile
+@@ -8,6 +8,7 @@ obj-$(CONFIG_FB_OLPC_DCON)	+= olpc_dcon/
+ obj-$(CONFIG_RTL8192U)		+= rtl8192u/
+ obj-$(CONFIG_RTL8192E)		+= rtl8192e/
+ obj-$(CONFIG_RTL8723BS)		+= rtl8723bs/
++obj-$(CONFIG_RTL8723BU)		+= rtl8723bu/
+ obj-$(CONFIG_R8712U)		+= rtl8712/
+ obj-$(CONFIG_R8188EU)		+= rtl8188eu/
+ obj-$(CONFIG_R8822BE)		+= rtlwifi/
+-- 
+2.17.1
+

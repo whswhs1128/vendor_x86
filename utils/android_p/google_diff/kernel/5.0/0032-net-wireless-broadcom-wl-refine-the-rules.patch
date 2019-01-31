@@ -1,0 +1,26 @@
+From 51de6002bba2a2e0aac9d537dc0ebc2029f1e3ed Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 7 May 2017 01:33:50 +0800
+Subject: [PATCH 32/80] net: wireless: broadcom: wl: refine the rules
+
+Sync with kernel-4.4 branch.
+---
+ drivers/net/wireless/broadcom/wl/build.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index 9bd9c68f6f9f9..a8631cb1e732a 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -9,7 +9,7 @@ $(WL_SRC):
+ 
+ $(WL_LIB): $(WL_SRC) $(wildcard $(WL_PATH)/*.patch)
+ 	$(hide) tar zxf $< -C $(@D) --overwrite -m && \
+-		rm -rf $@ && mv $(@D)/lib $@ && \
++		rm -rf $@ && mv $(@D)/lib $@ && touch $@ && \
+ 		patch -p1 -d $(@D) -i wl.patch && \
+ 		patch -p1 -d $(@D) -i linux-recent.patch
+ 
+-- 
+2.17.1
+

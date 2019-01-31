@@ -1,0 +1,45 @@
+From bd949bc34eeb0ba221f2d6bb8cb5cebbfdc9f74d Mon Sep 17 00:00:00 2001
+From: Hans de Goede <hdegoede@redhat.com>
+Date: Tue, 19 Jun 2018 22:06:04 +0200
+Subject: [PATCH 60/80] drm/i915/intel_dsi: Move initialization of encoder
+ variables up a bit
+
+Move the initialization of encoder variables a bit higher inside the
+intel_dsi_init() function. So that can call intel_encoder_current_mode()
+from intel_dsi_vbt_init().
+
+This is a preparation patch for reading back the GOP configured pclk
+from intel_dsi_vbt_init().
+
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+---
+ drivers/gpu/drm/i915/vlv_dsi.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/i915/vlv_dsi.c b/drivers/gpu/drm/i915/vlv_dsi.c
+index 361e962a79690..62ec7a01d4b68 100644
+--- a/drivers/gpu/drm/i915/vlv_dsi.c
++++ b/drivers/gpu/drm/i915/vlv_dsi.c
+@@ -1693,6 +1693,9 @@ void vlv_dsi_init(struct drm_i915_private *dev_priv)
+ 	intel_connector->get_hw_state = intel_connector_get_hw_state;
+ 
+ 	intel_encoder->port = port;
++	intel_encoder->type = INTEL_OUTPUT_DSI;
++	intel_encoder->power_domain = POWER_DOMAIN_PORT_DSI;
++	intel_encoder->cloneable = 0;
+ 
+ 	/*
+ 	 * On BYT/CHV, pipe A maps to MIPI DSI port A, pipe B maps to MIPI DSI
+@@ -1745,9 +1748,6 @@ void vlv_dsi_init(struct drm_i915_private *dev_priv)
+ 		}
+ 	}
+ 
+-	intel_encoder->type = INTEL_OUTPUT_DSI;
+-	intel_encoder->power_domain = POWER_DOMAIN_PORT_DSI;
+-	intel_encoder->cloneable = 0;
+ 	drm_connector_init(dev, connector, &intel_dsi_connector_funcs,
+ 			   DRM_MODE_CONNECTOR_DSI);
+ 
+-- 
+2.17.1
+

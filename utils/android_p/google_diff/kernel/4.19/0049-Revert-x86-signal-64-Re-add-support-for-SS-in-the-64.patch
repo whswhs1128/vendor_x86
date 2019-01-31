@@ -1,0 +1,286 @@
+From 8936a9204fdffd9d83ea057786b1770116a98b63 Mon Sep 17 00:00:00 2001
+From: GuneetAtwal <guneetatwal@gmail.com>
+Date: Sat, 22 Sep 2018 17:38:06 +0530
+Subject: [PATCH 49/70] Revert "x86/signal/64: Re-add support for SS in the
+ 64-bit signal context"
+
+This reverts commit 6c25da5ad55d48c41b8909bc1f4e3cd5d85bb499.
+
+Conflcts:
+	arch/x86/kernel/signal.c
+	tools/testing/selftests/x86/Makefile
+---
+ arch/x86/include/asm/sighandling.h     |  1 +
+ arch/x86/include/uapi/asm/sigcontext.h |  7 +--
+ arch/x86/include/uapi/asm/ucontext.h   | 53 ++--------------------
+ arch/x86/kernel/signal.c               | 63 ++++++++------------------
+ tools/testing/selftests/x86/Makefile   |  1 +
+ 5 files changed, 28 insertions(+), 97 deletions(-)
+
+diff --git a/arch/x86/include/asm/sighandling.h b/arch/x86/include/asm/sighandling.h
+index bd26834724e52..227afa2fa0fe2 100644
+--- a/arch/x86/include/asm/sighandling.h
++++ b/arch/x86/include/asm/sighandling.h
+@@ -14,6 +14,7 @@
+ 			 X86_EFLAGS_CF | X86_EFLAGS_RF)
+ 
+ void signal_fault(struct pt_regs *regs, void __user *frame, char *where);
++int restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc);
+ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
+ 		     struct pt_regs *regs, unsigned long mask);
+ 
+diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
+index 844d60eb18827..873fcbc5e3b9d 100644
+--- a/arch/x86/include/uapi/asm/sigcontext.h
++++ b/arch/x86/include/uapi/asm/sigcontext.h
+@@ -257,7 +257,7 @@ struct sigcontext_64 {
+ 	__u16				cs;
+ 	__u16				gs;
+ 	__u16				fs;
+-	__u16				ss;
++	__u16				__pad0;
+ 	__u64				err;
+ 	__u64				trapno;
+ 	__u64				oldmask;
+@@ -369,10 +369,7 @@ struct sigcontext {
+ 	 */
+ 	__u16				gs;
+ 	__u16				fs;
+-	union {
+-		__u16			ss;	/* If UC_SIGCONTEXT_SS */
+-		__u16			__pad0;	/* Alias name for old (!UC_SIGCONTEXT_SS) user-space */
+-	};
++	__u16				__pad0;
+ 	__u64				err;
+ 	__u64				trapno;
+ 	__u64				oldmask;
+diff --git a/arch/x86/include/uapi/asm/ucontext.h b/arch/x86/include/uapi/asm/ucontext.h
+index 5657b7a49f03a..973bcea93b8e9 100644
+--- a/arch/x86/include/uapi/asm/ucontext.h
++++ b/arch/x86/include/uapi/asm/ucontext.h
+@@ -2,54 +2,11 @@
+ #ifndef _ASM_X86_UCONTEXT_H
+ #define _ASM_X86_UCONTEXT_H
+ 
+-/*
+- * Indicates the presence of extended state information in the memory
+- * layout pointed by the fpstate pointer in the ucontext's sigcontext
+- * struct (uc_mcontext).
+- */
+-#define UC_FP_XSTATE	0x1
+-
+-#ifdef __x86_64__
+-/*
+- * UC_SIGCONTEXT_SS will be set when delivering 64-bit or x32 signals on
+- * kernels that save SS in the sigcontext.  All kernels that set
+- * UC_SIGCONTEXT_SS will correctly restore at least the low 32 bits of esp
+- * regardless of SS (i.e. they implement espfix).
+- *
+- * Kernels that set UC_SIGCONTEXT_SS will also set UC_STRICT_RESTORE_SS
+- * when delivering a signal that came from 64-bit code.
+- *
+- * Sigreturn restores SS as follows:
+- *
+- * if (saved SS is valid || UC_STRICT_RESTORE_SS is set ||
+- *     saved CS is not 64-bit)
+- *         new SS = saved SS  (will fail IRET and signal if invalid)
+- * else
+- *         new SS = a flat 32-bit data segment
+- *
+- * This behavior serves three purposes:
+- *
+- * - Legacy programs that construct a 64-bit sigcontext from scratch
+- *   with zero or garbage in the SS slot (e.g. old CRIU) and call
+- *   sigreturn will still work.
+- *
+- * - Old DOSEMU versions sometimes catch a signal from a segmented
+- *   context, delete the old SS segment (with modify_ldt), and change
+- *   the saved CS to a 64-bit segment.  These DOSEMU versions expect
+- *   sigreturn to send them back to 64-bit mode without killing them,
+- *   despite the fact that the SS selector when the signal was raised is
+- *   no longer valid.  UC_STRICT_RESTORE_SS will be clear, so the kernel
+- *   will fix up SS for these DOSEMU versions.
+- *
+- * - Old and new programs that catch a signal and return without
+- *   modifying the saved context will end up in exactly the state they
+- *   started in, even if they were running in a segmented context when
+- *   the signal was raised..  Old kernels would lose track of the
+- *   previous SS value.
+- */
+-#define UC_SIGCONTEXT_SS	0x2
+-#define UC_STRICT_RESTORE_SS	0x4
+-#endif
++#define UC_FP_XSTATE	0x1	/* indicates the presence of extended state
++				 * information in the memory layout pointed
++				 * by the fpstate pointer in the ucontext's
++				 * sigcontext struct (uc_mcontext).
++				 */
+ 
+ #include <asm-generic/ucontext.h>
+ 
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index 92a3b312a53c4..70f197325681c 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -94,9 +94,7 @@ static void force_valid_ss(struct pt_regs *regs)
+ }
+ #endif
+ 
+-static int restore_sigcontext(struct pt_regs *regs,
+-			      struct sigcontext __user *sc,
+-			      unsigned long uc_flags)
++int restore_sigcontext(struct pt_regs *regs, struct sigcontext __user *sc)
+ {
+ 	unsigned long buf_val;
+ 	void __user *buf;
+@@ -129,18 +127,15 @@ static int restore_sigcontext(struct pt_regs *regs,
+ 		COPY(r15);
+ #endif /* CONFIG_X86_64 */
+ 
++#ifdef CONFIG_X86_32
+ 		COPY_SEG_CPL3(cs);
+ 		COPY_SEG_CPL3(ss);
+-
+-#ifdef CONFIG_X86_64
+-		/*
+-		 * Fix up SS if needed for the benefit of old DOSEMU and
+-		 * CRIU.
+-		 */
+-		if (unlikely(!(uc_flags & UC_STRICT_RESTORE_SS) &&
+-			     user_64bit_mode(regs)))
+-			force_valid_ss(regs);
+-#endif
++#else /* !CONFIG_X86_32 */
++		/* Kernel saves and restores only the CS segment register on signals,
++		 * which is the bare minimum needed to allow mixed 32/64-bit code.
++		 * App's signal handler can save/restore other segments if needed. */
++		COPY_SEG_CPL3(cs);
++#endif /* CONFIG_X86_32 */
+ 
+ 		get_user_ex(tmpflags, &sc->flags);
+ 		regs->flags = (regs->flags & ~FIX_EFLAGS) | (tmpflags & FIX_EFLAGS);
+@@ -203,7 +198,6 @@ int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
+ 		put_user_ex(regs->cs, &sc->cs);
+ 		put_user_ex(0, &sc->gs);
+ 		put_user_ex(0, &sc->fs);
+-		put_user_ex(regs->ss, &sc->ss);
+ #endif /* CONFIG_X86_32 */
+ 
+ 		put_user_ex(fpstate, &sc->fpstate);
+@@ -441,21 +435,6 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
+ 	return 0;
+ }
+ #else /* !CONFIG_X86_32 */
+-static unsigned long frame_uc_flags(struct pt_regs *regs)
+-{
+-	unsigned long flags;
+-
+-	if (boot_cpu_has(X86_FEATURE_XSAVE))
+-		flags = UC_FP_XSTATE | UC_SIGCONTEXT_SS;
+-	else
+-		flags = UC_SIGCONTEXT_SS;
+-
+-	if (likely(user_64bit_mode(regs)))
+-		flags |= UC_STRICT_RESTORE_SS;
+-
+-	return flags;
+-}
+-
+ static int __setup_rt_frame(int sig, struct ksignal *ksig,
+ 			    sigset_t *set, struct pt_regs *regs)
+ {
+@@ -475,7 +454,10 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
+ 
+ 	put_user_try {
+ 		/* Create the ucontext.  */
+-		put_user_ex(frame_uc_flags(regs), &frame->uc.uc_flags);
++		if (boot_cpu_has(X86_FEATURE_XSAVE))
++			put_user_ex(UC_FP_XSTATE, &frame->uc.uc_flags);
++		else
++			put_user_ex(0, &frame->uc.uc_flags);
+ 		put_user_ex(0, &frame->uc.uc_link);
+ 		save_altstack_ex(&frame->uc.uc_stack, regs->sp);
+ 
+@@ -557,7 +539,10 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
+ 
+ 	put_user_try {
+ 		/* Create the ucontext.  */
+-		put_user_ex(frame_uc_flags(regs), &frame->uc.uc_flags);
++		if (boot_cpu_has(X86_FEATURE_XSAVE))
++			put_user_ex(UC_FP_XSTATE, &frame->uc.uc_flags);
++		else
++			put_user_ex(0, &frame->uc.uc_flags);
+ 		put_user_ex(0, &frame->uc.uc_link);
+ 		compat_save_altstack_ex(&frame->uc.uc_stack, regs->sp);
+ 		put_user_ex(0, &frame->uc.uc__pad0);
+@@ -619,11 +604,7 @@ SYSCALL_DEFINE0(sigreturn)
+ 
+ 	set_current_blocked(&set);
+ 
+-	/*
+-	 * x86_32 has no uc_flags bits relevant to restore_sigcontext.
+-	 * Save a few cycles by skipping the __get_user.
+-	 */
+-	if (restore_sigcontext(regs, &frame->sc, 0))
++	if (restore_sigcontext(regs, &frame->sc))
+ 		goto badframe;
+ 	return regs->ax;
+ 
+@@ -639,19 +620,16 @@ SYSCALL_DEFINE0(rt_sigreturn)
+ 	struct pt_regs *regs = current_pt_regs();
+ 	struct rt_sigframe __user *frame;
+ 	sigset_t set;
+-	unsigned long uc_flags;
+ 
+ 	frame = (struct rt_sigframe __user *)(regs->sp - sizeof(long));
+ 	if (!access_ok(VERIFY_READ, frame, sizeof(*frame)))
+ 		goto badframe;
+ 	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
+ 		goto badframe;
+-	if (__get_user(uc_flags, &frame->uc.uc_flags))
+-		goto badframe;
+ 
+ 	set_current_blocked(&set);
+ 
+-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
++	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
+ 		goto badframe;
+ 
+ 	if (restore_altstack(&frame->uc.uc_stack))
+@@ -867,7 +845,6 @@ asmlinkage long sys32_x32_rt_sigreturn(void)
+ 	struct pt_regs *regs = current_pt_regs();
+ 	struct rt_sigframe_x32 __user *frame;
+ 	sigset_t set;
+-	unsigned long uc_flags;
+ 
+ 	frame = (struct rt_sigframe_x32 __user *)(regs->sp - 8);
+ 
+@@ -875,12 +852,10 @@ asmlinkage long sys32_x32_rt_sigreturn(void)
+ 		goto badframe;
+ 	if (__copy_from_user(&set, &frame->uc.uc_sigmask, sizeof(set)))
+ 		goto badframe;
+-	if (__get_user(uc_flags, &frame->uc.uc_flags))
+-		goto badframe;
+ 
+ 	set_current_blocked(&set);
+ 
+-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
++	if (restore_sigcontext(regs, &frame->uc.uc_mcontext))
+ 		goto badframe;
+ 
+ 	if (compat_restore_altstack(&frame->uc.uc_stack))
+diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
+index 186520198de75..f78c740bff687 100644
+--- a/tools/testing/selftests/x86/Makefile
++++ b/tools/testing/selftests/x86/Makefile
+@@ -15,6 +15,7 @@ TARGETS_C_BOTHBITS := single_step_syscall sysret_ss_attrs syscall_nt test_mremap
+ 			protection_keys test_vdso test_vsyscall mov_ss_trap
+ TARGETS_C_32BIT_ONLY := entry_from_vm86 syscall_arg_fault test_syscall_vdso unwind_vdso \
+ 			test_FCMOV test_FCOMI test_FISTTP \
++			ldt_gdt \
+ 			vdso_restorer
+ TARGETS_C_64BIT_ONLY := fsgsbase sysret_rip
+ # Some selftests require 32bit support enabled also on 64bit systems
+-- 
+2.17.1
+

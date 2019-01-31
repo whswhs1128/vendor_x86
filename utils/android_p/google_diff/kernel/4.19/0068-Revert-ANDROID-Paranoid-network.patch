@@ -1,0 +1,207 @@
+From 7fcf3eccb8d8eddfbca3e719bf7734ab74e10533 Mon Sep 17 00:00:00 2001
+From: youling257 <youling257@gmail.com>
+Date: Thu, 6 Jul 2017 23:52:30 +0800
+Subject: [PATCH 68/70] Revert "ANDROID: Paranoid network."
+
+This reverts commit ec2622b0c41f49e3e8bef9b7ac10c59ebc6432c2.
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ net/Kconfig                  |  6 ------
+ net/bluetooth/af_bluetooth.c | 29 -----------------------------
+ net/ipv4/af_inet.c           | 31 +------------------------------
+ net/ipv6/af_inet6.c          | 32 +-------------------------------
+ 4 files changed, 2 insertions(+), 96 deletions(-)
+
+diff --git a/net/Kconfig b/net/Kconfig
+index 56bf7db443a2b..8cc61e3922569 100644
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -92,12 +92,6 @@ source "net/netlabel/Kconfig"
+ 
+ endif # if INET
+ 
+-config ANDROID_PARANOID_NETWORK
+-	bool "Only allow certain groups to create sockets"
+-	default y
+-	help
+-		none
+-
+ config NETWORK_SECMARK
+ 	bool "Security Marking"
+ 	help
+diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+index 6fa61b875b69f..deacc52d7ff18 100644
+--- a/net/bluetooth/af_bluetooth.c
++++ b/net/bluetooth/af_bluetooth.c
+@@ -108,40 +108,11 @@ void bt_sock_unregister(int proto)
+ }
+ EXPORT_SYMBOL(bt_sock_unregister);
+ 
+-#ifdef CONFIG_PARANOID_NETWORK
+-static inline int current_has_bt_admin(void)
+-{
+-	return !current_euid();
+-}
+-
+-static inline int current_has_bt(void)
+-{
+-	return current_has_bt_admin();
+-}
+-# else
+-static inline int current_has_bt_admin(void)
+-{
+-	return 1;
+-}
+-
+-static inline int current_has_bt(void)
+-{
+-	return 1;
+-}
+-#endif
+-
+ static int bt_sock_create(struct net *net, struct socket *sock, int proto,
+ 			  int kern)
+ {
+ 	int err;
+ 
+-	if (proto == BTPROTO_RFCOMM || proto == BTPROTO_SCO ||
+-			proto == BTPROTO_L2CAP) {
+-		if (!current_has_bt())
+-			return -EPERM;
+-	} else if (!current_has_bt_admin())
+-		return -EPERM;
+-
+ 	if (net != &init_net)
+ 		return -EAFNOSUPPORT;
+ 
+diff --git a/net/ipv4/af_inet.c b/net/ipv4/af_inet.c
+index ef1275fcc0b81..debd10aafaf00 100644
+--- a/net/ipv4/af_inet.c
++++ b/net/ipv4/af_inet.c
+@@ -123,9 +123,6 @@
+ 
+ #include <trace/events/sock.h>
+ 
+-#ifdef CONFIG_ANDROID_PARANOID_NETWORK
+-#include <linux/android_aid.h>
+-#endif
+ 
+ /* The inetsw table contains everything that inet_create needs to
+  * build a new socket.
+@@ -244,29 +241,6 @@ int inet_listen(struct socket *sock, int backlog)
+ }
+ EXPORT_SYMBOL(inet_listen);
+ 
+-#ifdef CONFIG_ANDROID_PARANOID_NETWORK
+-static inline int current_has_network(void)
+-{
+-	return (!current_euid() || in_egroup_p(AID_INET) ||
+-		in_egroup_p(AID_NET_RAW));
+-}
+-static inline int current_has_cap(struct net *net, int cap)
+-{
+-	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
+-		return 1;
+-	return ns_capable(net->user_ns, cap);
+-}
+-# else
+-static inline int current_has_network(void)
+-{
+-	return 1;
+-}
+-static inline int current_has_cap(struct net *net, int cap)
+-{
+-	return ns_capable(net->user_ns, cap);
+-}
+-#endif
+-
+ /*
+  *	Create an inet socket.
+  */
+@@ -285,9 +259,6 @@ static int inet_create(struct net *net, struct socket *sock, int protocol,
+ 	if (protocol < 0 || protocol >= IPPROTO_MAX)
+ 		return -EINVAL;
+ 
+-	if (!current_has_network())
+-		return -EACCES;
+-
+ 	sock->state = SS_UNCONNECTED;
+ 
+ 	/* Look for the requested type/protocol pair. */
+@@ -337,7 +308,7 @@ static int inet_create(struct net *net, struct socket *sock, int protocol,
+ 
+ 	err = -EPERM;
+ 	if (sock->type == SOCK_RAW && !kern &&
+-	    !current_has_cap(net, CAP_NET_RAW))
++	    !ns_capable(net->user_ns, CAP_NET_RAW))
+ 		goto out_rcu_unlock;
+ 
+ 	sock->ops = answer->ops;
+diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
+index e55548e568434..9a4261e502727 100644
+--- a/net/ipv6/af_inet6.c
++++ b/net/ipv6/af_inet6.c
+@@ -66,10 +66,6 @@
+ #include <linux/uaccess.h>
+ #include <linux/mroute6.h>
+ 
+-#ifdef CONFIG_ANDROID_PARANOID_NETWORK
+-#include <linux/android_aid.h>
+-#endif
+-
+ #include "ip6_offload.h"
+ 
+ MODULE_AUTHOR("Cast of dozens");
+@@ -111,29 +107,6 @@ static __inline__ struct ipv6_pinfo *inet6_sk_generic(struct sock *sk)
+ 	return (struct ipv6_pinfo *)(((u8 *)sk) + offset);
+ }
+ 
+-#ifdef CONFIG_ANDROID_PARANOID_NETWORK
+-static inline int current_has_network(void)
+-{
+-	return (!current_euid() || in_egroup_p(AID_INET) ||
+-		in_egroup_p(AID_NET_RAW));
+-}
+-static inline int current_has_cap(struct net *net, int cap)
+-{
+-	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
+-		return 1;
+-	return ns_capable(net->user_ns, cap);
+-}
+-# else
+-static inline int current_has_network(void)
+-{
+-	return 1;
+-}
+-static inline int current_has_cap(struct net *net, int cap)
+-{
+-	return ns_capable(net->user_ns, cap);
+-}
+-#endif
+-
+ static int inet6_create(struct net *net, struct socket *sock, int protocol,
+ 			int kern)
+ {
+@@ -149,9 +122,6 @@ static int inet6_create(struct net *net, struct socket *sock, int protocol,
+ 	if (protocol < 0 || protocol >= IPPROTO_MAX)
+ 		return -EINVAL;
+ 
+-	if (!current_has_network())
+-		return -EACCES;
+-
+ 	/* Look for the requested type/protocol pair. */
+ lookup_protocol:
+ 	err = -ESOCKTNOSUPPORT;
+@@ -199,7 +169,7 @@ static int inet6_create(struct net *net, struct socket *sock, int protocol,
+ 
+ 	err = -EPERM;
+ 	if (sock->type == SOCK_RAW && !kern &&
+-	    !current_has_cap(net, CAP_NET_RAW))
++	    !ns_capable(net->user_ns, CAP_NET_RAW))
+ 		goto out_rcu_unlock;
+ 
+ 	sock->ops = answer->ops;
+-- 
+2.17.1
+

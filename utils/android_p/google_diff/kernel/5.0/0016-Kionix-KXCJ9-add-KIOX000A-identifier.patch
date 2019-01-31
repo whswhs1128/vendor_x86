@@ -1,0 +1,24 @@
+From c45002087ceb00e3bcef4a239b0f9ae0a342813e Mon Sep 17 00:00:00 2001
+From: Wootever <Wootever@users.noreply.github.com>
+Date: Sun, 3 Jan 2016 19:59:42 +0100
+Subject: [PATCH 16/80] Kionix KXCJ9: add KIOX000A identifier
+
+---
+ drivers/iio/accel/kxcjk-1013.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/iio/accel/kxcjk-1013.c b/drivers/iio/accel/kxcjk-1013.c
+index 7096e577b23f8..3b85fe781acb4 100644
+--- a/drivers/iio/accel/kxcjk-1013.c
++++ b/drivers/iio/accel/kxcjk-1013.c
+@@ -1487,6 +1487,7 @@ static const struct dev_pm_ops kxcjk1013_pm_ops = {
+ 
+ static const struct acpi_device_id kx_acpi_match[] = {
+ 	{"KXCJ1013", KXCJK1013},
++	{"KIOX000A", KXCJ91008},
+ 	{"KXCJ1008", KXCJ91008},
+ 	{"KXCJ9000", KXCJ91008},
+ 	{"KIOX0009", KXTJ21009},
+-- 
+2.17.1
+

@@ -1,0 +1,105 @@
+From f5e151227623699f6966874158ac696304394f26 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 2 Jul 2017 14:19:13 +0200
+Subject: [PATCH 36/80] net: wireless: broadcom: wl: add patch for kernel 4.12
+
+build.mk is modified to apply incremental patch linux-412.patch
+copied from https://aur.archlinux.org/cgit/aur.git/tree/?h=broadcom-wl
+
+Porting of 0542e4e "add linux412.patch created by wichmannpas"
+---
+ drivers/net/wireless/broadcom/wl/build.mk     |  3 +-
+ .../net/wireless/broadcom/wl/linux-412.patch  | 68 +++++++++++++++++++
+ 2 files changed, 70 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/net/wireless/broadcom/wl/linux-412.patch
+
+diff --git a/drivers/net/wireless/broadcom/wl/build.mk b/drivers/net/wireless/broadcom/wl/build.mk
+index 006bf0230f358..fd45612fb0eea 100644
+--- a/drivers/net/wireless/broadcom/wl/build.mk
++++ b/drivers/net/wireless/broadcom/wl/build.mk
+@@ -13,6 +13,7 @@ $(WL_LIB): $(WL_SRC) $(wildcard $(WL_PATH)/*.patch)
+ 		patch -p1 -d $(@D) -i wl.patch && \
+ 		patch -p1 -d $(@D) -i linux-recent.patch && \
+ 		patch -p1 -d $(@D) -i linux-48.patch && \
+-		patch -p1 -d $(@D) -i linux-411.patch
++		patch -p1 -d $(@D) -i linux-411.patch && \
++		patch -p1 -d $(@D) -i linux-412.patch
+ 
+ $(INSTALLED_KERNEL_TARGET): $(if $(WL_ENABLED),$(WL_LIB))
+diff --git a/drivers/net/wireless/broadcom/wl/linux-412.patch b/drivers/net/wireless/broadcom/wl/linux-412.patch
+new file mode 100644
+index 0000000000000..8abc73db4db11
+--- /dev/null
++++ b/drivers/net/wireless/broadcom/wl/linux-412.patch
+@@ -0,0 +1,68 @@
++diff --git a/src/wl/sys/wl_cfg80211_hybrid.c b/src/wl/sys/wl_cfg80211_hybrid.c
++index da36405..d3741eb 100644
++--- a/src/wl/sys/wl_cfg80211_hybrid.c
+++++ b/src/wl/sys/wl_cfg80211_hybrid.c
++@@ -53,7 +53,11 @@ u32 wl_dbg_level = WL_DBG_ERR;
++ #endif
++ 
++ static s32 wl_cfg80211_change_iface(struct wiphy *wiphy, struct net_device *ndev,
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+++           enum nl80211_iftype type, struct vif_params *params);
+++#else
++            enum nl80211_iftype type, u32 *flags, struct vif_params *params);
+++#endif
++ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
++ static s32
++ wl_cfg80211_scan(struct wiphy *wiphy,
++@@ -466,7 +470,11 @@ wl_dev_ioctl(struct net_device *dev, u32 cmd, void *arg, u32 len)
++ 
++ static s32
++ wl_cfg80211_change_iface(struct wiphy *wiphy, struct net_device *ndev,
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+++                         enum nl80211_iftype type,
+++#else
++                          enum nl80211_iftype type, u32 *flags,
+++#endif
++    struct vif_params *params)
++ {
++ 	struct wl_cfg80211_priv *wl = wiphy_to_wl(wiphy);
++@@ -2361,6 +2369,20 @@ wl_bss_roaming_done(struct wl_cfg80211_priv *wl, struct net_device *ndev,
++                     const wl_event_msg_t *e, void *data)
++ {
++ 	struct wl_cfg80211_connect_info *conn_info = wl_to_conn(wl);
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+++	struct cfg80211_bss *bss;
+++	struct wlc_ssid *ssid;
+++	ssid = &wl->profile->ssid;
+++	bss = cfg80211_get_bss(wl_to_wiphy(wl), NULL, (s8 *)&wl->bssid,
+++	ssid->SSID, ssid->SSID_len, WLAN_CAPABILITY_ESS, WLAN_CAPABILITY_ESS);
+++	struct cfg80211_roam_info roam_info = {
+++		.bss = bss,
+++		.req_ie = conn_info->req_ie,
+++		.req_ie_len = conn_info->req_ie_len,
+++		.resp_ie = conn_info->resp_ie,
+++		.resp_ie_len = conn_info->resp_ie_len,
+++	};
+++#endif
++ 	s32 err = 0;
++ 
++ 	wl_get_assoc_ies(wl);
++@@ -2368,12 +2390,17 @@ wl_bss_roaming_done(struct wl_cfg80211_priv *wl, struct net_device *ndev,
++ 	memcpy(&wl->bssid, &e->addr, ETHER_ADDR_LEN);
++ 	wl_update_bss_info(wl);
++ 	cfg80211_roamed(ndev,
+++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+++			&roam_info,
+++#else
++ #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)
++ 			&wl->conf->channel,	 
++ #endif
++ 			(u8 *)&wl->bssid,
++ 			conn_info->req_ie, conn_info->req_ie_len,
++-			conn_info->resp_ie, conn_info->resp_ie_len, GFP_KERNEL);
+++			conn_info->resp_ie, conn_info->resp_ie_len,
+++#endif
+++			GFP_KERNEL);
++ 	WL_DBG(("Report roaming result\n"));
++ 
++ 	set_bit(WL_STATUS_CONNECTED, &wl->status);
+-- 
+2.17.1
+

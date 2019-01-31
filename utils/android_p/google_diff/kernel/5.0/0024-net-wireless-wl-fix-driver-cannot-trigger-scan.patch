@@ -1,0 +1,35 @@
+From 8f3cc77a83863821b8d022f07e3f611fb545b401 Mon Sep 17 00:00:00 2001
+From: Ma Jian <majian@jidemail.com>
+Date: Tue, 2 Aug 2016 02:52:08 +0800
+Subject: [PATCH 24/80] net: wireless: wl: fix driver cannot trigger scan
+
+The wl driver didn't set max_scan_ie_len, so the scan request will
+be treated as invalid argument request.
+
+NO_REF_TASK
+Tested: run on acer-es13, wifi will work
+
+Change-Id: I74703851e159d6f39afa7439bfff2be5eebf0b66
+---
+ drivers/net/wireless/broadcom/wl/linux-recent.patch | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/net/wireless/broadcom/wl/linux-recent.patch b/drivers/net/wireless/broadcom/wl/linux-recent.patch
+index f388aa0719235..3ff9f187edf77 100644
+--- a/drivers/net/wireless/broadcom/wl/linux-recent.patch
++++ b/drivers/net/wireless/broadcom/wl/linux-recent.patch
+@@ -28,3 +28,11 @@
+  #define CHAN2G(_channel, _freq, _flags) {			\
+  	.band			= IEEE80211_BAND_2GHZ,		\
+  	.center_freq		= (_freq),			\
++@@ -1872,6 +1879,7 @@
++ 	}
++ 	set_wiphy_dev(wdev->wiphy, dev);
++ 	wdev->wiphy->max_scan_ssids = WL_NUM_SCAN_MAX;
+++	wdev->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
++ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 33)
++ 	wdev->wiphy->max_num_pmkids = WL_NUM_PMKIDS_MAX;
++ #endif
+-- 
+2.17.1
+

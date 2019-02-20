@@ -1,7 +1,8 @@
-From da907aeab46d5532beaf7b702375188c31176fcd Mon Sep 17 00:00:00 2001
+From be16fc7e6249279a2244d7761002c3bab9caadfa Mon Sep 17 00:00:00 2001
 From: Priyanka Bose <priyanka.bose@intel.com>
-Date: Wed, 19 Sep 2018 23:11:23 +0530
-Subject: [PATCH] Adding dependancies for Capstone Disassembler in Vendor Art
+Date: Wed, 20 Feb 2019 15:49:09 -0500
+Subject: [PATCH] [PATCH] Adding dependancies for Capstone Disassembler in
+ Vendor Art
 
 Change-Id: I280791e6904ff8b94d577c66c084fe1661652b45
 Category: device enablement
@@ -16,7 +17,7 @@ Signed-off-by: Priyanka Bose <priyanka.bose@intel.com>
  2 files changed, 14 insertions(+)
 
 diff --git a/android/config.go b/android/config.go
-index fafed6b..794241a 100644
+index fafed6b0..794241a7 100644
 --- a/android/config.go
 +++ b/android/config.go
 @@ -845,3 +845,7 @@ func stringSlice(s *[]string) []string {
@@ -28,10 +29,10 @@ index fafed6b..794241a 100644
 +        return Bool(c.productVariables.AutoFastJni)
 +}
 diff --git a/android/variable.go b/android/variable.go
-index f4aaec7..722336e 100644
+index 1039299f..4ff151fe 100644
 --- a/android/variable.go
 +++ b/android/variable.go
-@@ -98,6 +98,14 @@ type variableProperties struct {
+@@ -100,6 +100,14 @@ type variableProperties struct {
  			Enabled *bool `android:"arch_variant"`
  		} `android:"arch_variant"`
  
@@ -46,15 +47,15 @@ index f4aaec7..722336e 100644
  		Uml struct {
  			Cppflags []string
  		}
-@@ -230,6 +238,8 @@ type productVariables struct {
+@@ -235,6 +243,8 @@ type productVariables struct {
  	PgoAdditionalProfileDirs []string `json:",omitempty"`
  
  	VendorVars map[string]map[string]string `json:",omitempty"`
-+
++	
 +	AutoFastJni *bool `json:",omitempty"`
- }
  
- func boolPtr(v bool) *bool {
+ 	// include Bliss variables
+ 	Bliss android.ProductVariables
 -- 
-1.9.1
+2.17.1
 

@@ -1,7 +1,7 @@
-From 555e207b0f1d56ec50e38629ae400603b1bc65dd Mon Sep 17 00:00:00 2001
+From 9de50c1643681aef2c63d385bf14cc1e29069db9 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 3 Nov 2014 23:06:02 +0800
-Subject: [PATCH 05/31] Allow all to execute su
+Subject: [PATCH 06/27] Allow all to execute su
 
 Let the Superuser app control how su is used.
 ---
@@ -9,10 +9,10 @@ Let the Superuser app control how su is used.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libcutils/fs_config.cpp b/libcutils/fs_config.cpp
-index 3ba95e9220..84d1811488 100644
+index 5b79b1d7dc..ad9e07365b 100644
 --- a/libcutils/fs_config.cpp
 +++ b/libcutils/fs_config.cpp
-@@ -176,7 +176,7 @@ static const struct fs_path_config android_files[] = {
+@@ -173,7 +173,7 @@ static const struct fs_path_config android_files[] = {
      // the following two files are INTENTIONALLY set-uid, but they
      // are NOT included on user builds.
      { 06755, AID_ROOT,      AID_ROOT,      0, "system/xbin/procmem" },

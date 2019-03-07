@@ -1,94 +1,43 @@
-From 7c201625a002894af7f460879402992b751883f0 Mon Sep 17 00:00:00 2001
+From 0c07a63df7562ffdddba8bfcf7d4728a6e6b8fcc Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
-Date: Wed, 13 Dec 2017 15:04:30 +0800
-Subject: [PATCH 16/31] init: add modprobe & auto load modules on uevents
-
-We added the modprobe function to init before but it was dropped in
-oreo-x86. Originally I planned to replace it by toybox's modprobe.
-However, it doesn't work as expected. For example, the audio driver
-is not loaded correctly in some Skylake devices.
-
-To fix that, add back the modprobe function to init.
-
-ueventd: auto load modules on uevents
+Date: Thu, 7 Mar 2019 18:36:32 +0800
+Subject: [PATCH 27/27] ueventd: auto load modules on uevents (pie-x86)
 
 This is an almost rewritten patch which implements the auto modules
-loading function for oreo-x86.
+loading function for pie-x86.
 
-The commits from nougat-x86 are squashed:
+The commits from nougat-x86 and oreo-x86 are squashed:
 
 * ueventd: defer modules loading if explicitly listed
 
 * ueventd: auto load modules on uevents
 
-Conflicts:
-	init/builtins.cpp
-	init/devices.h
-	libcutils/Android.bp
+* init: add modprobe
 
-Change-Id: I3f236a35176aef1b771bd1f670b12605ed443480
+* ueventd: load modules in the main process only
+
+* modprobe: handle module options correctly
+
+* modprobe: fix return value
 ---
- init/Android.bp                         |   9 +-
  init/Android.mk                         |   1 +
- init/builtins.cpp                       |  12 +-
- init/devices.cpp                        | 155 ++++++++--
+ init/builtins.cpp                       |   7 +-
+ init/devices.cpp                        | 125 ++++++++
  init/devices.h                          |   8 +
- init/init.cpp                           |  25 +-
- init/init_parser.cpp                    | 168 +++++++++++
- init/init_parser.h                      | 102 +++++++
- init/service.cpp                        |  10 +-
+ init/init.cpp                           |   4 +
  init/uevent.h                           |   1 +
  init/uevent_listener.cpp                |   4 +
- init/ueventd.cpp                        |  11 +-
+ init/ueventd.cpp                        |   9 +-
  init/ueventd.h                          |   1 +
- init/util.cpp                           |  30 ++
- init/util.h                             |   1 +
  libcutils/Android.bp                    |   1 +
  libcutils/include/cutils/probe_module.h | 106 +++++++
  libcutils/probe_module.c                | 386 ++++++++++++++++++++++++
- libcutils/sched_policy.cpp              |   2 +
- 19 files changed, 996 insertions(+), 37 deletions(-)
- create mode 100644 init/init_parser.cpp
- create mode 100644 init/init_parser.h
+ 12 files changed, 647 insertions(+), 6 deletions(-)
  create mode 100644 libcutils/include/cutils/probe_module.h
  create mode 100644 libcutils/probe_module.c
 
-diff --git a/init/Android.bp b/init/Android.bp
-index 23537c9db4..e12a601ac4 100644
---- a/init/Android.bp
-+++ b/init/Android.bp
-@@ -26,7 +26,12 @@ cc_defaults {
-         "-Wextra",
-         "-Wno-unused-parameter",
-         "-Werror",
--        "-DALLOW_LOCAL_PROP_OVERRIDE=1",
-+//	"-Werror=implicit",
-+//      "-Wno-error=format",
-+//      "-Wno-error=type-limits",
-+//      "-Wno-format-extra-args",
-+        "-DTARGET_PRODUCT=\"$(TARGET_PRODUCT)\"",
-+        "-DALLOW_LOCAL_PROP_OVERRIDE=0",
-         "-DALLOW_PERMISSIVE_SELINUX=0",
-         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
-         "-DWORLD_WRITABLE_KMSG=0",
-@@ -104,6 +109,7 @@ cc_library_static {
-         "import_parser.cpp",
-         "init.cpp",
-         "init_first_stage.cpp",
-+        "init_parser.cpp",
-         "keychords.cpp",
-         "log.cpp",
-         "parser.cpp",
-@@ -125,7 +131,6 @@ cc_library_static {
-         "ueventd_parser.cpp",
-         "util.cpp",
-         "watchdogd.cpp",
--        "vendor_init.cpp",
-     ],
-     whole_static_libs: ["libcap"],
-     header_libs: ["bootimg_headers"],
 diff --git a/init/Android.mk b/init/Android.mk
-index a41f669c9a..e1b2f6caab 100644
+index e701394dc8..b8803f2960 100644
 --- a/init/Android.mk
 +++ b/init/Android.mk
 @@ -87,6 +87,7 @@ LOCAL_REQUIRED_MODULES := \
@@ -100,7 +49,7 @@ index a41f669c9a..e1b2f6caab 100644
      ln -sf ../init $(TARGET_ROOT_OUT)/sbin/watchdogd
  
 diff --git a/init/builtins.cpp b/init/builtins.cpp
-index e723424a2a..1309ed1839 100644
+index 06be284112..79e49fd64a 100644
 --- a/init/builtins.cpp
 +++ b/init/builtins.cpp
 @@ -33,7 +33,6 @@
@@ -119,47 +68,20 @@ index e723424a2a..1309ed1839 100644
  #include <ext4_utils/ext4_crypt.h>
  #include <ext4_utils/ext4_crypt_init_extensions.h>
  #include <fs_mgr.h>
-@@ -231,10 +231,9 @@ static Result<Success> do_insmod(const BuiltinArguments& args) {
+@@ -231,10 +231,7 @@ static Result<Success> do_insmod(const BuiltinArguments& args) {
      std::string filename = *it++;
      std::string options = android::base::Join(std::vector<std::string>(it, args.end()), ' ');
  
 -    unique_fd fd(TEMP_FAILURE_RETRY(open(filename.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
 -    if (fd == -1) return ErrnoError() << "open(\"" << filename << "\") failed";
-+//    return insmod(filename.c_str(), options.c_str(), flags);
-+	int rc = insmod(filename.c_str(), options.c_str(), flags); 
- 
+-
 -    int rc = syscall(__NR_finit_module, fd.get(), options.c_str(), flags);
++    int rc = insmod(filename.c_str(), options.c_str(), flags);
      if (rc == -1) return ErrnoError() << "finit_module for \"" << filename << "\" failed";
  
      return Success();
-@@ -454,7 +453,7 @@ static Result<int> mount_fstab(const char* fstabfile, int mount_mode) {
-         // Only needed if someone explicitly changes the default log level in their init.rc.
-         android::base::ScopedLogSeverity info(android::base::INFO);
- 
--        struct fstab* fstab = fs_mgr_read_fstab(filename_val.c_str());
-+        struct fstab* fstab = fs_mgr_read_fstab(fstabfile);
-         int child_ret = fs_mgr_mount_all(fstab, mount_mode);
-         fs_mgr_free_fstab(fstab);
-         if (child_ret == -1) {
-@@ -545,6 +544,7 @@ static Result<Success> queue_fs_event(int code) {
-  * not return.
-  */
- static Result<Success> do_mount_all(const BuiltinArguments& args) {
-+    std::size_t na = 0;
-     bool import_rc = true;
-     bool queue_event = true;
-     int mount_mode = MOUNT_MODE_DEFAULT;
-@@ -552,7 +552,7 @@ static Result<Success> do_mount_all(const BuiltinArguments& args) {
-     std::size_t path_arg_end = args.size();
-     const char* prop_post_fix = "default";
- 
--    for (std::size_t na = args.size() - 1; na > 1; --na) {
-+    for (na = args.size() - 1; na > 1; --na) {
-         if (args[na] == "--early") {
-             path_arg_end = na;
-             queue_event = false;
 diff --git a/init/devices.cpp b/init/devices.cpp
-index 27860b44d9..a0c4c105db 100644
+index bfe38cfc53..eea57e906c 100644
 --- a/init/devices.cpp
 +++ b/init/devices.cpp
 @@ -22,6 +22,8 @@
@@ -181,40 +103,11 @@ index 27860b44d9..a0c4c105db 100644
  #include "selinux.h"
  #include "ueventd.h"
  #include "util.h"
-+#include "init_parser.h"
++#include "parser.h"
  
  #ifdef _INIT_INIT_H
  #error "Do not include init.h in files used by ueventd or watchdogd; it will expose init's globals"
-@@ -392,27 +397,11 @@ void DeviceHandler::HandleDeviceEvent(const Uevent& uevent) {
-         if (StartsWith(uevent.path, "/devices")) {
-             links = GetBlockDeviceSymlinks(uevent);
-         }
--    } else if (StartsWith(uevent.subsystem, "usb")) {
--        if (uevent.subsystem == "usb" || uevent.subsystem == "usbmisc") {
--            if (!uevent.device_name.empty()) {
--                devpath = "/dev/" + uevent.device_name;
--            } else {
--                // This imitates the file system that would be created
--                // if we were using devfs instead.
--                // Minors are broken up into groups of 128, starting at "001"
--                int bus_id = uevent.minor / 128 + 1;
--                int device_id = uevent.minor % 128 + 1;
--                devpath = StringPrintf("/dev/bus/usb/%03d/%03d", bus_id, device_id);
--            }
--        } else {
--            // ignore other USB events
--            return;
--        }
-     } else if (const auto subsystem =
-                    std::find(subsystems_.cbegin(), subsystems_.cend(), uevent.subsystem);
-                subsystem != subsystems_.cend()) {
-         devpath = subsystem->ParseDevPath(uevent);
--    } else if (uevent.subsystem == "usb") {
-+    } else if (uevent.subsystem == "usb" || uevent.subsystem == "usbmisc") {
-         if (!uevent.device_name.empty()) {
-             devpath = "/dev/" + uevent.device_name;
-         } else {
-@@ -435,6 +424,103 @@ void DeviceHandler::HandleDeviceEvent(const Uevent& uevent) {
+@@ -419,6 +424,91 @@ void DeviceHandler::HandleDeviceEvent(const Uevent& uevent) {
      HandleDevice(uevent.action, devpath, block, uevent.major, uevent.minor, links);
  }
  
@@ -261,49 +154,37 @@ index 27860b44d9..a0c4c105db 100644
 +
 +void DeviceHandler::ReadModulesDescFiles()
 +{
-+    auto line_parser = [] (auto args, auto err, std::set<std::string>* set_) -> bool {
-+//    auto line_parser = [&] (auto args, std::set<std::string>* set_) -> bool {
++    auto line_parser = [] (auto args, std::set<std::string>* set_) -> Result<Success> {
 +        if (args.size() < 2) {
-+            *err = "must have 2 entries";
-+            return false;
-+//            return Error() << "must have 2 entries";
++            return Error() << "must have 2 entries";
 +        }
 +
 +        set_->emplace(args[1]);
-+        return true;
-+//        return Success();
++        return Success();
 +    };
 +    using namespace std::placeholders;
 +    std::set<std::string> blacklist, deferred;
 +
-+    InitParser parser;
-+    parser.AddSingleLineParser("blacklist", std::bind(line_parser, _1, _2, &blacklist));
-+    parser.AddSingleLineParser("deferred", std::bind(line_parser, _1, _2, &deferred));
-+//    parser.AddSingleLineParser("blacklist", std::bind(line_parser, _1, &blacklist));
-+//    parser.AddSingleLineParser("deferred", std::bind(line_parser, _1, &deferred));
++    Parser parser;
++    parser.AddSingleLineParser("blacklist", std::bind(line_parser, _1, &blacklist));
++    parser.AddSingleLineParser("deferred", std::bind(line_parser, _1, &deferred));
 +
 +    // wait until the file is ready
 +    while (!parser.ParseConfig("/system/etc/modules.blacklist")) {
 +        std::this_thread::sleep_for(100ms);
 +    }
 +
-+    parser.AddSingleLineParser("alias", [&] (auto args, auto err) {
-+//    parser.AddSingleLineParser("alias", [&] (auto args) {
++    parser.AddSingleLineParser("alias", [&] (auto args) -> Result<Success> {
 +        if (args.size() < 3) {
-+            *err = "must have 3 entries";
-+            return false;
-+//            return Error() << "must have 3 entries";
-+//            return Error();
++            return Error() << "must have 3 entries";
 +        }
 +        if (deferred.find(args[2]) != deferred.end()) {
 +            deferred_mod_aliases_.emplace(args[1], args[2]);
 +        } else if (blacklist.find(args[2]) == blacklist.end()) {
 +            mod_aliases_.emplace(args[1], args[2]);
 +        }
-+        return true;
-+//        return Success();
++        return Success();
 +    });
-+
 +    char alias[PATH_MAX];
 +    strlcat(get_default_mod_path(alias), "modules.alias", PATH_MAX);
 +    parser.ParseConfig(alias);
@@ -318,7 +199,7 @@ index 27860b44d9..a0c4c105db 100644
  DeviceHandler::DeviceHandler(std::vector<Permissions> dev_permissions,
                               std::vector<SysfsPermissions> sysfs_permissions,
                               std::vector<Subsystem> subsystems, std::set<std::string> boot_devices,
-@@ -450,5 +536,40 @@ DeviceHandler::DeviceHandler()
+@@ -434,5 +524,40 @@ DeviceHandler::DeviceHandler()
      : DeviceHandler(std::vector<Permissions>{}, std::vector<SysfsPermissions>{},
                      std::vector<Subsystem>{}, std::set<std::string>{}, false) {}
  
@@ -360,7 +241,7 @@ index 27860b44d9..a0c4c105db 100644
  }  // namespace init
  }  // namespace android
 diff --git a/init/devices.h b/init/devices.h
-index f9035da3db..e15471d936 100644
+index f9035da3db..d5c2ae5b62 100644
 --- a/init/devices.h
 +++ b/init/devices.h
 @@ -23,6 +23,7 @@
@@ -383,61 +264,20 @@ index f9035da3db..e15471d936 100644
  
      std::vector<std::string> GetBlockDeviceSymlinks(const Uevent& uevent) const;
      void set_skip_restorecon(bool value) { skip_restorecon_ = value; }
-@@ -126,6 +132,8 @@ class DeviceHandler {
-     std::vector<Permissions> dev_permissions_;
+@@ -127,6 +133,8 @@ class DeviceHandler {
      std::vector<SysfsPermissions> sysfs_permissions_;
      std::vector<Subsystem> subsystems_;
+     std::set<std::string> boot_devices_;
 +    std::multimap<std::string, std::string> mod_aliases_;
 +    std::multimap<std::string, std::string> deferred_mod_aliases_;
-     std::set<std::string> boot_devices_;
      bool skip_restorecon_;
      std::string sysfs_mount_point_;
+ };
 diff --git a/init/init.cpp b/init/init.cpp
-index 39ad106700..e57c6c6ffc 100644
+index 9cfe61d544..31d79b58c1 100644
 --- a/init/init.cpp
 +++ b/init/init.cpp
-@@ -457,7 +457,25 @@ static void set_usb_controller() {
-         break;
-     }
- }
-+/*
-+void handle_control_message(const std::string& msg, const std::string& name) {
-+    Service* svc = ServiceManager::GetInstance().FindServiceByName(name);
-+    if (svc == nullptr) {
-+        LOG(ERROR) << "no such service '" << name << "'";
-+        return;
-+    }
- 
-+    if (msg == "start") {
-+        svc->Start();
-+    } else if (msg == "stop") {
-+        svc->Stop();
-+    } else if (msg == "restart") {
-+        svc->Restart();
-+    } else {
-+        LOG(ERROR) << "unknown control msg '" << msg << "'";
-+    }
-+}
-+*/
- static void InstallRebootSignalHandlers() {
-     // Instead of panic'ing the kernel as is the default behavior when init crashes,
-     // we prefer to reboot to bootloader on development builds, as this will prevent
-@@ -490,12 +508,13 @@ static void InstallRebootSignalHandlers() {
- #endif
-     sigaction(SIGSYS, &action, nullptr);
-     sigaction(SIGTRAP, &action, nullptr);
--
-+/*
-     action.sa_handler = [](int sig) {
-         LOG(INFO) << "Got ctrl-alt-del: " << sig;
-         handle_control_message("start", "ctrl-alt-del");
-     };
-     sigaction(SIGINT, &action, nullptr);
-+*/
- }
- 
- static void HandleSigtermSignal() {
-@@ -549,6 +568,10 @@ static void InstallSigtermHandler() {
+@@ -549,6 +549,10 @@ static void InstallSigtermHandler() {
  }
  
  int main(int argc, char** argv) {
@@ -448,310 +288,6 @@ index 39ad106700..e57c6c6ffc 100644
      if (!strcmp(basename(argv[0]), "ueventd")) {
          return ueventd_main(argc, argv);
      }
-diff --git a/init/init_parser.cpp b/init/init_parser.cpp
-new file mode 100644
-index 0000000000..be9fc96521
---- /dev/null
-+++ b/init/init_parser.cpp
-@@ -0,0 +1,168 @@
-+/*
-+ * Copyright (C) 2010 The Android Open Source Project
-+ *
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ *      http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+
-+#include "init_parser.h"
-+
-+#include <dirent.h>
-+
-+#include <android-base/chrono_utils.h>
-+#include <android-base/logging.h>
-+#include <android-base/stringprintf.h>
-+#include <android-base/strings.h>
-+
-+#include "tokenizer.h"
-+#include "util.h"
-+
-+namespace android {
-+namespace init {
-+
-+InitParser::InitParser() {
-+}
-+
-+InitParser& InitParser::GetInstance() {
-+    static InitParser instance;
-+    return instance;
-+}
-+
-+void InitParser::AddSectionParser(const std::string& name,
-+                              std::unique_ptr<SectionParser> parser) {
-+    section_parsers_[name] = std::move(parser);
-+}
-+
-+void InitParser::AddSingleLineParser(const std::string& prefix, LineCallback callback) {
-+    line_callbacks_.emplace_back(prefix, callback);
-+}
-+
-+void InitParser::ParseData(const std::string& filename, const std::string& data) {
-+    //TODO: Use a parser with const input and remove this copy
-+    std::vector<char> data_copy(data.begin(), data.end());
-+    data_copy.push_back('\0');
-+
-+    parse_state state;
-+    state.line = 0;
-+    state.ptr = &data_copy[0];
-+    state.nexttoken = 0;
-+
-+    SectionParser* section_parser = nullptr;
-+    std::vector<std::string> args;
-+
-+    for (;;) {
-+        switch (next_token(&state)) {
-+        case T_EOF:
-+            if (section_parser) {
-+                section_parser->EndSection();
-+            }
-+            return;
-+        case T_NEWLINE:
-+            state.line++;
-+            if (args.empty()) {
-+                break;
-+            }
-+            // If we have a line matching a prefix we recognize, call its callback and unset any
-+            // current section parsers.  This is meant for /sys/ and /dev/ line entries for uevent.
-+            for (const auto& [prefix, callback] : line_callbacks_) {
-+                if (android::base::StartsWith(args[0], prefix.c_str())) {
-+                    if (section_parser) section_parser->EndSection();
-+
-+                    std::string ret_err;
-+                    if (!callback(std::move(args), &ret_err)) {
-+                        LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
-+                    }
-+                    section_parser = nullptr;
-+                    break;
-+                }
-+            }
-+            if (section_parsers_.count(args[0])) {
-+                if (section_parser) {
-+                    section_parser->EndSection();
-+                }
-+                section_parser = section_parsers_[args[0]].get();
-+                std::string ret_err;
-+                if (!section_parser->ParseSection(std::move(args), filename, state.line, &ret_err)) {
-+                    LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
-+                    section_parser = nullptr;
-+                }
-+            } else if (section_parser) {
-+                std::string ret_err;
-+                if (!section_parser->ParseLineSection(std::move(args), state.line, &ret_err)) {
-+                    LOG(ERROR) << filename << ": " << state.line << ": " << ret_err;
-+                }
-+            }
-+            args.clear();
-+            break;
-+        case T_TEXT:
-+            args.emplace_back(state.text);
-+            break;
-+        }
-+    }
-+}
-+
-+bool InitParser::ParseConfigFile(const std::string& path) {
-+    LOG(INFO) << "Parsing file " << path << "...";
-+    android::base::Timer t;
-+    std::string data;
-+    std::string err;
-+    if (!ReadFile(path, &data, &err)) {
-+        LOG(ERROR) << err;
-+        return false;
-+    }
-+
-+    data.push_back('\n'); // TODO: fix parse_config.
-+    ParseData(path, data);
-+    for (const auto& [section_name, section_parser] : section_parsers_) {
-+        section_parser->EndFile();
-+    }
-+
-+    LOG(VERBOSE) << "(Parsing " << path << " took " << t << ".)";
-+    return true;
-+}
-+
-+bool InitParser::ParseConfigDir(const std::string& path) {
-+    LOG(INFO) << "Parsing directory " << path << "...";
-+    std::unique_ptr<DIR, int(*)(DIR*)> config_dir(opendir(path.c_str()), closedir);
-+    if (!config_dir) {
-+        PLOG(ERROR) << "Could not import directory '" << path << "'";
-+        return false;
-+    }
-+    dirent* current_file;
-+    std::vector<std::string> files;
-+    while ((current_file = readdir(config_dir.get()))) {
-+        // Ignore directories and only process regular files.
-+        if (current_file->d_type == DT_REG) {
-+            std::string current_path =
-+                android::base::StringPrintf("%s/%s", path.c_str(), current_file->d_name);
-+            files.emplace_back(current_path);
-+        }
-+    }
-+    // Sort first so we load files in a consistent order (bug 31996208)
-+    std::sort(files.begin(), files.end());
-+    for (const auto& file : files) {
-+        if (!ParseConfigFile(file)) {
-+            LOG(ERROR) << "could not import file '" << file << "'";
-+        }
-+    }
-+    return true;
-+}
-+
-+bool InitParser::ParseConfig(const std::string& path) {
-+    if (is_dir(path.c_str())) {
-+        return ParseConfigDir(path);
-+    }
-+    return ParseConfigFile(path);
-+}
-+
-+}  // namespace init
-+}  // namespace android
-diff --git a/init/init_parser.h b/init/init_parser.h
-new file mode 100644
-index 0000000000..1dc150bf06
---- /dev/null
-+++ b/init/init_parser.h
-@@ -0,0 +1,102 @@
-+/*
-+ * Copyright (C) 2010 The Android Open Source Project
-+ *
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ *      http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+
-+#ifndef _INIT_INIT_PARSER_H_
-+#define _INIT_INIT_PARSER_H_
-+
-+#include <map>
-+#include <memory>
-+#include <string>
-+#include <vector>
-+
-+//  SectionParser is an interface that can parse a given 'section' in init.
-+//
-+//  You can implement up to 4 functions below, with ParseSection() being mandatory.
-+//  The first two function return bool with false indicating a failure and has a std::string* err
-+//  parameter into which an error string can be written.  It will be reported along with the
-+//  filename and line number of where the error occurred.
-+//
-+//  1) bool ParseSection(std::vector<std::string>&& args, const std::string& filename,
-+//                       int line, std::string* err)
-+//    This function is called when a section is first encountered.
-+//
-+//  2) bool ParseLineSection(std::vector<std::string>&& args, int line, std::string* err)
-+//    This function is called on each subsequent line until the next section is encountered.
-+//
-+//  3) bool EndSection()
-+//    This function is called either when a new section is found or at the end of the file.
-+//    It indicates that parsing of the current section is complete and any relevant objects should
-+//    be committed.
-+//
-+//  4) bool EndFile()
-+//    This function is called at the end of the file.
-+//    It indicates that the parsing has completed and any relevant objects should be committed.
-+
-+namespace android {
-+namespace init {
-+
-+class SectionParser {
-+  public:
-+    virtual ~SectionParser() {}
-+    virtual bool ParseSection(std::vector<std::string>&& args, const std::string& filename,
-+                              int line, std::string* err) = 0;
-+    virtual bool ParseLineSection(std::vector<std::string>&&, int, std::string*) { return true; };
-+    virtual void EndSection(){};
-+    virtual void EndFile(){};
-+};
-+
-+class InitParser {
-+  public:
-+    //  LineCallback is the type for callbacks that can parse a line starting with a given prefix.
-+    //
-+    //  They take the form of bool Callback(std::vector<std::string>&& args, std::string* err)
-+    //
-+    //  Similar to ParseSection() and ParseLineSection(), this function returns bool with false
-+    //  indicating a failure and has an std::string* err parameter into which an error string can
-+    //  be written.
-+    using LineCallback = std::function<bool(std::vector<std::string>&&, std::string*)>;
-+
-+    // TODO: init is the only user of this as a singleton; remove it.
-+    static InitParser& GetInstance();
-+
-+    InitParser();
-+
-+    bool ParseConfig(const std::string& path);
-+    void AddSectionParser(const std::string& name, std::unique_ptr<SectionParser> parser);
-+    void AddSingleLineParser(const std::string& prefix, LineCallback callback);
-+    void set_is_system_etc_init_loaded(bool loaded) { is_system_etc_init_loaded_ = loaded; }
-+    void set_is_vendor_etc_init_loaded(bool loaded) { is_vendor_etc_init_loaded_ = loaded; }
-+    void set_is_odm_etc_init_loaded(bool loaded) { is_odm_etc_init_loaded_ = loaded; }
-+    bool is_system_etc_init_loaded() { return is_system_etc_init_loaded_; }
-+    bool is_vendor_etc_init_loaded() { return is_vendor_etc_init_loaded_; }
-+    bool is_odm_etc_init_loaded() { return is_odm_etc_init_loaded_; }
-+
-+  private:
-+    void ParseData(const std::string& filename, const std::string& data);
-+    bool ParseConfigFile(const std::string& path);
-+    bool ParseConfigDir(const std::string& path);
-+
-+    std::map<std::string, std::unique_ptr<SectionParser>> section_parsers_;
-+    std::vector<std::pair<std::string, LineCallback>> line_callbacks_;
-+    bool is_system_etc_init_loaded_ = false;
-+    bool is_vendor_etc_init_loaded_ = false;
-+    bool is_odm_etc_init_loaded_ = false;
-+};
-+
-+}  // namespace init
-+}  // namespace android
-+
-+#endif
-diff --git a/init/service.cpp b/init/service.cpp
-index 115d610bcb..fd9b81acca 100644
---- a/init/service.cpp
-+++ b/init/service.cpp
-@@ -91,16 +91,8 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
-         free(new_con);
-     }
-     if (rc == 0 && computed_context == mycon.get()) {
--        if (selinux_status_getenforce() > 0) {
--            return Error() << "File " << service_path << "(labeled \"" << filecon.get()
--                           << "\") has incorrect label or no domain transition from " << mycon.get()
--                           << " to another SELinux domain defined. Have you configured your "
--                              "service correctly? https://source.android.com/security/selinux/"
--                              "device-policy#label_new_services_and_address_denials";
--        }else{
--        KLOG_WARNING("service", "%s does not have a SELinux domain defined", service_name.c_str());
-+        KLOG_WARNING("service", "%s does not have a SELinux domain defined", service_path.c_str());
-         return "skip";
--        }
-     }
-     if (rc < 0) {
-         return Error() << "Could not get process context";
 diff --git a/init/uevent.h b/init/uevent.h
 index c4fd9454c4..dc35fd968d 100644
 --- a/init/uevent.h
@@ -765,7 +301,7 @@ index c4fd9454c4..dc35fd968d 100644
      int major;
      int minor;
 diff --git a/init/uevent_listener.cpp b/init/uevent_listener.cpp
-index 0df880cc62..4d9e5a7196 100644
+index 24b14c44dc..8cf212867d 100644
 --- a/init/uevent_listener.cpp
 +++ b/init/uevent_listener.cpp
 @@ -39,6 +39,7 @@ static void ParseEvent(const char* msg, Uevent* uevent) {
@@ -787,19 +323,9 @@ index 0df880cc62..4d9e5a7196 100644
  
          // advance to after the next \0
 diff --git a/init/ueventd.cpp b/init/ueventd.cpp
-index 6608dfc60e..b0306ec48d 100644
+index ee605f433f..832c2880f4 100644
 --- a/init/ueventd.cpp
 +++ b/init/ueventd.cpp
-@@ -30,8 +30,8 @@
- #include <android-base/chrono_utils.h>
- #include <android-base/logging.h>
- #include <android-base/properties.h>
--#include <fstab/fstab.h>
- #include <cutils/klog.h>
-+#include <fstab/fstab.h>
- #include <selinux/android.h>
- #include <selinux/selinux.h>
- 
 @@ -127,6 +127,7 @@ class ColdBoot {
  
      unsigned int num_handler_subprocesses_;
@@ -827,9 +353,9 @@ index 6608dfc60e..b0306ec48d 100644
 +    }
 +
      close(open(COLDBOOT_DONE, O_WRONLY | O_CREAT | O_CLOEXEC, 0000));
+     klog_set_level(KLOG_NOTICE_LEVEL);
      KLOG_NOTICE("Coldboot", "took %f seconds", cold_boot_timer.duration().count() / 1000.0f);
- }
-@@ -281,6 +287,7 @@ int ueventd_main(int argc, char** argv) {
+@@ -282,6 +288,7 @@ int ueventd_main(int argc, char** argv) {
  
      uevent_listener.Poll([&device_handler](const Uevent& uevent) {
          HandleFirmwareEvent(uevent);
@@ -849,59 +375,6 @@ index 51775ecece..2841eca722 100644
  
  }  // namespace init
  }  // namespace android
-diff --git a/init/util.cpp b/init/util.cpp
-index 4455b2eb1e..f87e096c52 100644
---- a/init/util.cpp
-+++ b/init/util.cpp
-@@ -160,6 +160,36 @@ out_unlink:
-     return -1;
- }
- 
-+bool ReadFile(const std::string& path, std::string* content, std::string* err) {
-+    content->clear();
-+    *err = "";
-+
-+    android::base::unique_fd fd(
-+        TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
-+    if (fd == -1) {
-+        *err = "Unable to open '" + path + "': " + strerror(errno);
-+        return false;
-+    }
-+
-+    // For security reasons, disallow world-writable
-+    // or group-writable files.
-+    struct stat sb;
-+    if (fstat(fd, &sb) == -1) {
-+        *err = "fstat failed for '" + path + "': " + strerror(errno);
-+        return false;
-+    }
-+    if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-+        *err = "Skipping insecure file '" + path + "'";
-+        return false;
-+    }
-+
-+    if (!android::base::ReadFdToString(fd, content)) {
-+        *err = "Unable to read '" + path + "': " + strerror(errno);
-+        return false;
-+    }
-+    return true;
-+}
-+
- Result<std::string> ReadFile(const std::string& path) {
-     android::base::unique_fd fd(
-         TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC)));
-diff --git a/init/util.h b/init/util.h
-index 07e4864ace..d8b4b7116d 100644
---- a/init/util.h
-+++ b/init/util.h
-@@ -41,6 +41,7 @@ namespace init {
- int CreateSocket(const char* name, int type, bool passcred, mode_t perm, uid_t uid, gid_t gid,
-                  const char* socketcon);
- 
-+bool ReadFile(const std::string& path, std::string* content, std::string* err);
- Result<std::string> ReadFile(const std::string& path);
- Result<Success> WriteFile(const std::string& path, const std::string& content);
- 
 diff --git a/libcutils/Android.bp b/libcutils/Android.bp
 index bcc9b1c84b..09da6d5858 100644
 --- a/libcutils/Android.bp
@@ -1418,19 +891,6 @@ index 0000000000..c4596d57af
 +}
 +
 +/* end of file */
-diff --git a/libcutils/sched_policy.cpp b/libcutils/sched_policy.cpp
-index f72ec52d60..86872cb2a2 100644
---- a/libcutils/sched_policy.cpp
-+++ b/libcutils/sched_policy.cpp
-@@ -93,6 +93,8 @@ static int add_tid_to_cgroup(int tid, int fd)
-                 return 0;
-         SLOGW("add_tid_to_cgroup failed to write '%s' (%s); fd=%d\n",
-               ptr, strerror(errno), fd);
-+        if (errno == ENOSPC)
-+                return 0;
-         errno = EINVAL;
-         return -1;
-     }
 -- 
 2.17.1
 

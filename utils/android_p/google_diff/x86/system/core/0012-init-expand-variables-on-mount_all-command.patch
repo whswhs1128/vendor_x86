@@ -1,15 +1,12 @@
-From 622c72bbad2541557e1978017cc712be66883989 Mon Sep 17 00:00:00 2001
+From bfa4c8dee51b84f86f7a768cac553b35011efa28 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 23 Nov 2015 17:57:37 +0800
-Subject: [PATCH 08/31] init: expand variables on mount_all command
+Subject: [PATCH 12/27] init: expand variables on mount_all command
 
 This allows mount_all to handle fstab.${ro.hardware} instead
 of hardcoding the file name.
 
 Change-Id: Ia7fb4e5a84dd50a46afdd4239b9b06204f449cfe
-
-Conflicts:
-	init/builtins.cpp
 ---
  init/builtins.cpp | 10 +++++++---
  1 file changed, 7 insertions(+), 3 deletions(-)

@@ -1,7 +1,7 @@
-From b4ad930d30f8184342da692cb53c6dcc4c0e40a5 Mon Sep 17 00:00:00 2001
+From a86fd8519c5038e989ce8543db1580d20a128b6c Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 29 Oct 2014 23:25:57 +0800
-Subject: [PATCH 04/31] init.rc: run the console shell as root
+Subject: [PATCH 05/27] init.rc: run the console shell as root
 
 To make debugging easier.
 ---
@@ -9,10 +9,10 @@ To make debugging easier.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index c390c392d6..f97f9157e9 100644
+index b9464e7fd8..945d8c4d44 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -752,7 +752,7 @@ service console /system/bin/sh
+@@ -751,7 +751,7 @@ service console /system/bin/sh
      class core
      console
      disabled

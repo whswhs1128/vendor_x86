@@ -1,7 +1,7 @@
-From 89f1fda2de252b96cf0ad2d635101bccd445112a Mon Sep 17 00:00:00 2001
+From 006f16f73455f29a3e5c5be6aa6ddbde20a2846e Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
-Date: Mon, 10 Aug 2015 16:31:28 +0800
-Subject: [PATCH 07/31] Software-accelerated Pixel Flinger
+Date: Tue, 26 Feb 2019 23:14:59 +0800
+Subject: [PATCH 11/27] Software-accelerated Pixel Flinger
 
 The typical graphic workloads on VirtualBox are improved 3X.
 
@@ -12,20 +12,15 @@ http://review.cyanogenmod.org/#/c/70896/
 
 And by Quanganh pham <quanganh2627@gmail.com>:
 http://review.cyanogenmod.org/#/c/97125/
-
-Conflicts:
-	libpixelflinger/tests/codegen/codegen.cpp
-
-Change-Id: Ia86fe9d3d0b9678d7718e2ded01da722c6f282a7
 ---
- libpixelflinger/Android.mk                    |   31 +-
+ libpixelflinger/Android.mk                    |   33 +-
  libpixelflinger/codeflinger/Android.mk        |    3 +
  .../codeflinger/x86/GGLX86Assembler.cpp       | 1507 ++++++++++++
  .../codeflinger/x86/GGLX86Assembler.h         |  563 +++++
- .../codeflinger/x86/X86Assembler.cpp          |  618 +++++
+ .../codeflinger/x86/X86Assembler.cpp          |  619 +++++
  .../codeflinger/x86/X86Assembler.h            |  163 ++
  libpixelflinger/codeflinger/x86/blending.cpp  |  974 ++++++++
- .../codeflinger/x86/libenc/Android.mk         |   30 +
+ .../codeflinger/x86/libenc/Android.mk         |   31 +
  .../codeflinger/x86/libenc/README.txt         |   21 +
  .../codeflinger/x86/libenc/dec_base.cpp       |  541 +++++
  .../codeflinger/x86/libenc/dec_base.h         |  135 +
@@ -44,8 +39,8 @@ Change-Id: Ia86fe9d3d0b9678d7718e2ded01da722c6f282a7
  libpixelflinger/pixelflinger.cpp              |    4 +
  libpixelflinger/scanline.cpp                  |   48 +-
  libpixelflinger/tests/codegen/Android.mk      |   11 +-
- libpixelflinger/tests/codegen/codegen.cpp     |   17 +
- 27 files changed, 15194 insertions(+), 10 deletions(-)
+ libpixelflinger/tests/codegen/codegen.cpp     |   22 +-
+ 27 files changed, 15196 insertions(+), 17 deletions(-)
  create mode 100644 libpixelflinger/codeflinger/Android.mk
  create mode 100644 libpixelflinger/codeflinger/x86/GGLX86Assembler.cpp
  create mode 100644 libpixelflinger/codeflinger/x86/GGLX86Assembler.h
@@ -70,7 +65,7 @@ Change-Id: Ia86fe9d3d0b9678d7718e2ded01da722c6f282a7
  create mode 100644 libpixelflinger/codeflinger/x86/texturing.cpp
 
 diff --git a/libpixelflinger/Android.mk b/libpixelflinger/Android.mk
-index c7306cd5e9..f87b38b2ac 100644
+index c7306cd5e9..b759210763 100644
 --- a/libpixelflinger/Android.mk
 +++ b/libpixelflinger/Android.mk
 @@ -7,9 +7,16 @@ include $(CLEAR_VARS)
@@ -91,7 +86,7 @@ index c7306cd5e9..f87b38b2ac 100644
  	codeflinger/GGLAssembler.cpp \
  	codeflinger/load_store.cpp \
  	codeflinger/blending.cpp \
-@@ -19,10 +26,8 @@ PIXELFLINGER_SRC_FILES:= \
+@@ -19,14 +26,12 @@ PIXELFLINGER_SRC_FILES:= \
  	pixelflinger.cpp.arm \
  	trap.cpp.arm \
  	scanline.cpp.arm \
@@ -104,6 +99,11 @@ index c7306cd5e9..f87b38b2ac 100644
  
  PIXELFLINGER_CFLAGS := -fstrict-aliasing -fomit-frame-pointer
  PIXELFLINGER_CFLAGS += -Wall -Werror
+-PIXELFLINGER_CFLAGS += -Wno-unused-function
++PIXELFLINGER_CFLAGS += -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable
+ 
+ PIXELFLINGER_SRC_FILES_arm := \
+ 	codeflinger/ARMAssembler.cpp \
 @@ -45,6 +50,18 @@ PIXELFLINGER_SRC_FILES_arm64 := \
  	arch-arm64/col32cb16blend.S \
  	arch-arm64/t32cb16blend.S \
@@ -2234,10 +2234,10 @@ index 0000000000..1960cfcc88
 +#endif // ANDROID_GGLX86ASSEMBLER_H
 diff --git a/libpixelflinger/codeflinger/x86/X86Assembler.cpp b/libpixelflinger/codeflinger/x86/X86Assembler.cpp
 new file mode 100644
-index 0000000000..2a717ac992
+index 0000000000..15ab92e535
 --- /dev/null
 +++ b/libpixelflinger/codeflinger/x86/X86Assembler.cpp
-@@ -0,0 +1,618 @@
+@@ -0,0 +1,619 @@
 +/* libs/pixelflinger/codeflinger/x86/X86Assembler.cpp
 +**
 +** Copyright 2006, The Android Open Source Project
@@ -2259,6 +2259,7 @@ index 0000000000..2a717ac992
 +
 +#include <stdio.h>
 +#include <stdlib.h>
++#include <inttypes.h>
 +#include <cutils/log.h>
 +#include <cutils/properties.h>
 +#include <string.h>
@@ -2486,7 +2487,7 @@ index 0000000000..2a717ac992
 +
 +    // the instruction cache is flushed by CodeCache
 +    const int64_t duration = ggl_system_time() - mDuration;
-+    const char * const format = "generated %s (%d ins size) at [%p:%p] in %lld ns\n";
++    const char * const format = "generated %s (%d ins size) at [%p:%p] in %" PRId64 " ns\n";
 +    ALOGI(format, name, int(pc()-base()), base(), pc(), duration);
 +
 +#if defined(WITH_LIB_HARDWARE)
@@ -4007,10 +4008,10 @@ index 0000000000..f918ffde04
 +}; // namespace android
 diff --git a/libpixelflinger/codeflinger/x86/libenc/Android.mk b/libpixelflinger/codeflinger/x86/libenc/Android.mk
 new file mode 100644
-index 0000000000..445de06c9e
+index 0000000000..7a6d96edd1
 --- /dev/null
 +++ b/libpixelflinger/codeflinger/x86/libenc/Android.mk
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,31 @@
 +#
 +# Copyright (C) 2015 The Android-x86 Open Source Project
 +#
@@ -4039,6 +4040,7 @@ index 0000000000..445de06c9e
 +LOCAL_SRC_FILES := $(enc_src_files)
 +LOCAL_MODULE := libenc
 +LOCAL_MODULE_TAGS := optional
++LOCAL_CFLAGS := -Wno-unused-parameter
 +LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
 +include $(BUILD_STATIC_LIBRARY)
 diff --git a/libpixelflinger/codeflinger/x86/libenc/README.txt b/libpixelflinger/codeflinger/x86/libenc/README.txt
@@ -15515,7 +15517,7 @@ index 72d71efd3a..034e36fbb3 100644
  
  LOCAL_CFLAGS:= -Wall -Werror
 diff --git a/libpixelflinger/tests/codegen/codegen.cpp b/libpixelflinger/tests/codegen/codegen.cpp
-index dce4ed72c3..47fa070d2b 100644
+index dce4ed72c3..b27a65342a 100644
 --- a/libpixelflinger/tests/codegen/codegen.cpp
 +++ b/libpixelflinger/tests/codegen/codegen.cpp
 @@ -7,6 +7,10 @@
@@ -15542,7 +15544,15 @@ index dce4ed72c3..47fa070d2b 100644
  #else
  #   define ANDROID_ARM_CODEGEN  0
  #endif
-@@ -50,6 +57,7 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+@@ -40,7 +47,6 @@ public:
+     const AssemblyKey<needs_t>& key() const { return mKey; }
+ };
+ 
+-#if ANDROID_ARM_CODEGEN
+ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+ {
+     GGLContext* c;
+@@ -50,6 +56,7 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
      needs.p = p;
      needs.t[0] = t0;
      needs.t[1] = t1;
@@ -15550,7 +15560,7 @@ index dce4ed72c3..47fa070d2b 100644
      sp<ScanlineAssembly> a(new ScanlineAssembly(needs, ASSEMBLY_SCRATCH_SIZE));
  
  #if defined(__arm__)
-@@ -72,6 +80,14 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
+@@ -72,13 +79,16 @@ static void ggl_test_codegen(uint32_t n, uint32_t p, uint32_t t0, uint32_t t1)
      if (err != 0) {
          printf("error %08x (%s)\n", err, strerror(-err));
      }
@@ -15564,12 +15574,11 @@ index dce4ed72c3..47fa070d2b 100644
 +#endif
      gglUninit(c);
  }
- #else
-@@ -79,6 +95,7 @@ static void ggl_test_codegen(uint32_t, uint32_t, uint32_t, uint32_t) {
-     printf("This test runs only on ARM, Arm64 or MIPS\n");
- }
- #endif
-+}
+-#else
+-static void ggl_test_codegen(uint32_t, uint32_t, uint32_t, uint32_t) {
+-    printf("This test runs only on ARM, Arm64 or MIPS\n");
+-}
+-#endif
  
  int main(int argc, char** argv)
  {

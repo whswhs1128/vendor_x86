@@ -1,37 +1,52 @@
-From ea28a47699a7586fe187b3f5536e568cd4e8d5e7 Mon Sep 17 00:00:00 2001
+From 100c9e870e9672401b8c5cbe6e3827e07f701214 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 23 Sep 2016 17:59:47 +0800
-Subject: [PATCH 11/31] init: set default value of ro.hardware to the target
+Subject: [PATCH 19/27] init: set default value of ro.hardware to the target
  name
 
 People usually forget to set the value of androidboot.hardware to
-the target name in kernel cmdline which results in boot failure.
+the target name in kernel cmdline that results in boot failure.
 
 The change tries to reduce such an error in the future. The target
 name is hardcoded to the image. This eliminates the necessity of
 androidboot.hardware.
-
-Conflicts:
-	init/Android.mk
-
-Change-Id: Ieef00dce33f52e556bad66b1ee9d1c0991c0f041
 ---
- init/Android.mk | 1 +
+ init/Android.bp | 1 -
+ init/Android.mk | 3 ++-
  init/init.cpp   | 2 +-
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/init/Android.bp b/init/Android.bp
+index 70a4ac6512..d305bab8b3 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -102,7 +102,6 @@ cc_library_static {
+         "devices.cpp",
+         "firmware_handler.cpp",
+         "import_parser.cpp",
+-        "init.cpp",
+         "init_first_stage.cpp",
+         "keychords.cpp",
+         "log.cpp",
 diff --git a/init/Android.mk b/init/Android.mk
-index c89bacc99e..a41f669c9a 100644
+index c4a6a50e5f..e701394dc8 100644
 --- a/init/Android.mk
 +++ b/init/Android.mk
-@@ -41,6 +41,7 @@ init_cflags += \
+@@ -36,12 +36,13 @@ init_cflags += \
+     -Wno-unused-parameter \
+     -Werror \
+     -std=gnu++1z \
++    -DTARGET_PRODUCT=\"$(TARGET_PRODUCT)\"
+ 
+ # --
  
  include $(CLEAR_VARS)
  LOCAL_CPPFLAGS := $(init_cflags)
-+LOCAL_CPPFLAGS += -DTARGET_PRODUCT=\"$(TARGET_PRODUCT)\"
- LOCAL_SRC_FILES := main.cpp
+-LOCAL_SRC_FILES := main.cpp
++LOCAL_SRC_FILES := init.cpp main.cpp
  
  LOCAL_MODULE:= init
+ 
 diff --git a/init/init.cpp b/init/init.cpp
 index 4fe115e924..3c020366e7 100644
 --- a/init/init.cpp

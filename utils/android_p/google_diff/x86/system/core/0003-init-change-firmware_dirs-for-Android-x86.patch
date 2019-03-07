@@ -1,12 +1,8 @@
-From 545d5492e521c82695e2bdc0951c8b2273fa94af Mon Sep 17 00:00:00 2001
+From 40f666383e8972e4fbd2d70e9413ab2ac016e8b8 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 1 Feb 2011 15:47:03 +0800
-Subject: [PATCH 02/31] init: change firmware_dirs for Android-x86
+Subject: [PATCH 03/27] init: change firmware_dirs for Android-x86
 
-Conflicts:
-	init/firmware_handler.cpp
-
-Change-Id: I1f8cd005cc82084e60746a3682c5cd0daf2cd798
 ---
  init/firmware_handler.cpp | 4 ++++
  1 file changed, 4 insertions(+)

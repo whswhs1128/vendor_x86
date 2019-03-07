@@ -1,0 +1,74 @@
+From 0959dea7d5bbb0071d5079882f8842787dd41a9d Mon Sep 17 00:00:00 2001
+From: Irina Patru <irina.patru@intel.com>
+Date: Fri, 22 Aug 2014 15:18:49 +0300
+Subject: [PATCH 10/27] UPSTREAM_PENDING newfs_msdos: Handle alignment failure
+
+When trying to create a new FAT32 file system using alignment, the resulted
+MBR structure is corrupted, because the total sectors reported does not
+correspond to the actual available sectors. This is due to the reserved
+sectors field which is updated during the alignment.
+
+When fsck_msdos will try to check this file system, it will fail because it
+cannot match the reported sectors with the actual available sectors.
+Due to the failed check, the file system cannot be mounted by vold.
+
+I/fsck_msdos( 2180): FAT size too small, 242822 entries won't fit into 1897 sectors
+I/fsck_msdos( 2180): fsck_msdos terminated by exit(8)
+E/Vold    ( 2180): Filesystem check failed (unknown exit code 8)
+E/Vold    ( 2180): /dev/block/vold/179:49 failed FS checks (I/O error)
+D/Vold    ( 2180): Volume sdcard1 state changing 3 (Checking) -> 1 (Idle-Unmounted)
+
+In order to fix this issue, we will save the initial bpb structure and restore
+it if the alignment fails.
+
+Change-Id: I58d5078551c689b28c9070585bb330c45bab9c62
+Signed-off-by: Irina Patru <irina.patru@intel.com>
+Reviewed-on: https://android.intel.com/256992
+Reviewed-by: Dolca, Robert <robert.dolca@intel.com>
+Reviewed-by: cactus <cactus@intel.com>
+Reviewed-by: Popa, Valentin <valentin.popa@intel.com>
+---
+ toolbox/newfs_msdos.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/toolbox/newfs_msdos.c b/toolbox/newfs_msdos.c
+index d7047e2c47..eb2cfbdc4a 100644
+--- a/toolbox/newfs_msdos.c
++++ b/toolbox/newfs_msdos.c
+@@ -249,7 +249,7 @@ int newfs_msdos_main(int argc, char *argv[])
+     char buf[MAXPATHLEN];
+     struct stat sb;
+     struct timeval tv;
+-    struct bpb bpb;
++    struct bpb bpb, tempbpb;
+     struct tm *tm;
+     struct bs *bs;
+     struct bsbpb *bsbpb;
+@@ -553,6 +553,7 @@ int newfs_msdos_main(int argc, char *argv[])
+     set_spf = !bpb.bspf;
+     set_spc = !bpb.spc;
+     tempx = x;
++    memset(&tempbpb, 0, sizeof(bpb));
+     /*
+      * Attempt to align if opt_A is set. This is done by increasing the number
+      * of reserved blocks. This can cause other factors to change, which can in
+@@ -600,10 +601,14 @@ int newfs_msdos_main(int argc, char *argv[])
+             alignment = (bpb.res + bpb.bspf * bpb.nft) % bpb.spc;
+             extra_res += bpb.spc - alignment;
+         }
+-        attempts++;
++        if (++attempts == 1)
++            memcpy(&tempbpb, &bpb, sizeof(bpb));
+     } while(opt_A && alignment != 0 && attempts < 2);
+-    if (alignment != 0)
++    if (alignment != 0) {
+         warnx("warning: Alignment failed.");
++        /* return to data from first iteration */
++        memcpy(&bpb, &tempbpb, sizeof(bpb));
++    }
+ 
+     cls = (bpb.bsec - x1) / bpb.spc;
+     x = (u_int64_t)bpb.bspf * bpb.bps * NPB / (fat / BPN) - RESFTE;
+-- 
+2.17.1
+

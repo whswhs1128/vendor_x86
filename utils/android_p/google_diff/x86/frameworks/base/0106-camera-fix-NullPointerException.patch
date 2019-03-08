@@ -1,0 +1,34 @@
+From 53542972db28248a19239c58415d7c8626cde5f5 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 21 Feb 2013 01:46:17 +0800
+Subject: [PATCH 06/23] camera: fix NullPointerException
+
+---
+ core/java/android/hardware/Camera.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/java/android/hardware/Camera.java b/core/java/android/hardware/Camera.java
+index 0f007ea1697b..a37f7157a2dc 100644
+--- a/core/java/android/hardware/Camera.java
++++ b/core/java/android/hardware/Camera.java
+@@ -4820,6 +4820,8 @@ public class Camera {
+                 return Float.parseFloat(mMap.get(key));
+             } catch (NumberFormatException ex) {
+                 return defaultValue;
++            } catch (NullPointerException ex) {
++                return defaultValue;
+             }
+         }
+ 
+@@ -4829,6 +4831,8 @@ public class Camera {
+                 return Integer.parseInt(mMap.get(key));
+             } catch (NumberFormatException ex) {
+                 return defaultValue;
++            } catch (NullPointerException ex) {
++                return defaultValue;
+             }
+         }
+ 
+-- 
+2.17.1
+

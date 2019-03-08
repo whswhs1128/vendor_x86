@@ -867,7 +867,7 @@ index 000000000000..36453644b6af
 +#include <utils/Vector.h>
 +#include <sys/types.h>
 +
-+#include <ScopedUtfChars.h>
++#include <nativehelper/ScopedUtfChars.h>
 +#include <assert.h>
 +namespace android {
 +//  assumption: the length of name of any abi type in abi list,

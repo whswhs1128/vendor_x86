@@ -1,7 +1,7 @@
-From d82365f8206c11c1069017db3fc0be452355ed3a Mon Sep 17 00:00:00 2001
+From ff549d47f192d3186c1849a87f7f15eb6eeb2d2b Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 26 Feb 2019 21:59:39 +0800
-Subject: [PATCH] mkuserimg_mke2fs.sh: calculate size automatically
+Subject: [PATCH 1/4] mkuserimg_mke2fs.sh: calculate size automatically
 
 Add extra size by the $SRC_DIR size plus 10%.
 ---

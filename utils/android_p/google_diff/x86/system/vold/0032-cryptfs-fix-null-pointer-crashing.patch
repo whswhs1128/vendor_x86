@@ -1,0 +1,38 @@
+From c184382af847c317120d85c3d5093b803ffbee51 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 5 Mar 2019 21:50:08 -0500
+Subject: [PATCH 2/2] cryptfs: fix null pointer crashing
+
+Since android-x86 usually doesn't have the data mount point defined
+in the fstab, we will get a null pointer of fstab_rec. This causes
+unable to open Settings Developer options.
+
+Change-Id: I50cfc6042feb93df93f8edb459539035aca85b71
+---
+ cryptfs.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/cryptfs.cpp b/cryptfs.cpp
+index 5a061bb..ef543bd 100644
+--- a/cryptfs.cpp
++++ b/cryptfs.cpp
+@@ -1598,7 +1598,9 @@ static int cryptfs_restart_internal(int restart_main)
+         property_get("ro.crypto.readonly", ro_prop, "");
+         if (strlen(ro_prop) > 0 && std::stoi(ro_prop)) {
+             struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, DATA_MNT_POINT);
+-            rec->flags |= MS_RDONLY;
++            if (rec) {
++				rec->flags |= MS_RDONLY;
++			}
+         }
+ 
+         /* If that succeeded, then mount the decrypted filesystem */
+@@ -2941,4 +2943,5 @@ int cryptfs_isConvertibleToFBE()
+ {
+     struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, DATA_MNT_POINT);
+     return fs_mgr_is_convertible_to_fbe(rec) ? 1 : 0;
++    return (rec && fs_mgr_is_convertible_to_fbe(rec)) ? 1 : 0;
+ }
+-- 
+2.17.1
+

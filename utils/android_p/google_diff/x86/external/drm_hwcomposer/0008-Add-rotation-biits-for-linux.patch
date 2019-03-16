@@ -1,0 +1,36 @@
+From 458eaa9c375aee3ca25100c54569938261b59fc3 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 26 Sep 2018 00:04:25 -0400
+Subject: [PATCH] Add rotation biits for linux
+
+Thanks to @fguy
+
+Change-Id: I07af2208fcc03ff7f8c5724bdc321a6157371a48
+---
+ drmdisplaycompositor.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/drmdisplaycompositor.cpp b/drmdisplaycompositor.cpp
+index 60adbac..97160dc 100644
+--- a/drmdisplaycompositor.cpp
++++ b/drmdisplaycompositor.cpp
+@@ -39,6 +39,16 @@
+ 
+ #define DRM_DISPLAY_COMPOSITOR_MAX_QUEUE_DEPTH 2
+ 
++/* rotation property bits */
++#ifndef DRM_ROTATE_0
++#define DRM_ROTATE_0	0
++#define DRM_ROTATE_90	1
++#define DRM_ROTATE_180	2
++#define DRM_ROTATE_270	3
++#define DRM_REFLECT_X	4
++#define DRM_REFLECT_Y	5
++#endif
++
+ namespace android {
+ 
+ void SquashState::Init(DrmHwcLayer *layers, size_t num_layers) {
+-- 
+2.17.1
+

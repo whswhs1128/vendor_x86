@@ -1,7 +1,7 @@
-From 023341f483918bdd9857579d990213c1c169789d Mon Sep 17 00:00:00 2001
+From f62ae4976117b60c875c1d913fabd88ec0f8076f Mon Sep 17 00:00:00 2001
 From: Daniel Leung <daniel.leung@intel.com>
 Date: Thu, 13 Sep 2012 13:43:41 -0700
-Subject: [PATCH 24/28] Prevent EventHub from adding input device twice
+Subject: [PATCH 02/18] Prevent EventHub from adding input device twice
 
 When Android first starts up, it scans /dev/input for input devices.
 In some rare instances, the EventHub gets another notification that
@@ -21,7 +21,7 @@ Signed-off-by: Daniel Leung <daniel.leung@intel.com>
  2 files changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/services/inputflinger/EventHub.cpp b/services/inputflinger/EventHub.cpp
-index 67ebedce6b..f2620041b7 100644
+index 4d9a2a0254..f315ceb77b 100644
 --- a/services/inputflinger/EventHub.cpp
 +++ b/services/inputflinger/EventHub.cpp
 @@ -1108,8 +1108,17 @@ status_t EventHub::unregisterDeviceFromEpollLocked(Device* device) {

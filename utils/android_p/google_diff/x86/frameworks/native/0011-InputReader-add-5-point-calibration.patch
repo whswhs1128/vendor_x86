@@ -1,24 +1,19 @@
-From da1a2bea887f0b4d8f22e7c3df98c9ece963a7d3 Mon Sep 17 00:00:00 2001
+From d900b7a982d820d4cde237a61f2ee6dfe10ffcce Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 2 Nov 2014 01:21:12 +0800
-Subject: [PATCH] InputReader: add 5-point calibration
+Subject: [PATCH 11/18] InputReader: add 5-point calibration
 
 Updated for Android 5.0.
-
-Change-Id: I58d07157c3758888e73778073c3c94d1605a5f59
-
-Conflicts:
-	services/inputflinger/InputReader.cpp
 ---
- services/inputflinger/InputReader.cpp | 46 +++++++++++++++++++++------
+ services/inputflinger/InputReader.cpp | 42 ++++++++++++++++++++++-----
  services/inputflinger/InputReader.h   |  3 ++
- 2 files changed, 39 insertions(+), 10 deletions(-)
+ 2 files changed, 37 insertions(+), 8 deletions(-)
 
 diff --git a/services/inputflinger/InputReader.cpp b/services/inputflinger/InputReader.cpp
-index 761b60d63d..37b9e8b278 100644
+index c574a6076f..895275b98f 100644
 --- a/services/inputflinger/InputReader.cpp
 +++ b/services/inputflinger/InputReader.cpp
-@@ -3310,6 +3310,19 @@ void TouchInputMapper::configure(nsecs_t when,
+@@ -3312,6 +3312,19 @@ void TouchInputMapper::configure(nsecs_t when,
          configureSurface(when, &resetNeeded);
      }
  
@@ -38,7 +33,7 @@ index 761b60d63d..37b9e8b278 100644
      if (changes && resetNeeded) {
          // Send reset, unless this is the first time the device has been configured,
          // in which case the reader will call reset itself after all mappers are ready.
-@@ -5122,11 +5135,24 @@ void TouchInputMapper::cookPointerData() {
+@@ -5124,11 +5137,24 @@ void TouchInputMapper::cookPointerData() {
          // Adjust X, Y, and coverage coords for surface orientation.
          float x, y;
          float left, top, right, bottom;
@@ -65,35 +60,29 @@ index 761b60d63d..37b9e8b278 100644
              left = float(rawTop - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
              right = float(rawBottom- mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
              bottom = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale + mXTranslate;
-@@ -5137,10 +5163,10 @@ void TouchInputMapper::cookPointerData() {
+@@ -5139,8 +5165,8 @@ void TouchInputMapper::cookPointerData() {
              }
              break;
          case DISPLAY_ORIENTATION_180:
 -            x = float(mRawPointerAxes.x.maxValue - xTransformed) * mXScale;
-+            x = float(mRawPointerAxes.x.maxValue - xTransformed) * mXScale + mXTranslate;
-             y = float(mRawPointerAxes.y.maxValue - yTransformed) * mYScale + mYTranslate;
--            left = float(mRawPointerAxes.x.maxValue - rawRight) * mXScale;
--            right = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale;
-+            left = float(mRawPointerAxes.x.maxValue - rawRight) * mXScale + mYTranslate;
-+            right = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale + mYTranslate;
+-            y = float(mRawPointerAxes.y.maxValue - yTransformed) * mYScale + mYTranslate;
++            x = mSurfaceWidth - x_cal;
++            y = mSurfaceHeight - y_cal + mYTranslate;
+             left = float(mRawPointerAxes.x.maxValue - rawRight) * mXScale;
+             right = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale;
              bottom = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale + mYTranslate;
-             top = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale + mYTranslate;
-             orientation -= M_PI;
-@@ -5149,10 +5175,10 @@ void TouchInputMapper::cookPointerData() {
+@@ -5151,8 +5177,8 @@ void TouchInputMapper::cookPointerData() {
              }
              break;
          case DISPLAY_ORIENTATION_270:
 -            x = float(mRawPointerAxes.y.maxValue - yTransformed) * mYScale;
-+            x = float(mRawPointerAxes.y.maxValue - yTransformed) * mYScale + mYTranslate;
-             y = float(xTransformed - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
--            left = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale;
--            right = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale;
-+            left = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale + mYTranslate;
-+            right = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale + mYTranslate;
+-            y = float(xTransformed - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
++            x = mSurfaceHeight - y_cal;
++            y = x_cal + mXTranslate;
+             left = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale;
+             right = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale;
              bottom = float(rawRight - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
-             top = float(rawLeft - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
-             orientation += M_PI_2;
-@@ -5161,8 +5187,8 @@ void TouchInputMapper::cookPointerData() {
+@@ -5163,8 +5189,8 @@ void TouchInputMapper::cookPointerData() {
              }
              break;
          default:

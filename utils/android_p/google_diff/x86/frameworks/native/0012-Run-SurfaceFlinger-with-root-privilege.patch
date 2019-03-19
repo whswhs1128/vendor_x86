@@ -1,7 +1,7 @@
-From 08c78283e1886aab81f258d5d7e33ab15709777f Mon Sep 17 00:00:00 2001
+From 5d24fb5fa85fae681f2d38a444fed03859e89794 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 4 Aug 2016 01:38:50 +0800
-Subject: [PATCH 06/28] Run SurfaceFlinger with root privilege
+Subject: [PATCH 12/18] Run SurfaceFlinger with root privilege
 
 To control virtual consoles, SurfaceFlinger needs the root privilege.
 ---

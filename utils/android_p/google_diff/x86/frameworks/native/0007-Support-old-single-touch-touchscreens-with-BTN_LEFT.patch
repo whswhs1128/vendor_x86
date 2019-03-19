@@ -1,7 +1,7 @@
-From a555e8c28bc6c79ed2ddbc7ff4d112813138f2ee Mon Sep 17 00:00:00 2001
+From 3d1acf8b0424ce310574270fa94d922a7041e3fd Mon Sep 17 00:00:00 2001
 From: DanielK <daniel.kenzelmann@googlemail.com>
 Date: Tue, 20 Mar 2012 14:28:43 +0800
-Subject: [PATCH 03/28] Support old single-touch touchscreens with BTN_LEFT
+Subject: [PATCH 07/18] Support old single-touch touchscreens with BTN_LEFT
 
 ---
  services/inputflinger/EventHub.cpp    | 2 +-
@@ -22,7 +22,7 @@ index 4d9a2a0254..67ebedce6b 100644
              && test_bit(ABS_Y, device->absBitmask)) {
          device->classes |= INPUT_DEVICE_CLASS_TOUCH;
 diff --git a/services/inputflinger/InputReader.cpp b/services/inputflinger/InputReader.cpp
-index e0cd8a005a..6b999b9abe 100644
+index 0b7e850452..e0bd8ff10f 100644
 --- a/services/inputflinger/InputReader.cpp
 +++ b/services/inputflinger/InputReader.cpp
 @@ -1499,7 +1499,7 @@ TouchButtonAccumulator::TouchButtonAccumulator() :

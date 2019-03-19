@@ -1,7 +1,7 @@
-From 4ab27766256f65120637a49323298dcefa8eaf4b Mon Sep 17 00:00:00 2001
+From f2319f67a6499a80283704a2c9aad8c8ceb76aca Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 14 Sep 2017 18:20:23 +0800
-Subject: [PATCH 10/28] libEGL: use SwiftShader if hardware gralloc is not set
+Subject: [PATCH 16/18] libEGL: use SwiftShader if hardware gralloc is not set
 
 ---
  opengl/libs/EGL/Loader.cpp | 8 +++++++-

@@ -1,25 +1,20 @@
-From dbea75e9bf718346b19a2be030533c2c99262162 Mon Sep 17 00:00:00 2001
+From ed77bdb8616d6b2448581b2a0a10d7ec3fe0bfcf Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Oct 2014 15:39:53 +0800
-Subject: [PATCH 07/28] auto determine the density if not provided in
+Subject: [PATCH 10/18] auto determine the density if not provided in
  surfaceflinger
 
 We hope to support tablet UI for different resolutions.
 So adjust the density according to the resolution.
-
-Conflicts:
-	services/surfaceflinger/SurfaceFlinger_hwc1.cpp
-
-Change-Id: Ibbe48e9e0f95db899eaff370497ac74dbcc8d4ec
 ---
  services/surfaceflinger/SurfaceFlinger.cpp | 29 ++++++++++++++++++----
  1 file changed, 24 insertions(+), 5 deletions(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 8cf044e86c..d821df4798 100644
+index c41c9f659e..b8784b1b90 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -847,8 +847,27 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+@@ -892,8 +892,27 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
      public:
          static int getEmuDensity() {
              return getDensityFromProperty("qemu.sf.lcd_density"); }
@@ -49,7 +44,7 @@ index 8cf044e86c..d821df4798 100644
      };
  
      configs->clear();
-@@ -860,10 +879,12 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+@@ -905,10 +924,12 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
  
          float xdpi = hwConfig->getDpiX();
          float ydpi = hwConfig->getDpiY();
@@ -63,7 +58,7 @@ index 8cf044e86c..d821df4798 100644
              if (density == 0) {
                  // the build doesn't provide a density -- this is wrong!
                  // use xdpi instead
-@@ -887,8 +908,6 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
+@@ -932,8 +953,6 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
              info.orientation = 0;
          }
  

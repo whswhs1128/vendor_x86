@@ -1,7 +1,7 @@
-From 7c251951fc5aa5efa6740f3a6648dd880f54f1e3 Mon Sep 17 00:00:00 2001
+From 1ad89dae9e28a7f17135590cecf231ea834c5c00 Mon Sep 17 00:00:00 2001
 From: Paulo Sergio Travaglia <pstglia@gmail.com>
 Date: Sun, 17 Jan 2016 15:23:06 -0200
-Subject: [PATCH 10/14] Allow screenrecord usage on Android-x86
+Subject: [PATCH 6/8] Allow screenrecord usage on Android-x86
 
 Selects a supported color format for screenrecord (
 OMX_COLOR_FormatYUV420Planar instead of OMX_COLOR_FormatAndroidOpaque)
@@ -13,10 +13,10 @@ in order to make screenrecord work on Android-x86.
  2 files changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/cmds/screenrecord/screenrecord.cpp b/cmds/screenrecord/screenrecord.cpp
-index 4f2a11f33e..a41c1b92c0 100644
+index d1859d142..cb512c0e8 100644
 --- a/cmds/screenrecord/screenrecord.cpp
 +++ b/cmds/screenrecord/screenrecord.cpp
-@@ -165,7 +165,7 @@ static status_t prepareEncoder(float displayFps, sp<MediaCodec>* pCodec,
+@@ -157,7 +157,7 @@ static status_t prepareEncoder(float displayFps, sp<MediaCodec>* pCodec,
      format->setInt32("width", gVideoWidth);
      format->setInt32("height", gVideoHeight);
      format->setString("mime", kMimeTypeAvc);
@@ -26,7 +26,7 @@ index 4f2a11f33e..a41c1b92c0 100644
      format->setFloat("frame-rate", displayFps);
      format->setInt32("i-frame-interval", 10);
 diff --git a/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp b/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
-index 2e90baad65..4901f224dc 100644
+index 2e90baad6..4901f224d 100644
 --- a/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
 +++ b/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
 @@ -397,8 +397,10 @@ OMX_ERRORTYPE SoftVideoEncoderOMXComponent::internalGetParameter(

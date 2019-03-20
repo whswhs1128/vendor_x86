@@ -1,7 +1,7 @@
-From 30d64b823396057d1c8c46b6d9df0a6c13f4e186 Mon Sep 17 00:00:00 2001
+From 2134d49fcc1492f7909fc7805cf737e92833c105 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 23 Nov 2015 00:46:22 +0800
-Subject: [PATCH 09/14] Don't use YV12 color format for video decoding
+Subject: [PATCH 5/8] Don't use YV12 color format for video decoding
 
 YV12 is not supported by Mesa yet. This has to be reverted
 when we can enable h/w decoder.
@@ -10,7 +10,7 @@ when we can enable h/w decoder.
  1 file changed, 2 insertions(+)
 
 diff --git a/media/libstagefright/colorconversion/SoftwareRenderer.cpp b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
-index 657a05b420..3f7a5144d6 100644
+index 657a05b42..3f7a5144d 100644
 --- a/media/libstagefright/colorconversion/SoftwareRenderer.cpp
 +++ b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
 @@ -122,6 +122,7 @@ void SoftwareRenderer::resetFormatIfChanged(

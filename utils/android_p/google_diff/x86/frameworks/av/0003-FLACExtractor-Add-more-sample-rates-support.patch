@@ -1,0 +1,44 @@
+From 6513699456c5d5dfdb494fdb9a326e516c3475f7 Mon Sep 17 00:00:00 2001
+From: Billy <xiaobing.feng@windriver.com>
+Date: Thu, 20 Dec 2012 11:02:55 +0800
+Subject: [PATCH 3/8] FLACExtractor: Add more sample rates support
+
+In FLACExtractor.cpp, it has function to check file's sample rate.
+If the input sample rate is not in its list, it will return "unsupported
+sample rate" issue. Modify code to make other sample rates (100,1k,42k,46k)
+pass the check
+
+Issue: AXIA-1441
+Change-Id: I48f91119275560ec6d00feb0dedc70d10aa55262
+Signed-off-by: Xiaobing Feng <xiaobing.feng@windriver.com>
+Signed-off-by: Matt Gumbel <matthew.k.gumbel@intel.com>
+---
+ media/extractors/flac/FLACExtractor.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/extractors/flac/FLACExtractor.cpp b/media/extractors/flac/FLACExtractor.cpp
+index e3da259e8..7c78c0e90 100644
+--- a/media/extractors/flac/FLACExtractor.cpp
++++ b/media/extractors/flac/FLACExtractor.cpp
+@@ -572,6 +572,8 @@ status_t FLACParser::init()
+         }
+         // check sample rate
+         switch (getSampleRate()) {
++        case   100:
++        case  1000:
+         case  8000:
+         case 11025:
+         case 12000:
+@@ -579,7 +581,9 @@ status_t FLACParser::init()
+         case 22050:
+         case 24000:
+         case 32000:
++        case 42000:
+         case 44100:
++        case 46000:
+         case 48000:
+         case 88200:
+         case 96000:
+-- 
+2.17.1
+

@@ -1,0 +1,28 @@
+From 7521c9b042b547ad4b4fde3e1d8b7d1e010f2cfd Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 22 Feb 2019 23:58:24 -0500
+Subject: [PATCH 19/25] Add microg fused location provider to config
+
+Looks like we somehow missed this on the commits for Pie
+
+Change-Id: If4dc0b3e7eb4358edb844b80fdd06c739fc1cea3
+---
+ core/res/res/values/config.xml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 6590f190cde..061cb71c900 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -1684,6 +1684,8 @@
+     <string-array name="config_locationProviderPackageNames" translatable="false">
+         <!-- The standard AOSP fused location provider -->
+         <item>com.android.location.fused</item>
++        <!-- The (faked) microg fused location provider (a free reimplementation) -->
++        <item>com.google.android.gms</item>
+     </string-array>
+ 
+     <!-- This string array can be overriden to enable test location providers initially. -->
+-- 
+2.17.1
+

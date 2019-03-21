@@ -1,7 +1,7 @@
-From 3328e56d121fa963a5c6b5bc95959613a14dc68b Mon Sep 17 00:00:00 2001
+From 874efb3821af2604ec15364c12db787e21af53b8 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 13 Sep 2013 16:15:12 +0800
-Subject: [PATCH 05/25] MediaFile: support more media types
+Subject: [PATCH 05/17] MediaFile: support more media types
 
 ---
  media/java/android/media/MediaFile.java | 44 ++++++++++++++++++-------

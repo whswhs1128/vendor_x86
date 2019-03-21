@@ -1,7 +1,8 @@
-From f91fc5976f14cdf97fe2524b7a542036c1287de4 Mon Sep 17 00:00:00 2001
+From 0206e9d7c3ed10490d8d0407b10a9c47a89a8a72 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 16 Mar 2018 14:50:39 +0800
-Subject: [PATCH 16/25] Ignore exceptions from getSupportedPreviewFpsRange
+Subject: [PATCH 15/17] Camera: ignore exceptions from
+ getSupportedPreviewFpsRange
 
 ---
  .../android/hardware/camera2/legacy/LegacyMetadataMapper.java | 4 +++-

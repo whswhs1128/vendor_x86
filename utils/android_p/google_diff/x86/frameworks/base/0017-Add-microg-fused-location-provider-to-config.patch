@@ -1,7 +1,7 @@
-From 7521c9b042b547ad4b4fde3e1d8b7d1e010f2cfd Mon Sep 17 00:00:00 2001
+From 1e39c0c8a89e01e7b350d4e19402fe910181ff33 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 22 Feb 2019 23:58:24 -0500
-Subject: [PATCH 19/25] Add microg fused location provider to config
+Subject: [PATCH 17/17] Add microg fused location provider to config
 
 Looks like we somehow missed this on the commits for Pie
 
@@ -11,10 +11,10 @@ Change-Id: If4dc0b3e7eb4358edb844b80fdd06c739fc1cea3
  1 file changed, 2 insertions(+)
 
 diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
-index 6590f190cde..061cb71c900 100644
+index d6f0e913264..1eac24dbce9 100644
 --- a/core/res/res/values/config.xml
 +++ b/core/res/res/values/config.xml
-@@ -1684,6 +1684,8 @@
+@@ -1680,6 +1680,8 @@
      <string-array name="config_locationProviderPackageNames" translatable="false">
          <!-- The standard AOSP fused location provider -->
          <item>com.android.location.fused</item>

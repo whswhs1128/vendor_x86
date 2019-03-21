@@ -1,7 +1,7 @@
-From 2e5787e1b2459d9230b30a898aa2caf849482f26 Mon Sep 17 00:00:00 2001
+From ea00f73b1592bd888f8e81358bc6903200527a85 Mon Sep 17 00:00:00 2001
 From: Andy Ross <andy.ross@windriver.com>
 Date: Tue, 15 Jan 2013 15:05:38 -0800
-Subject: [PATCH 03/25] GLSurfaceView: Be less picky about EGLConfig alpha
+Subject: [PATCH 02/17] GLSurfaceView: Be less picky about EGLConfig alpha
  sizes
 
 EGLChooseConfig returns a "best match" set of visuals meeting or

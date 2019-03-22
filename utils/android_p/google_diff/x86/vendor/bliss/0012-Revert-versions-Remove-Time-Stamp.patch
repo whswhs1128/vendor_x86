@@ -1,0 +1,26 @@
+From bcf1d6198b8f739424edcedd2900209eb8c46ab1 Mon Sep 17 00:00:00 2001
+From: Jackeagle <jackeagle102@gmail.com>
+Date: Fri, 1 Mar 2019 09:58:52 -0500
+Subject: [PATCH] Revert "versions: Remove Time Stamp"
+
+This reverts commit c209a605609d13e2ac9ec743e63c826abb6e4d31.
+---
+ config/versions.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/versions.mk b/config/versions.mk
+index 8aff6eded..0544f3c26 100644
+--- a/config/versions.mk
++++ b/config/versions.mk
+@@ -30,7 +30,7 @@ endif
+ ifdef BLISS_RELEASE
+     BLISS_VERSION := Bliss-v$(VERSION)
+ else
+-    BLISS_VERSION := Bliss-v$(VERSION)-$(BLISS_BUILD)-$(BLISS_BUILDTYPE)-$(shell date +%Y%m%d)
++    BLISS_VERSION := Bliss-v$(VERSION)-$(BLISS_BUILD)-$(BLISS_BUILDTYPE)-$(shell date +%Y%m%d-%H%M)
+ endif
+ 
+ BLISS_DISPLAY_VERSION := $(VERSION)
+-- 
+2.17.1
+

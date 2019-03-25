@@ -1,36 +1,46 @@
-From c184382af847c317120d85c3d5093b803ffbee51 Mon Sep 17 00:00:00 2001
+From 3c5199a56d8aa6722d7f61b20f909ef91854513d Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
-Date: Tue, 5 Mar 2019 21:50:08 -0500
-Subject: [PATCH 2/2] cryptfs: fix null pointer crashing
+Date: Mon, 5 Sep 2016 12:21:22 +0800
+Subject: [PATCH 5/6] cryptfs: fix null pointer crashing
 
 Since android-x86 usually doesn't have the data mount point defined
 in the fstab, we will get a null pointer of fstab_rec. This causes
 unable to open Settings Developer options.
-
-Change-Id: I50cfc6042feb93df93f8edb459539035aca85b71
 ---
- cryptfs.cpp | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ Ext4Crypt.cpp | 1 +
+ cryptfs.cpp   | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
+diff --git a/Ext4Crypt.cpp b/Ext4Crypt.cpp
+index 99a63b4b..0bf753f3 100644
+--- a/Ext4Crypt.cpp
++++ b/Ext4Crypt.cpp
+@@ -274,6 +274,7 @@ static bool lookup_key_ref(const std::map<userid_t, std::string>& key_map, useri
+ 
+ static void get_data_file_encryption_modes(PolicyKeyRef* key_ref) {
+     struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, DATA_MNT_POINT);
++    if (!rec) return;
+     char const* contents_mode;
+     char const* filenames_mode;
+     fs_mgr_get_file_encryption_modes(rec, &contents_mode, &filenames_mode);
 diff --git a/cryptfs.cpp b/cryptfs.cpp
-index 5a061bb..ef543bd 100644
+index 5a061bbf..2945c3ef 100644
 --- a/cryptfs.cpp
 +++ b/cryptfs.cpp
-@@ -1598,7 +1598,9 @@ static int cryptfs_restart_internal(int restart_main)
+@@ -1598,7 +1598,7 @@ static int cryptfs_restart_internal(int restart_main)
          property_get("ro.crypto.readonly", ro_prop, "");
          if (strlen(ro_prop) > 0 && std::stoi(ro_prop)) {
              struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, DATA_MNT_POINT);
 -            rec->flags |= MS_RDONLY;
-+            if (rec) {
-+				rec->flags |= MS_RDONLY;
-+			}
++            if (rec) rec->flags |= MS_RDONLY;
          }
  
          /* If that succeeded, then mount the decrypted filesystem */
-@@ -2941,4 +2943,5 @@ int cryptfs_isConvertibleToFBE()
+@@ -2940,5 +2940,5 @@ void cryptfs_clear_password()
+ int cryptfs_isConvertibleToFBE()
  {
      struct fstab_rec* rec = fs_mgr_get_entry_for_mount_point(fstab_default, DATA_MNT_POINT);
-     return fs_mgr_is_convertible_to_fbe(rec) ? 1 : 0;
+-    return fs_mgr_is_convertible_to_fbe(rec) ? 1 : 0;
 +    return (rec && fs_mgr_is_convertible_to_fbe(rec)) ? 1 : 0;
  }
 -- 

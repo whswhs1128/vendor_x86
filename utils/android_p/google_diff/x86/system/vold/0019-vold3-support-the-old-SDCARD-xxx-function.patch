@@ -1,7 +1,7 @@
-From 0d1a023203cbbaa6457312df6f63c1982297ce56 Mon Sep 17 00:00:00 2001
+From ff2e1866b0a268bab0f4437caafe31837eec6789 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 13 Aug 2016 01:58:29 +0800
-Subject: [PATCH 19/20] vold3: support the old SDCARD=xxx function
+Subject: [PATCH 6/6] vold3: support the old SDCARD=xxx function
 
 By specifying SDCARD=xxx in kernel cmdline, vold will try to mount
 that disk or partition as a sdcard. This is an old function we've
@@ -12,7 +12,7 @@ still like and use it.
  1 file changed, 31 insertions(+)
 
 diff --git a/main.cpp b/main.cpp
-index 4cdd304..d3b28d8 100644
+index 7418aaf5..e2fed701 100644
 --- a/main.cpp
 +++ b/main.cpp
 @@ -24,6 +24,7 @@
@@ -23,7 +23,7 @@ index 4cdd304..d3b28d8 100644
  #include <android-base/logging.h>
  #include <android-base/properties.h>
  #include <android-base/stringprintf.h>
-@@ -268,5 +269,35 @@ static int process_config(VolumeManager* vm, bool* has_adoptable, bool* has_quot
+@@ -267,5 +268,35 @@ static int process_config(VolumeManager* vm, bool* has_adoptable, bool* has_quot
                                      fstype, mntopts)));
          }
      }

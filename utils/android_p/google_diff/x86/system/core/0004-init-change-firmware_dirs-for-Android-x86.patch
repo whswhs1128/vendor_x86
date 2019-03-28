@@ -1,14 +1,15 @@
-From 40f666383e8972e4fbd2d70e9413ab2ac016e8b8 Mon Sep 17 00:00:00 2001
+From b16b346b4ecf8967e268369de575a7e78bd289b5 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 1 Feb 2011 15:47:03 +0800
-Subject: [PATCH 04/28] init: change firmware_dirs for Android-x86
+Subject: [PATCH] init: change firmware_dirs for Android-x86
 
+Change-Id: Ic1a371af54cd76b0e481190d9adf759c05ce3f8c
 ---
  init/firmware_handler.cpp | 4 ++++
  1 file changed, 4 insertions(+)
 
 diff --git a/init/firmware_handler.cpp b/init/firmware_handler.cpp
-index 8c8d9f2ab4..10654bb4d4 100644
+index 8c8d9f2ab4..6d262cc64d 100644
 --- a/init/firmware_handler.cpp
 +++ b/init/firmware_handler.cpp
 @@ -78,8 +78,12 @@ static void ProcessFirmwareEvent(const Uevent& uevent) {
@@ -16,7 +17,7 @@ index 8c8d9f2ab4..10654bb4d4 100644
      }
  
 +#if defined(__i386__) || defined(__x86_64__)
-+    static const char *firmware_dirs[] = { "/system/lib/firmware" };
++    static const char* firmware_dirs[] = { "/system/lib/firmware" };
 +#else
      static const char* firmware_dirs[] = {"/etc/firmware/", "/odm/firmware/",
                                            "/vendor/firmware/", "/firmware/image/"};

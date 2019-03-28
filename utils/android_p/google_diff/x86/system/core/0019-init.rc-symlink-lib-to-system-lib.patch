@@ -1,26 +1,24 @@
-From 2765c4fb77c59afa6864ffec4e79a3a0951de8d8 Mon Sep 17 00:00:00 2001
+From 353be088fb94617e1b9ad5ce54e5128e33ec6eb1 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
-Date: Thu, 7 Mar 2019 15:13:31 -0500
-Subject: [PATCH] nit.rc: symlink /lib to /system/lib
+Date: Fri, 29 Jul 2016 19:49:58 +0800
+Subject: [PATCH 19/28] init.rc: symlink /lib to /system/lib
 
 Currently more linux drivers use request_firmware_nowait() to load
 firmwares. It requires the firmwares exist in the standard path.
 
 Create the symlink before ueventd started to ensure firmwares
 could be loaded correctly.
-
-Change-Id: I9f7b79785b0678c9a7982e530892277b2e271894
 ---
  rootdir/init.rc | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index f97f9157e9..8d343de6b8 100644
+index 8a6c3fbab0..1a917b1f49 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -36,6 +36,9 @@ on early-init
-     # cgroup for system_server and surfaceflinger
-     mkdir /dev/memcg/system 0550 system system
+@@ -38,6 +38,9 @@ on early-init
+ 
+     mount debugfs /sys/kernel/debug /sys/kernel/debug mode=755
  
 +    # for /lib/firmware
 +    symlink system/lib /lib

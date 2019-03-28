@@ -1,7 +1,7 @@
-From 0c07a63df7562ffdddba8bfcf7d4728a6e6b8fcc Mon Sep 17 00:00:00 2001
+From 5b54942749913341f7a76d61def6ddefcb45ca16 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 7 Mar 2019 18:36:32 +0800
-Subject: [PATCH 27/27] ueventd: auto load modules on uevents (pie-x86)
+Subject: [PATCH 28/28] ueventd: auto load modules on uevents (pie-x86)
 
 This is an almost rewritten patch which implements the auto modules
 loading function for pie-x86.
@@ -323,7 +323,7 @@ index 24b14c44dc..8cf212867d 100644
  
          // advance to after the next \0
 diff --git a/init/ueventd.cpp b/init/ueventd.cpp
-index ee605f433f..832c2880f4 100644
+index 10c91819fd..2bb1831e4b 100644
 --- a/init/ueventd.cpp
 +++ b/init/ueventd.cpp
 @@ -127,6 +127,7 @@ class ColdBoot {
@@ -353,9 +353,9 @@ index ee605f433f..832c2880f4 100644
 +    }
 +
      close(open(COLDBOOT_DONE, O_WRONLY | O_CREAT | O_CLOEXEC, 0000));
-     klog_set_level(KLOG_NOTICE_LEVEL);
-     KLOG_NOTICE("Coldboot", "took %f seconds", cold_boot_timer.duration().count() / 1000.0f);
-@@ -282,6 +288,7 @@ int ueventd_main(int argc, char** argv) {
+     KLOG_INFO("Coldboot", "took %f seconds", cold_boot_timer.duration().count() / 1000.0f);
+ }
+@@ -281,6 +287,7 @@ int ueventd_main(int argc, char** argv) {
  
      uevent_listener.Poll([&device_handler](const Uevent& uevent) {
          HandleFirmwareEvent(uevent);

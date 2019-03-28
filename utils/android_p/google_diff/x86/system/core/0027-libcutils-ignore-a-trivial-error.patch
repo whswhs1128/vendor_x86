@@ -1,7 +1,7 @@
-From d04d00bf414e44a2bb6e059d209cf22dd888522f Mon Sep 17 00:00:00 2001
+From fe509fc8ee6bbb6d2378dcf0097004cfaba66919 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 10 Jun 2018 17:34:04 +0800
-Subject: [PATCH 26/27] libcutils: ignore a trivial error
+Subject: [PATCH 27/28] libcutils: ignore a trivial error
 
 Sometimes it complains: "add_tid_to_cgroup failed to write '1900'
 (No space left on device); fd=11". I don't understand why.

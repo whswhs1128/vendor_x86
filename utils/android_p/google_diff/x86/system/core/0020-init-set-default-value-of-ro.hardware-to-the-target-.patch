@@ -1,7 +1,7 @@
 From 100c9e870e9672401b8c5cbe6e3827e07f701214 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 23 Sep 2016 17:59:47 +0800
-Subject: [PATCH 19/27] init: set default value of ro.hardware to the target
+Subject: [PATCH 20/28] init: set default value of ro.hardware to the target
  name
 
 People usually forget to set the value of androidboot.hardware to

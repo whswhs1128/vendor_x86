@@ -1,7 +1,7 @@
 From 1c05cf91129fa331f0a66a5b4a8cb55a3f28509e Mon Sep 17 00:00:00 2001
 From: Ma Jian <majian@jidemail.com>
 Date: Sun, 12 Jun 2016 17:34:25 +0800
-Subject: [PATCH 16/27] Support use local time for RTC
+Subject: [PATCH 17/28] Support use local time for RTC
 
 When default timezone isn't UTC, there will no persist.sys.timezone
 under /data/property/, so init won't get the default timezone for

@@ -1,7 +1,7 @@
 From 006f16f73455f29a3e5c5be6aa6ddbde20a2846e Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 26 Feb 2019 23:14:59 +0800
-Subject: [PATCH 11/27] Software-accelerated Pixel Flinger
+Subject: [PATCH 12/28] Software-accelerated Pixel Flinger
 
 The typical graphic workloads on VirtualBox are improved 3X.
 

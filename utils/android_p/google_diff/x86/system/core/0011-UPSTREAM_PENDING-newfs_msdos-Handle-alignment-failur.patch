@@ -1,7 +1,7 @@
 From 0959dea7d5bbb0071d5079882f8842787dd41a9d Mon Sep 17 00:00:00 2001
 From: Irina Patru <irina.patru@intel.com>
 Date: Fri, 22 Aug 2014 15:18:49 +0300
-Subject: [PATCH 10/27] UPSTREAM_PENDING newfs_msdos: Handle alignment failure
+Subject: [PATCH 11/28] UPSTREAM_PENDING newfs_msdos: Handle alignment failure
 
 When trying to create a new FAT32 file system using alignment, the resulted
 MBR structure is corrupted, because the total sectors reported does not

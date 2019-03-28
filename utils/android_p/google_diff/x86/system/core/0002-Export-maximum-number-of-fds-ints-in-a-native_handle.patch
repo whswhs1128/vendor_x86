@@ -1,7 +1,7 @@
 From 20ac1203a3201ac3e6d05a19325f5569033f3d08 Mon Sep 17 00:00:00 2001
 From: Martijn Coenen <maco@google.com>
 Date: Wed, 5 Dec 2018 09:42:25 +0100
-Subject: [PATCH 01/27] Export maximum number of fds/ints in a native_handle.
+Subject: [PATCH 02/28] Export maximum number of fds/ints in a native_handle.
 
 So we can deserialize it consisently and safely.
 

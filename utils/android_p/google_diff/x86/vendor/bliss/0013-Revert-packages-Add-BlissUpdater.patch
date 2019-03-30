@@ -1,0 +1,27 @@
+From 38dc06c59fdf94beb2821a72614a31c9aa1fc7af Mon Sep 17 00:00:00 2001
+From: Jackeagle <jackeagle102@gmail.com>
+Date: Thu, 7 Mar 2019 12:43:44 -0500
+Subject: [PATCH 1/3] Revert "packages: Add BlissUpdater"
+
+This reverts commit 1fd97f5a7a02847724fef70b23142c9df2e61f15.
+---
+ config/bliss_packages.mk | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/config/bliss_packages.mk b/config/bliss_packages.mk
+index fe04def5f..1b3e41640 100644
+--- a/config/bliss_packages.mk
++++ b/config/bliss_packages.mk
+@@ -67,8 +67,7 @@ PRODUCT_PACKAGES += \
+     LatinIME \
+     Terminal \
+     Launcher3 \
+-    WallpaperPicker \
+-    BlissUpdater
++    WallpaperPicker
+ 
+ # Additional apps
+ PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

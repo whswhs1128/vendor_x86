@@ -1,7 +1,8 @@
-From d7b3800b710a8d5f0e1008f4326ec057b9804602 Mon Sep 17 00:00:00 2001
+From 07d90cf77a33043482d01b720ec155b98f103cb4 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Wed, 27 Mar 2019 06:11:54 +0100
-Subject: [PATCH 2/3] Revert "vendor/bliss: Add separate init for BlissUpdater"
+Subject: [PATCH 14/15] Revert "vendor/bliss: Add separate init for
+ BlissUpdater"
 
 This reverts commit f814ada37fbdc0ff6cec776fb6328c5e1f8d4fdf.
 ---

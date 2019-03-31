@@ -1,7 +1,7 @@
-From 456d8976a21cbdce213b2e5a1113724c4a05d06f Mon Sep 17 00:00:00 2001
+From 4ae424386218b7c6b9931be02a90134b35a20b60 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:56:00 -0500
-Subject: [PATCH 4/9] Revert "kernel: Remove deprecated flag errors"
+Subject: [PATCH 04/15] Revert "kernel: Remove deprecated flag errors"
 
 This reverts commit 31a4c13150d86dd3690fe4b79678f0578900591c.
 ---
@@ -9,7 +9,7 @@ This reverts commit 31a4c13150d86dd3690fe4b79678f0578900591c.
  1 file changed, 6 insertions(+)
 
 diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
-index 61d63bcc..b42d86dc 100644
+index 61d63bcc4..b42d86dc6 100644
 --- a/build/tasks/kernel.mk
 +++ b/build/tasks/kernel.mk
 @@ -77,6 +77,12 @@ KERNEL_DEFCONFIG_SRC := $(KERNEL_SRC)/arch/$(KERNEL_DEFCONFIG_ARCH)/configs/$(KE

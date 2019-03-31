@@ -1,7 +1,7 @@
-From e76039ca4444117dbb5c43a8d0b6dcd9c1712db4 Mon Sep 17 00:00:00 2001
+From 1060ed157ec50409ba74e0eaf6c45a36683477d9 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:55:46 -0500
-Subject: [PATCH 2/9] Revert "kernel.mk: Support kernels that use LTO"
+Subject: [PATCH 02/15] Revert "kernel.mk: Support kernels that use LTO"
 
 This reverts commit 811524eef488f81295c876b669d8ec7a6cad9cea.
 ---
@@ -9,7 +9,7 @@ This reverts commit 811524eef488f81295c876b669d8ec7a6cad9cea.
  1 file changed, 15 insertions(+), 16 deletions(-)
 
 diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
-index 54812a90..7a674ee9 100644
+index 54812a908..7a674ee90 100644
 --- a/build/tasks/kernel.mk
 +++ b/build/tasks/kernel.mk
 @@ -178,9 +178,8 @@ ifeq ($(TARGET_KERNEL_CLANG_COMPILE),true)

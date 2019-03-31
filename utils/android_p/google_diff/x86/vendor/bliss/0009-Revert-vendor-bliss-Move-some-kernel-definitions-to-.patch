@@ -1,7 +1,7 @@
-From 1fe137b24228d2b6a06c3141e894a1988230811d Mon Sep 17 00:00:00 2001
+From d918551633e350d9c2bc0bc444b3fcbf6846560f Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:57:23 -0500
-Subject: [PATCH 9/9] Revert "vendor/bliss: Move some kernel definitions to
+Subject: [PATCH 09/15] Revert "vendor/bliss: Move some kernel definitions to
  BoardConfigKernel"
 
 This reverts commit 3a8423358f51b6616622c881e04d82ba2f603984.
@@ -13,7 +13,7 @@ This reverts commit 3a8423358f51b6616622c881e04d82ba2f603984.
  delete mode 100644 config/BoardConfigKernel.mk
 
 diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
-index d0263d37..6057b9f1 100644
+index d0263d372..6057b9f1d 100644
 --- a/build/tasks/kernel.mk
 +++ b/build/tasks/kernel.mk
 @@ -1,5 +1,4 @@
@@ -267,7 +267,7 @@ index d0263d37..6057b9f1 100644
  		--image $@ \
  		--partition_size $(BOARD_DTBOIMG_PARTITION_SIZE) \
 diff --git a/config/BoardConfigBliss.mk b/config/BoardConfigBliss.mk
-index e38938b0..e6102f7a 100644
+index e38938b0a..e6102f7af 100644
 --- a/config/BoardConfigBliss.mk
 +++ b/config/BoardConfigBliss.mk
 @@ -8,8 +8,6 @@ ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
@@ -281,7 +281,7 @@ index e38938b0..e6102f7a 100644
  endif 
 diff --git a/config/BoardConfigKernel.mk b/config/BoardConfigKernel.mk
 deleted file mode 100644
-index 74f3413b..00000000
+index 74f3413b6..000000000
 --- a/config/BoardConfigKernel.mk
 +++ /dev/null
 @@ -1,111 +0,0 @@

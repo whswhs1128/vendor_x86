@@ -1,7 +1,7 @@
-From dff7724ce0ebd95545d8eb5c69ea7dd4c21e1b80 Mon Sep 17 00:00:00 2001
+From 732553c5230ccc8ace111981e6e31c0ac2b0dfb2 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:57:16 -0500
-Subject: [PATCH 8/9] Revert "vendor/bliss: Add soong generator module type"
+Subject: [PATCH 08/15] Revert "vendor/bliss: Add soong generator module type"
 
 This reverts commit 0d2bcd429f2227c1efd59c2a7a4916f6f10c8af2.
 ---
@@ -11,7 +11,7 @@ This reverts commit 0d2bcd429f2227c1efd59c2a7a4916f6f10c8af2.
  delete mode 100644 build/soong/generator/generator.go
 
 diff --git a/build/soong/Android.bp b/build/soong/Android.bp
-index 45a4ab72..2cb1afa0 100644
+index 45a4ab72a..2cb1afa0e 100644
 --- a/build/soong/Android.bp
 +++ b/build/soong/Android.bp
 @@ -5,19 +5,3 @@ bootstrap_go_package {
@@ -36,7 +36,7 @@ index 45a4ab72..2cb1afa0 100644
 -}
 diff --git a/build/soong/generator/generator.go b/build/soong/generator/generator.go
 deleted file mode 100644
-index b14a19c5..00000000
+index b14a19c50..000000000
 --- a/build/soong/generator/generator.go
 +++ /dev/null
 @@ -1,307 +0,0 @@

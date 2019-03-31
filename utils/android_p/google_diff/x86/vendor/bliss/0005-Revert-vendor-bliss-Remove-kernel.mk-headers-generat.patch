@@ -1,7 +1,7 @@
-From 4a0c568b97efb930137b0f7f3a0d811df8973f5d Mon Sep 17 00:00:00 2001
+From 93b811b11df12c6daf9168e61e044f18f2343f82 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:56:07 -0500
-Subject: [PATCH 5/9] Revert "vendor/bliss: Remove kernel.mk headers
+Subject: [PATCH 05/15] Revert "vendor/bliss: Remove kernel.mk headers
  generation"
 
 This reverts commit 6a4c7c1258ffecc26324b034c9091373bf0272dd.
@@ -10,7 +10,7 @@ This reverts commit 6a4c7c1258ffecc26324b034c9091373bf0272dd.
  1 file changed, 50 insertions(+)
 
 diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
-index b42d86dc..d0263d37 100644
+index b42d86dc6..d0263d372 100644
 --- a/build/tasks/kernel.mk
 +++ b/build/tasks/kernel.mk
 @@ -151,6 +151,9 @@ endif

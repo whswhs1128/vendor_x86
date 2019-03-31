@@ -1,7 +1,7 @@
-From e9a1c2d62bc123e66ac785f48b86334e33190fdf Mon Sep 17 00:00:00 2001
+From e6b36838b3b96f2fdd33fe9a7336eb954dbc70ac Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Wed, 19 Dec 2018 17:07:12 +0100
-Subject: [PATCH 11/11] Revert "soong_config: Add flag for legacy HW FDE"
+Subject: [PATCH 11/15] Revert "soong_config: Add flag for legacy HW FDE"
 
 This reverts commit b9c76da9c82d09514aeaaf74a13ed6c5bc32dfcb.
 ---
@@ -10,7 +10,7 @@ This reverts commit b9c76da9c82d09514aeaaf74a13ed6c5bc32dfcb.
  2 files changed, 1 insertion(+), 18 deletions(-)
 
 diff --git a/build/soong/android/variable.go b/build/soong/android/variable.go
-index 0123521..c11ec95 100644
+index 01235217f..c11ec9589 100644
 --- a/build/soong/android/variable.go
 +++ b/build/soong/android/variable.go
 @@ -25,17 +25,6 @@ type Product_variables struct {
@@ -42,7 +42,7 @@ index 0123521..c11ec95 100644
 + 	Target_process_sdk_version_override *string `json:",omitempty"`
  }
 diff --git a/build/soong/soong_config.mk b/build/soong/soong_config.mk
-index c31cb22..d4ea787 100644
+index c31cb22d4..d4ea78779 100644
 --- a/build/soong/soong_config.mk
 +++ b/build/soong/soong_config.mk
 @@ -4,9 +4,6 @@ _contents := $(_contents)    "Bliss":{$(newline)

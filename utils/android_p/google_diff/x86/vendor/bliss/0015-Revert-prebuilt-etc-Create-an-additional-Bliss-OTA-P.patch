@@ -1,7 +1,7 @@
-From eb681fa09092862b826d18e07b68678535e6dcc9 Mon Sep 17 00:00:00 2001
+From 70cf13ab1199c352bcf3c92379824d2fad107fb4 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Tue, 26 Mar 2019 16:38:25 +0100
-Subject: [PATCH 3/3] Revert "prebuilt/etc: Create an additional Bliss OTA
+Subject: [PATCH 15/15] Revert "prebuilt/etc: Create an additional Bliss OTA
  Package directory /data/"
 
 This reverts commit cc4484b4f2a9def3e24be8152dc5df3bfdd6a252.

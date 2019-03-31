@@ -1,7 +1,7 @@
-From df7d12a93f9eae6b35debd5a39286962bf973fdd Mon Sep 17 00:00:00 2001
+From 9345cbf1c65a2dd261992e5c7e485826f986e912 Mon Sep 17 00:00:00 2001
 From: Jackeagle <jackeagle102@gmail.com>
 Date: Mon, 3 Dec 2018 10:55:28 -0500
-Subject: [PATCH 1/9] Revert "verity_tool: Implement status getter"
+Subject: [PATCH 01/15] Revert "verity_tool: Implement status getter"
 
 This reverts commit 385296fd334a854915d41ef556ce7bb981f66bb3.
 ---
@@ -12,7 +12,7 @@ This reverts commit 385296fd334a854915d41ef556ce7bb981f66bb3.
  4 files changed, 6 insertions(+), 107 deletions(-)
 
 diff --git a/config/BoardConfigBliss.mk b/config/BoardConfigBliss.mk
-index 032e0613..7ccae1d4 100644
+index 032e06135..7ccae1d47 100644
 --- a/config/BoardConfigBliss.mk
 +++ b/config/BoardConfigBliss.mk
 @@ -9,8 +9,8 @@ ifeq ($(TARGET_HW_DISK_ENCRYPTION),true)
@@ -29,7 +29,7 @@ index 032e0613..7ccae1d4 100644
 +include vendor/bliss/config/BoardConfigQcom.mk 
 +endif 
 diff --git a/verity_tool/include/verity_tool.h b/verity_tool/include/verity_tool.h
-index b81eda1a..25a6a7c2 100644
+index b81eda1a9..25a6a7c26 100644
 --- a/verity_tool/include/verity_tool.h
 +++ b/verity_tool/include/verity_tool.h
 @@ -18,14 +18,6 @@
@@ -62,7 +62,7 @@ index b81eda1a..25a6a7c2 100644
   * Return codes:
   *
 diff --git a/verity_tool/main.cpp b/verity_tool/main.cpp
-index befdafac..f5f026aa 100644
+index befdafacd..f5f026aab 100644
 --- a/verity_tool/main.cpp
 +++ b/verity_tool/main.cpp
 @@ -24,23 +24,20 @@ static void print_usage() {
@@ -119,7 +119,7 @@ index befdafac..f5f026aa 100644
          printf("Error occurred in set_verity_enable\n");
          exit(EXIT_FAILURE);
 diff --git a/verity_tool/verity_tool.cpp b/verity_tool/verity_tool.cpp
-index 48e95b67..9575c4c1 100644
+index 48e95b676..9575c4c14 100644
 --- a/verity_tool/verity_tool.cpp
 +++ b/verity_tool/verity_tool.cpp
 @@ -108,69 +108,6 @@ static std::string get_ab_suffix() {

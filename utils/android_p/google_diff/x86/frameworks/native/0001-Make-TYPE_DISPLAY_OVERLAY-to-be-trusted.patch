@@ -1,7 +1,7 @@
-From 573191a29b4d63084911d0f544cfe239c93a7620 Mon Sep 17 00:00:00 2001
+From 95d3be3ea808f33c45d1c6c8d01c7f162b8cd4a6 Mon Sep 17 00:00:00 2001
 From: xianhaox <xianhaox.qing@intel.com>
 Date: Wed, 8 Nov 2017 18:43:44 +0800
-Subject: [PATCH 02/28] Make TYPE_DISPLAY_OVERLAY to be trusted
+Subject: [PATCH 2/3] Make TYPE_DISPLAY_OVERLAY to be trusted
 
 The Hvac app used TYPE_DISPLAY_OVERLAY window type. It covers
 almost the screen. Without trusting it will cause touch
@@ -20,7 +20,7 @@ Signed-off-by: Walter, Yan <walterx.yan@intel.com>
  2 files changed, 2 insertions(+)
 
 diff --git a/services/inputflinger/InputWindow.cpp b/services/inputflinger/InputWindow.cpp
-index 3ae7972779..c43f42e2f0 100644
+index 3ae7972..c43f42e 100644
 --- a/services/inputflinger/InputWindow.cpp
 +++ b/services/inputflinger/InputWindow.cpp
 @@ -50,6 +50,7 @@ bool InputWindowInfo::isTrustedOverlay() const {
@@ -32,10 +32,10 @@ index 3ae7972779..c43f42e2f0 100644
  }
  
 diff --git a/services/inputflinger/InputWindow.h b/services/inputflinger/InputWindow.h
-index 5a48375910..6dbfff593f 100644
+index 9eb2798..20d6200 100644
 --- a/services/inputflinger/InputWindow.h
 +++ b/services/inputflinger/InputWindow.h
-@@ -102,6 +102,7 @@ struct InputWindowInfo {
+@@ -103,6 +103,7 @@ struct InputWindowInfo {
          TYPE_BOOT_PROGRESS = FIRST_SYSTEM_WINDOW+21,
          TYPE_INPUT_CONSUMER = FIRST_SYSTEM_WINDOW+22,
          TYPE_NAVIGATION_BAR_PANEL = FIRST_SYSTEM_WINDOW+24,
@@ -44,5 +44,5 @@ index 5a48375910..6dbfff593f 100644
          TYPE_ACCESSIBILITY_OVERLAY = FIRST_SYSTEM_WINDOW+32,
          TYPE_DOCK_DIVIDER = FIRST_SYSTEM_WINDOW+34,
 -- 
-2.17.1
+1.9.1
 

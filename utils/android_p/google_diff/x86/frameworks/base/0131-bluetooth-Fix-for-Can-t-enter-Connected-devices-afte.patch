@@ -1,7 +1,7 @@
-From 40a12554da351405b6912fc360d4f9022916b17a Mon Sep 17 00:00:00 2001
+From b478159254b2dbeb4b52a4e1e79941923375afd6 Mon Sep 17 00:00:00 2001
 From: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
 Date: Sun, 12 Aug 2018 10:33:18 +0530
-Subject: [PATCH 6/6] bluetooth: Fix for Can't enter "Connected devices" after
+Subject: [PATCH] bluetooth: Fix for Can't enter "Connected devices" after
  pairing
 
 Issue: Once the device is paired and connected the Connected devices
@@ -30,27 +30,27 @@ Signed-off-by: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
  1 file changed, 12 insertions(+), 2 deletions(-)
 
 diff --git a/packages/SettingsLib/src/com/android/settingslib/bluetooth/CachedBluetoothDevice.java b/packages/SettingsLib/src/com/android/settingslib/bluetooth/CachedBluetoothDevice.java
-index bb8fbe2d..4e124eaf 100644
+index 1a8e24f46d4..ec77b3bbbf0 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/bluetooth/CachedBluetoothDevice.java
 +++ b/packages/SettingsLib/src/com/android/settingslib/bluetooth/CachedBluetoothDevice.java
-@@ -1189,8 +1189,18 @@ public class CachedBluetoothDevice implements Comparable<CachedBluetoothDevice>
-      * @return {@code true} if {@code cachedBluetoothDevice} is a2dp device
+@@ -1194,8 +1194,18 @@ public class CachedBluetoothDevice implements Comparable<CachedBluetoothDevice>
       */
      public boolean isA2dpDevice() {
--        return mProfileManager.getA2dpProfile().getConnectionStatus(mDevice) ==
+         A2dpProfile a2dpProfile = mProfileManager.getA2dpProfile();
+-        return a2dpProfile != null && a2dpProfile.getConnectionStatus(mDevice) ==
 -                BluetoothProfile.STATE_CONNECTED;
 +        if (mProfileManager.getA2dpProfile() != null) {
-+            return mProfileManager.getA2dpProfile().getConnectionStatus(mDevice) ==
-+                    BluetoothProfile.STATE_CONNECTED;
-+        } else if (mProfileManager.getA2dpSinkProfile() != null) {
-+            return mProfileManager.getA2dpSinkProfile().getConnectionStatus(mDevice) ==
-+                    BluetoothProfile.STATE_CONNECTED;
-+        } else {
-+            if (Utils.D)
-+                Log.d(TAG, "isA2dpDevice: no A2DP source or sink profile found");
++			return mProfileManager.getA2dpProfile().getConnectionStatus(mDevice) ==
++				BluetoothProfile.STATE_CONNECTED;
++		} else if (mProfileManager.getA2dpSinkProfile() != null) {
++			return mProfileManager.getA2dpSinkProfile().getConnectionStatus(mDevice) ==
++				BluetoothProfile.STATE_CONNECTED;
++		} else {
++			if (Utils.D)
++				Log.d(TAG, "isA2dpDevice: no A2DP source or sink profile found");
 +
-+            return false;
-+        }
++			return false;
++		}
      }
  
      /**

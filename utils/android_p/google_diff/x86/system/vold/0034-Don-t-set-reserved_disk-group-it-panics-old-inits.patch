@@ -1,0 +1,25 @@
+From 3f4fd8076f39eb071a348e05190e4e1ae8fa46bb Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Tue, 14 Aug 2018 20:53:12 +0200
+Subject: [PATCH 2/5] Don't set reserved_disk group, it panics old inits
+
+Conflicts:
+	vold.rc
+
+Change-Id: I3392eae56212a111f4a235098827e929a08f28f1
+---
+ vold.rc | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/vold.rc b/vold.rc
+index 93d87866..c27aedaa 100644
+--- a/vold.rc
++++ b/vold.rc
+@@ -5,4 +5,3 @@ service vold /system/bin/vold \
+     ioprio be 2
+     writepid /dev/cpuset/foreground/tasks
+     shutdown critical
+-    group root reserved_disk
+-- 
+2.17.1
+

@@ -1,17 +1,17 @@
-From cae9e8d524d63bda479ad836dea3f6dd6885d222 Mon Sep 17 00:00:00 2001
+From 452302a8603a0e197b0047c3c876baab23958ff1 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 29 Aug 2018 11:05:54 +0200
-Subject: [PATCH 23/27] Add a property to override pre-o max aspect ratio
+Subject: [PATCH 4/4] Add a property to override pre-o max aspect ratio
 
 ---
- .../core/java/com/android/server/am/ActivityRecord.java  | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+ .../core/java/com/android/server/am/ActivityRecord.java    | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/services/core/java/com/android/server/am/ActivityRecord.java b/services/core/java/com/android/server/am/ActivityRecord.java
-index 97ae3772ca3a..5718c5ee8d07 100644
+index 4a9f8fc5a6e4..d114e5ae4299 100644
 --- a/services/core/java/com/android/server/am/ActivityRecord.java
 +++ b/services/core/java/com/android/server/am/ActivityRecord.java
-@@ -161,6 +161,7 @@ import android.os.PersistableBundle;
+@@ -164,6 +164,7 @@ import android.os.PersistableBundle;
  import android.os.Process;
  import android.os.RemoteException;
  import android.os.SystemClock;
@@ -19,16 +19,7 @@ index 97ae3772ca3a..5718c5ee8d07 100644
  import android.os.UserHandle;
  import android.os.storage.StorageManager;
  import android.service.voice.IVoiceInteractionSession;
-@@ -2354,7 +2355,7 @@ final class ActivityRecord extends ConfigurationContainer implements AppWindowCo
-     // TODO(b/36505427): Consider moving this method and similar ones to ConfigurationContainer.
-     private void computeBounds(Rect outBounds) {
-         outBounds.setEmpty();
--        final float maxAspectRatio = info.maxAspectRatio;
-+        float maxAspectRatio = info.maxAspectRatio;
-         final ActivityStack stack = getStack();
-         if (task == null || stack == null || task.inMultiWindowMode() || maxAspectRatio == 0
-                 || isInVrUiMode(getConfiguration())) {
-@@ -2365,6 +2366,12 @@ final class ActivityRecord extends ConfigurationContainer implements AppWindowCo
+@@ -2438,6 +2439,12 @@ final class ActivityRecord extends ConfigurationContainer implements AppWindowCo
              return;
          }
  

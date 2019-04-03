@@ -1,23 +1,23 @@
-From b35e5ba30804ec173feb640b2c099187c676fcf5 Mon Sep 17 00:00:00 2001
+From 0472a2867ce0796808d490d2dbed4924a2218bfb Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Mon, 20 Aug 2018 22:27:02 +0200
-Subject: [PATCH 19/27] It is okay not to have wifi in SystemUI (on FDE lock)
+Subject: [PATCH 2/4] It is okay not to have wifi in SystemUI (on FDE lock)
 
 ---
- .../src/com/android/settingslib/wifi/WifiTracker.java         | 2 +-
- .../systemui/statusbar/policy/HotspotControllerImpl.java      | 1 +
- .../systemui/statusbar/policy/WifiSignalController.java       | 4 +++-
- 3 files changed, 5 insertions(+), 2 deletions(-)
+ .../src/com/android/settingslib/wifi/WifiTracker.java          | 2 +-
+ .../systemui/statusbar/policy/HotspotControllerImpl.java       | 1 +
+ .../systemui/statusbar/policy/WifiSignalController.java        | 3 ++-
+ 3 files changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java b/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
-index d8f0886730d8..76cd70d5c844 100644
+index 11c22eef5ad0..1ca952aaee30 100644
 --- a/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
 +++ b/packages/SettingsLib/src/com/android/settingslib/wifi/WifiTracker.java
 @@ -207,7 +207,7 @@ public class WifiTracker implements LifecycleObserver, OnStart, OnStop, OnDestro
          mConnectivityManager = connectivityManager;
  
          // check if verbose logging developer option has been turned on or off
--        sVerboseLogging = (mWifiManager.getVerboseLoggingLevel() > 0);
+-        sVerboseLogging = (mWifiManager == null) ? false : (mWifiManager.getVerboseLoggingLevel() > 0);
 +        sVerboseLogging = mWifiManager != null ? (mWifiManager.getVerboseLoggingLevel() > 0) : false;
  
          mFilter = filter;
@@ -35,20 +35,20 @@ index c44b385f5057..e5696edb9e00 100644
              mWifiManager.registerSoftApCallback(
                      this,
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/WifiSignalController.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/WifiSignalController.java
-index e5e576d6b80b..78b30500da76 100644
+index b83c6b88f8dc..83ae9badcb36 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/WifiSignalController.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/WifiSignalController.java
-@@ -59,7 +59,9 @@ public class WifiSignalController extends
+@@ -59,8 +59,9 @@ public class WifiSignalController extends
          mHasMobileData = hasMobileData;
          Handler handler = new WifiHandler(Looper.getMainLooper());
          mWifiChannel = new AsyncChannel();
--        Messenger wifiMessenger = wifiManager.getWifiServiceMessenger();
 +        Messenger wifiMessenger = null;
-+        if(wifiManager != null)
-+            wifiMessenger = wifiManager.getWifiServiceMessenger();
-         if (wifiMessenger != null) {
-             mWifiChannel.connect(context, handler, wifiMessenger);
-         }
+         if (wifiManager != null) {
+-            Messenger wifiMessenger = wifiManager.getWifiServiceMessenger();
++			wifiMessenger = wifiManager.getWifiServiceMessenger();
+             if (wifiMessenger != null) {
+                 mWifiChannel.connect(context, handler, wifiMessenger);
+             }
 -- 
 2.17.1
 

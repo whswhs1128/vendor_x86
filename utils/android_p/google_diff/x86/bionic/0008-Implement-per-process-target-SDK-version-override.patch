@@ -1,0 +1,40 @@
+From 0cd229527cf28deca5a79c477c11d0fa11f23c26 Mon Sep 17 00:00:00 2001
+From: Danny Baumann <dannybaumann@web.de>
+Date: Wed, 29 Aug 2018 11:21:52 +0200
+Subject: [PATCH] Implement per-process target SDK version override.
+
+Change-Id: I65bbdbe96541d8aacdd4de125cdb9c1435129413
+
+This is only partial cherry-pick. Value won't be set via Android.bp
+
+Conflicts:
+	linker/linker.cpp
+---
+ linker/linker.cpp | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 886e73855..af4e7bae2 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3925,6 +3925,17 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
+   }
+ 
+   uint32_t target_sdk = config->target_sdk_version();
++#ifdef SDK_VERSION_OVERRIDES
++  for (const auto& entry : android::base::Split(SDK_VERSION_OVERRIDES, " ")) {
++    auto splitted = android::base::Split(entry, "=");
++    if (splitted.size() == 2 && splitted[0] == executable_path) {
++      target_sdk = static_cast<uint32_t>(std::stoul(splitted[1]));
++      break;
++    }
++  }
++  DEBUG("Target SDK for %s = %d", executable_path, target_sdk);
++#endif
++  set_application_target_sdk_version(target_sdk);
+ 
+   std::string sdkVersionOverrides = android::base::GetProperty("persist.sys.phh.sdk_override", "");
+   static const char *SDK_VERSION_OVERRIDES = sdkVersionOverrides.c_str();
+-- 
+2.17.1
+

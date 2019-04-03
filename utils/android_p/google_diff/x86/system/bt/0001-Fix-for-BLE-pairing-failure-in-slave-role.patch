@@ -1,7 +1,7 @@
-From 067fdb231d762a5d16c9dc364d0eb739ec89b866 Mon Sep 17 00:00:00 2001
+From e656556acacf79d764a91cee3a91720fd6b2845a Mon Sep 17 00:00:00 2001
 From: Aiswarya Cyriac <aiswarya.cyriac@intel.com>
 Date: Mon, 26 Feb 2018 09:57:11 +0530
-Subject: [PATCH 2/3] Fix for BLE pairing failure in slave role
+Subject: [PATCH 1/4] Fix for BLE pairing failure in slave role
 
 Pairing fails due to DHkey mismatch and this fix address the
 mismatch
@@ -14,7 +14,7 @@ Signed-Off-by: Aiswarya Cyriac <aiswarya.cyriac@intel.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/stack/btm/btm_ble_multi_adv.cc b/stack/btm/btm_ble_multi_adv.cc
-index 60490fb..2fb90da 100644
+index 60490fb61..2fb90daab 100644
 --- a/stack/btm/btm_ble_multi_adv.cc
 +++ b/stack/btm/btm_ble_multi_adv.cc
 @@ -34,6 +34,7 @@

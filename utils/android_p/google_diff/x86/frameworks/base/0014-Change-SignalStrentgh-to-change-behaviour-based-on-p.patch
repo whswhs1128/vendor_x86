@@ -1,7 +1,7 @@
-From 3c69642a1b68aa9580e13629a1d5ee04d8f040de Mon Sep 17 00:00:00 2001
+From 5779f3cc6ef5dcebd72ff1153f191459412389d5 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Mon, 6 Aug 2018 20:01:44 +0200
-Subject: [PATCH 14/27] Change SignalStrentgh to change behaviour based on
+Subject: [PATCH 1/4] Change SignalStrentgh to change behaviour based on
  property
 
 Change-Id: I940ed724047567ec5195ac93ea04574c3d92f70b
@@ -10,7 +10,7 @@ Change-Id: I940ed724047567ec5195ac93ea04574c3d92f70b
  1 file changed, 27 insertions(+), 12 deletions(-)
 
 diff --git a/telephony/java/android/telephony/SignalStrength.java b/telephony/java/android/telephony/SignalStrength.java
-index 4e5639683a76..ff906d330d4b 100644
+index 55c0c778972f..69bc6128da64 100644
 --- a/telephony/java/android/telephony/SignalStrength.java
 +++ b/telephony/java/android/telephony/SignalStrength.java
 @@ -854,6 +854,7 @@ public class SignalStrength implements Parcelable {
@@ -21,9 +21,9 @@ index 4e5639683a76..ff906d330d4b 100644
          int rssiIconLevel = SIGNAL_STRENGTH_NONE_OR_UNKNOWN, rsrpIconLevel = -1, snrIconLevel = -1;
  
          if (mLteRsrp > MAX_LTE_RSRP || mLteRsrp < MIN_LTE_RSRP) {
-@@ -897,6 +898,32 @@ public class SignalStrength implements Parcelable {
-                 + rsrpIconLevel + " snrIconLevel:" + snrIconLevel
-                 + " lteRsrpBoost:" + mLteRsrpBoost);
+@@ -900,6 +901,32 @@ public class SignalStrength implements Parcelable {
+ 	/* Ignore RSSNR for now */
+ 	if(rsrpIconLevel != -1) return rsrpIconLevel;
  
 +        /* Valid values are (0-63, 99) as defined in TS 36.331 */
 +        // TODO the range here is probably supposed to be (0..31, 99). It's unclear if anyone relies
@@ -54,7 +54,7 @@ index 4e5639683a76..ff906d330d4b 100644
          /* Choose a measurement type to use for notification */
          if (snrIconLevel != -1 && rsrpIconLevel != -1) {
              /*
-@@ -911,18 +938,6 @@ public class SignalStrength implements Parcelable {
+@@ -914,18 +941,6 @@ public class SignalStrength implements Parcelable {
  
          if (rsrpIconLevel != -1) return rsrpIconLevel;
  

@@ -1,8 +1,7 @@
-From fbd5a5bfd5bfc6b472fdcd4168106079c336129a Mon Sep 17 00:00:00 2001
+From 0d3e79132af301d48736fac7af6ca92a9be5c750 Mon Sep 17 00:00:00 2001
 From: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
 Date: Mon, 18 Feb 2019 21:21:58 +0530
-Subject: [PATCH] [REVERT ME] Fallback to legacy(xt_qtaguid) network traffic
- control
+Subject: [PATCH 1/2] Fallback to legacy(xt_qtaguid) network traffic control
 
 eBPF network traffic control is not yet working causing
 many CTS test failures.
@@ -22,7 +21,7 @@ Signed-off-by: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libbpf/BpfUtils.cpp b/libbpf/BpfUtils.cpp
-index 9a587fb..370c693 100644
+index 9a587fbc..370c693c 100644
 --- a/libbpf/BpfUtils.cpp
 +++ b/libbpf/BpfUtils.cpp
 @@ -226,7 +226,7 @@ bool hasBpfSupport() {

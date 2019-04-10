@@ -1,0 +1,30 @@
+From bbf1f3b06726503b6ddba95144ae697cab11cbca Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <natechancellor@gmail.com>
+Date: Sun, 20 Nov 2016 01:17:22 -0700
+Subject: [PATCH 3/3] Allow apps in /system/priv-app to call and execute su
+ commands
+
+This is needed for an app like masquerade on CM's su or phh's Superuser
+
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+---
+ public/su.te | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/public/su.te b/public/su.te
+index 66d7b610..c3644f1c 100644
+--- a/public/su.te
++++ b/public/su.te
+@@ -14,6 +14,9 @@ userdebug_or_eng(`
+   # Allow system apps (like Settings) to use su
+   allow system_app su_exec:file { execute_no_trans getattr open read execute };
+ 
++  # Allow private apps (like masquerade) to use su
++  allow priv_app su_exec:file { execute_no_trans getattr open read execute };
++
+   # Add su to various domains
+   net_domain(su)
+ 
+-- 
+2.17.1
+

@@ -1,0 +1,27 @@
+From 156afe3a9a8e147135a56c6bb3cc8f888274d080 Mon Sep 17 00:00:00 2001
+From: Joe Maples <joe@frap129.org>
+Date: Tue, 27 Sep 2016 00:28:45 +0000
+Subject: [PATCH 2/3] su: Allow system apps to execute commands via su
+
+Signed-off-by: Joe Maples <joe@frap129.org>
+---
+ public/su.te | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/public/su.te b/public/su.te
+index 03129454..66d7b610 100644
+--- a/public/su.te
++++ b/public/su.te
+@@ -11,6 +11,9 @@ userdebug_or_eng(`
+   # wrapped to ensure that it does not exist at all on -user builds.
+   typeattribute su mlstrustedsubject;
+ 
++  # Allow system apps (like Settings) to use su
++  allow system_app su_exec:file { execute_no_trans getattr open read execute };
++
+   # Add su to various domains
+   net_domain(su)
+ 
+-- 
+2.17.1
+

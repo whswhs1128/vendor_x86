@@ -1,0 +1,28 @@
+From 47b548c1b6c908f794e6010a9cd931012b930a68 Mon Sep 17 00:00:00 2001
+From: Inventor1938 <ivan.kolev@mail.bg>
+Date: Wed, 27 Feb 2019 12:26:02 +0200
+Subject: [PATCH 2/3] Revert "Initialize SensorManager in systemReady()"
+
+This reverts commit cb63fda053a0202d7116b00efe3d30896bd7a4c0.
+---
+ .../java/com/android/server/power/PowerManagerService.java    | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index ebf83e0d5774..e5181ea80cbb 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -828,10 +828,6 @@ public final class PowerManagerService extends SystemService
+             mDisplayManagerInternal.initPowerManagement(
+                     mDisplayPowerCallbacks, mHandler, sensorManager);
+ 
+-            // Initialize proximity sensor
+-            mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+-            mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+-
+             try {
+                 final ForegroundProfileObserver observer = new ForegroundProfileObserver();
+                 ActivityManager.getService().registerUserSwitchObserver(observer, TAG);
+-- 
+2.17.1
+

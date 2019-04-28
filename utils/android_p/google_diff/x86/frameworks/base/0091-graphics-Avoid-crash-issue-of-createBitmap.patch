@@ -1,0 +1,34 @@
+From 96b772460bb02bfe1e0ab8acaf552866672c646c Mon Sep 17 00:00:00 2001
+From: "Cuiping.x.Shu" <cuiping.x.shu@sony.com>
+Date: Wed, 22 Nov 2017 13:30:31 +0800
+Subject: [PATCH 11/18] graphics: Avoid crash issue of createBitmap
+
+Add judgement for "source" to check if it has been recycled before
+nativeCopyColorSpace to avoid crash issue of createBitmap.
+
+Bug:123656975
+
+Change-Id: I98f93ce48c7bc91913d0b31bca1dc0a10eb319d7
+---
+ graphics/java/android/graphics/Bitmap.java | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/graphics/java/android/graphics/Bitmap.java b/graphics/java/android/graphics/Bitmap.java
+index 95a0c56905c0..0d61521269ee 100644
+--- a/graphics/java/android/graphics/Bitmap.java
++++ b/graphics/java/android/graphics/Bitmap.java
+@@ -806,6 +806,11 @@ public final class Bitmap implements Parcelable {
+         if (y + height > source.getHeight()) {
+             throw new IllegalArgumentException("y + height must be <= bitmap.height()");
+         }
++        if (source.mNativePtr == 0 || source.isRecycled()) {
++            throw new IllegalArgumentException("source.mNativePtr must be >0 and it can not be"
++                                               + "recycled before using");
++        }
++
+ 
+         // check if we can just return our argument unchanged
+         if (!source.isMutable() && x == 0 && y == 0 && width == source.getWidth() &&
+-- 
+2.17.1
+

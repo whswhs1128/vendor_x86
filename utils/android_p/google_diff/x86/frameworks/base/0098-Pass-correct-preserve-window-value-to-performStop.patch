@@ -1,0 +1,36 @@
+From 1cacfbcbb9c0d495185ac0bb876635b236a602c1 Mon Sep 17 00:00:00 2001
+From: Garfield Tan <xutan@google.com>
+Date: Tue, 29 May 2018 11:05:05 -0700
+Subject: [PATCH 18/18] Pass correct preserve window value to performStop
+
+W/o passing correct preserve window value, performStop will mark the
+window stopped as well, which consequently destroys all hardware
+resources (display list etc.) associated with it. This causes flickering
+when user drag resizes a task over a configuration change boundary that
+needs to relaunch that activity, because the display list that draws the
+content is cleared and not drawn.
+
+Bug: 80320060
+Test: Drag resizing doesn't cause flickering anymore.
+Change-Id: I43fe5bf958ceb76817f6e8b9d1896d274eb40be1
+Merged-In: I43fe5bf958ceb76817f6e8b9d1896d274eb40be1
+---
+ core/java/android/app/ActivityThread.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index d311e470a0de..dd7bdd211ffb 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -4179,7 +4179,7 @@ public final class ActivityThread extends ClientTransactionHandler {
+         }
+ 
+         try {
+-            r.activity.performStop(false /*preserveWindow*/, reason);
++            r.activity.performStop(r.mPreserveWindow, reason);
+         } catch (SuperNotCalledException e) {
+             throw e;
+         } catch (Exception e) {
+-- 
+2.17.1
+

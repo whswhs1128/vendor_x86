@@ -1,0 +1,34 @@
+From 477060b76bc5b37da6166c10e54444c3c717a6cb Mon Sep 17 00:00:00 2001
+From: huiwan <huiwan@codeaurora.org>
+Date: Fri, 16 Jun 2017 11:25:03 +0800
+Subject: [PATCH 04/18] SystemUI: fix the monkey crash issue
+
+A runtime exception occurred while executing doInBackground, result
+in by passing a null object to Log printer, adding part of message
+to avoid null exception.
+
+Change-Id: I8e2340f81f8b678ce66ca51c6b6ce23eedb3ae9c
+CRs-Fixed: 2058816
+Signed-off-by: Joe Maples <joe@frap129.org>
+---
+ .../systemui/statusbar/policy/SecurityControllerImpl.java     | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
+index 0adb4392a174..a28c6b2d886d 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/SecurityControllerImpl.java
+@@ -403,7 +403,9 @@ public class SecurityControllerImpl extends CurrentUserTracker implements Securi
+                 boolean hasCACerts = !(conn.getService().getUserCaAliases().getList().isEmpty());
+                 return new Pair<Integer, Boolean>(userId[0], hasCACerts);
+             } catch (RemoteException | InterruptedException | AssertionError e) {
+-                Log.i(TAG, e.getMessage());
++                if (e != null && e.getMessage() != null) {
++                    Log.i(TAG, e.getMessage());
++                }
+                 new Handler(Dependency.get(Dependency.BG_LOOPER)).postDelayed(
+                         () -> new CACertLoader().execute(userId[0]),
+                         CA_CERT_LOADING_RETRY_TIME_IN_MS);
+-- 
+2.17.1
+

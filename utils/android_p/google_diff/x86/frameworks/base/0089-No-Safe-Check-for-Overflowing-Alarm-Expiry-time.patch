@@ -1,0 +1,47 @@
+From 0bd9aba4868f577c9a29e19bdfc4123b646a059a Mon Sep 17 00:00:00 2001
+From: Mahesh Kumar <mahesh.kumar@mediatek.com>
+Date: Tue, 18 Dec 2018 00:58:30 +0530
+Subject: [PATCH 09/18] No Safe Check for Overflowing Alarm Expiry time
+
+If some application sets an alarm which exceeds Epoch/Posix time limit
+it leads to corrupted Alarm data like Batch start time, end time, window
+length etc. To fix this issue, Add safe check to ignore alarm which exceeds
+this limit.
+
+Test: manual, tested 5 times and it is passed 5 times
+Bug: 121230118
+Change-Id: Ia24e0ab1a195bad18bf4179fc8af2adf4d69fc09
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ .../core/java/com/android/server/AlarmManagerService.java | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/services/core/java/com/android/server/AlarmManagerService.java b/services/core/java/com/android/server/AlarmManagerService.java
+index 20bb7fb47890..f2027f0c19d4 100644
+--- a/services/core/java/com/android/server/AlarmManagerService.java
++++ b/services/core/java/com/android/server/AlarmManagerService.java
+@@ -490,6 +490,8 @@ class AlarmManagerService extends SystemService {
+ 
+     final LinkedList<WakeupEvent> mRecentWakeups = new LinkedList<WakeupEvent>();
+     final long RECENT_WAKEUP_PERIOD = 1000L * 60 * 60 * 24; // one day
++    // Alarm Expire time limit
++    final long MAX_EXPIRE_TIME = 2147483647000L;
+ 
+     final class Batch {
+         long start;     // These endpoints are always in ELAPSED
+@@ -1452,6 +1454,12 @@ class AlarmManagerService extends SystemService {
+             return;
+         }
+ 
++        // Ignore alarm which is set beyond max Posix/Epoch time
++        if (triggerAtTime > MAX_EXPIRE_TIME) {
++            Slog.w(TAG, "Alarm expire time must be less than maximum unix epoch time");
++            return;
++        }
++
+         // Sanity check the window length.  This will catch people mistakenly
+         // trying to pass an end-of-window timestamp rather than a duration.
+         if (windowLength > AlarmManager.INTERVAL_HALF_DAY) {
+-- 
+2.17.1
+

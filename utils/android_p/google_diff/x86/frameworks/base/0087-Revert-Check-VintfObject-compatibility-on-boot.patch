@@ -1,0 +1,69 @@
+From ba90c1b86e141dd690e7e80c130b43696a374206 Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Thu, 21 Dec 2017 19:38:13 +0100
+Subject: [PATCH 07/18] Revert "Check VintfObject compatibility on boot"
+
+On Pixel devies, this fails due to some signature check.
+
+Fallback to diffing only the fingerprint should be enough for our usecase.
+
+This reverts commit 1851118aa457baa8b489abfd3ef161014ed69d96.
+
+Change-Id: I8b444dd1e223a1934cd5ecb1675c6b9deb690a94
+Signed-off-by: Joe Maples <joe@frap129.org>
+
+Conflicts:
+	core/java/android/os/Build.java
+---
+ core/java/android/os/Build.java | 27 +--------------------------
+ 1 file changed, 1 insertion(+), 26 deletions(-)
+
+diff --git a/core/java/android/os/Build.java b/core/java/android/os/Build.java
+index a02c7da368d1..df15791a91a9 100644
+--- a/core/java/android/os/Build.java
++++ b/core/java/android/os/Build.java
+@@ -1021,20 +1021,8 @@ public class Build {
+     }
+ 
+     /**
+-     * True if Treble is enabled and required for this device.
+-     *
+-     * @hide
+-     */
+-    public static final boolean IS_TREBLE_ENABLED =
+-        SystemProperties.getBoolean("ro.treble.enabled", false);
+-
+-    /**
+-     * Verifies the current flash of the device is consistent with what
++     * Verifies the the current flash of the device is consistent with what
+      * was expected at build time.
+-     *
+-     * Treble devices will verify the Vendor Interface (VINTF). A device
+-     * launched without Treble:
+-     *
+      * 1) Checks that device fingerprint is defined and that it matches across
+      *    various partitions.
+      * 2) Verifies radio and bootloader partitions are those expected in the build.
+@@ -1045,19 +1033,6 @@ public class Build {
+         // Don't care on eng builds.  Incremental build may trigger false negative.
+         if (IS_ENG) return true;
+ 
+-        if (IS_TREBLE_ENABLED && Build.VERSION.FIRST_SDK_INT >= VERSION_CODES.O) {
+-            // If we can run this code, the device should already pass AVB.
+-            // So, we don't need to check AVB here.
+-            int result = VintfObject.verifyWithoutAvb();
+-
+-            if (result != 0) {
+-                Slog.e(TAG, "Vendor interface is incompatible, error="
+-                        + String.valueOf(result));
+-            }
+-
+-            return result == 0;
+-        }
+-
+         final String system = SystemProperties.get("ro.build.fingerprint");
+         final String vendor = SystemProperties.get("ro.vendor.build.fingerprint");
+         final String bootimage = SystemProperties.get("ro.bootimage.build.fingerprint");
+-- 
+2.17.1
+

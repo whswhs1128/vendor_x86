@@ -1,0 +1,93 @@
+From dfe3e668cdc96717469a47243470621571fd5851 Mon Sep 17 00:00:00 2001
+From: Praveena Pachipulusu <pveena@codeaurora.org>
+Date: Wed, 19 Nov 2014 16:07:45 +0530
+Subject: [PATCH 06/18] Fix to avoid UI freeze issue
+
+Due to some race condition in WindowManagerService, Screenshot
+layer remains as topmost and buffers are not flipped hence
+no updates seen on the screen. So, trying to destroy persistent
+layer explicitly if freeze timeout expires 6sec.
+
+Change-Id: Ibe295550a7431a4f633a57e7dfab0cbda102ab87
+Signed-off-by: Joe Maples <joe@frap129.org>
+---
+ .../server/wm/ScreenRotationAnimation.java    | 44 +++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/ScreenRotationAnimation.java b/services/core/java/com/android/server/wm/ScreenRotationAnimation.java
+index 95acfc170740..02a842c3dae2 100644
+--- a/services/core/java/com/android/server/wm/ScreenRotationAnimation.java
++++ b/services/core/java/com/android/server/wm/ScreenRotationAnimation.java
+@@ -42,6 +42,10 @@ import android.view.SurfaceSession;
+ import android.view.animation.Animation;
+ import android.view.animation.AnimationUtils;
+ import android.view.animation.Transformation;
++import android.os.Handler;
++import android.os.Message;
++import com.android.server.DisplayThread;
++import android.os.Looper;
+ 
+ import java.io.PrintWriter;
+ 
+@@ -148,6 +152,7 @@ class ScreenRotationAnimation {
+     private boolean mMoreStartExit;
+     private boolean mMoreStartFrame;
+     long mHalfwayPoint;
++    final H mHandler = new H(DisplayThread.get().getLooper());
+ 
+     private final WindowManagerService mService;
+ 
+@@ -290,6 +295,12 @@ class ScreenRotationAnimation {
+                 t.setAlpha(mSurfaceControl, 0);
+                 t.show(mSurfaceControl);
+                 sur.destroy();
++                // If screenshot layer stays for more than freeze
++                // timeout value with no updates on the screen,
++                // destroy the layer explicitly.
++                mHandler.removeMessages(H.SCREENSHOT_FREEZE_TIMEOUT);
++                mHandler.sendEmptyMessageDelayed(H.SCREENSHOT_FREEZE_TIMEOUT,
++                                           H.FREEZE_TIMEOUT_VAL);
+             } else {
+                 Slog.w(TAG, "Built-in display " + displayId + " is null.");
+             }
+@@ -986,4 +997,37 @@ class ScreenRotationAnimation {
+     public Transformation getEnterTransformation() {
+         return mEnterTransformation;
+     }
++
++    final class H extends Handler {
++        public static final int SCREENSHOT_FREEZE_TIMEOUT = 2;
++
++        //Set the freeze timeout value to 6sec (which is greater than
++        //APP_FREEZE_TIMEOUT value in WindowManagerService)
++        public static final int FREEZE_TIMEOUT_VAL = 6000;
++
++        public H(Looper looper) {
++            super(looper, null, true /*async*/);
++        }
++
++        @Override
++        public void handleMessage(Message msg) {
++            switch (msg.what) {
++                case SCREENSHOT_FREEZE_TIMEOUT: {
++                     if ((mSurfaceControl != null) && (isAnimating())) {
++                        Slog.e(TAG, "Exceeded Freeze timeout. Destroy layers");
++                        kill();
++                     } else if (mSurfaceControl != null){
++                        Slog.e(TAG,
++                          "No animation, exceeded freeze timeout. Destroy Screenshot layer");
++                        mSurfaceControl.destroy();
++                        mSurfaceControl = null;
++                     }
++                     break;
++                }
++                default:
++                     Slog.e(TAG, "No Valid Message To Handle");
++                break;
++            }
++        }
++    }
+ }
+-- 
+2.17.1
+

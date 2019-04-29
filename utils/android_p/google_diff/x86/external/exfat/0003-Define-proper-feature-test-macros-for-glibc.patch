@@ -1,0 +1,37 @@
+From 0d73984f695ce3f8fab90eca059b43b82dc019a8 Mon Sep 17 00:00:00 2001
+From: relan <relan@users.noreply.github.com>
+Date: Sat, 20 Apr 2019 21:31:37 +0300
+Subject: [PATCH 3/8] Define proper feature test macros for glibc.
+
+---
+ configure.ac | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/configure.ac b/configure.ac
+index 4d144be..b675be5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -31,6 +31,7 @@ AC_PROG_CC_C99
+ AC_PROG_RANLIB
+ AM_PROG_AR
+ AC_SYS_LARGEFILE
++AC_CANONICAL_HOST
+ PKG_CHECK_MODULES([UBLIO], [libublio], [
+   CFLAGS="$CFLAGS $UBLIO_CFLAGS"
+   LIBS="$LIBS $UBLIO_LIBS"
+@@ -38,6 +39,12 @@ PKG_CHECK_MODULES([UBLIO], [libublio], [
+     [Define if block devices are not supported.])
+ ], [:])
+ PKG_CHECK_MODULES([FUSE], [fuse])
++case "$host_os" in
++  *-gnu)
++    AC_DEFINE([_XOPEN_SOURCE], [500], [Enable pread() and pwrite().])
++    AC_DEFINE([_DEFAULT_SOURCE], [], [Enable vsyslog().])
++	;;
++esac
+ AC_CONFIG_HEADERS([libexfat/config.h])
+ AC_CONFIG_FILES([
+ 	libexfat/Makefile
+-- 
+2.17.1
+

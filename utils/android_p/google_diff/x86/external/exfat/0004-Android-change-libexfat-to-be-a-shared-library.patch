@@ -1,0 +1,64 @@
+From 2123183c93c0631ae31cf60c18034102c8c1df58 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 3 Apr 2019 19:27:15 +0800
+Subject: [PATCH 4/8] Android: change libexfat to be a shared library
+
+The library is used by several binaries so it should be shared.
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ Android.bp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 0db0368..6ef591f 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -30,7 +30,7 @@ cc_defaults {
+     shared_libs: ["liblog"],
+ }
+ 
+-cc_library_static {
++cc_library_shared {
+     name: "libexfat",
+ 
+     srcs: ["libexfat/*.c"],
+@@ -46,7 +46,7 @@ cc_binary {
+     srcs: ["mkfs/*.c"],
+     defaults: ["exfat_defaults"],
+     local_include_dirs: ["mkfs"],
+-    static_libs: ["libexfat"],
++    shared_libs: ["libexfat"],
+ }
+ 
+ cc_binary {
+@@ -55,7 +55,7 @@ cc_binary {
+     srcs: ["fsck/main.c"],
+     defaults: ["exfat_defaults"],
+     local_include_dirs: ["fsck"],
+-    static_libs: ["libexfat"],
++    shared_libs: ["libexfat"],
+ }
+ 
+ cc_binary {
+@@ -64,7 +64,7 @@ cc_binary {
+     srcs: ["dump/main.c"],
+     defaults: ["exfat_defaults"],
+     local_include_dirs: ["dump"],
+-    static_libs: ["libexfat"],
++    shared_libs: ["libexfat"],
+ }
+ 
+ cc_binary {
+@@ -73,7 +73,7 @@ cc_binary {
+     srcs: ["label/main.c"],
+     defaults: ["exfat_defaults"],
+     local_include_dirs: ["label"],
+-    static_libs: ["libexfat"],
++    shared_libs: ["libexfat"],
+ }
+ 
+ // Libraries for recovery
+-- 
+2.17.1
+

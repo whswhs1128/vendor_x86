@@ -1,0 +1,74 @@
+From f78a57617e6e281fae34f03b8254b1853312e5af Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 9 Apr 2019 18:23:16 +0800
+Subject: [PATCH 5/8] Revert "Wrap platform-specific FUSE options."
+
+This reverts commit 68524e0a51246bba984fce28fc5b23aee0dbd2e0.
+---
+ fuse/main.c | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/fuse/main.c b/fuse/main.c
+index c645390..833330c 100644
+--- a/fuse/main.c
++++ b/fuse/main.c
+@@ -451,7 +451,6 @@ static char* add_ro_option(char* options, bool ro)
+ 	return ro ? add_option(options, "ro", NULL) : options;
+ }
+ 
+-#if defined(__linux__) || defined(__FreeBSD__)
+ static char* add_user_option(char* options)
+ {
+ 	struct passwd* pw;
+@@ -468,9 +467,7 @@ static char* add_user_option(char* options)
+ 	}
+ 	return add_option(options, "user", pw->pw_name);
+ }
+-#endif
+ 
+-#if defined(__linux__)
+ static char* add_blksize_option(char* options, long cluster_size)
+ {
+ 	long page_size = sysconf(_SC_PAGESIZE);
+@@ -482,7 +479,6 @@ static char* add_blksize_option(char* options, long cluster_size)
+ 	snprintf(blksize, sizeof(blksize), "%ld", MIN(page_size, cluster_size));
+ 	return add_option(options, "blksize", blksize);
+ }
+-#endif
+ 
+ static char* add_fuse_options(char* options, const char* spec, bool ro)
+ {
+@@ -492,16 +488,13 @@ static char* add_fuse_options(char* options, const char* spec, bool ro)
+ 	options = add_ro_option(options, ro);
+ 	if (options == NULL)
+ 		return NULL;
+-#if defined(__linux__) || defined(__FreeBSD__)
+ 	options = add_user_option(options);
+ 	if (options == NULL)
+ 		return NULL;
+-#endif
+-#if defined(__linux__)
+ 	options = add_blksize_option(options, CLUSTER_SIZE(*ef.sb));
+ 	if (options == NULL)
+ 		return NULL;
+-#endif
++
+ 	return options;
+ }
+ 
+@@ -524,12 +517,8 @@ int main(int argc, char* argv[])
+ 	printf("FUSE exfat %s\n", VERSION);
+ 
+ 	fuse_options = strdup("allow_other,"
+-#if defined(__linux__) || defined(__FreeBSD__)
+ 			"big_writes,"
+-#endif
+-#if defined(__linux__)
+ 			"blkdev,"
+-#endif
+ 			"default_permissions");
+ 	exfat_options = strdup("ro_fallback");
+ 	if (fuse_options == NULL || exfat_options == NULL)
+-- 
+2.17.1
+

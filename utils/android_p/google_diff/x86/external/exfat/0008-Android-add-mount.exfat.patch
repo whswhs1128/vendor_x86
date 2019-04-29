@@ -1,0 +1,37 @@
+From ee82f5f879f0df7247bff656314033b7258cffad Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 9 Apr 2019 18:55:12 +0800
+Subject: [PATCH 8/8] Android: add mount.exfat
+
+The vold can use this to mount an exfat partition.
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ Android.bp | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/Android.bp b/Android.bp
+index 6ef591f..1b75c71 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -58,6 +58,17 @@ cc_binary {
+     shared_libs: ["libexfat"],
+ }
+ 
++cc_binary {
++    name: "mount.exfat",
++
++    cflags: [
++        "-Wno-unused-parameter",
++    ],
++    srcs: ["fuse/main.c"],
++    defaults: ["exfat_defaults"],
++    shared_libs: ["libexfat", "libfuse-lite"],
++}
++
+ cc_binary {
+     name: "dumpexfat",
+ 
+-- 
+2.17.1
+

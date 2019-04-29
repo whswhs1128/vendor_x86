@@ -1,0 +1,39 @@
+From 60b10f401b723d8018a9de58fba1ad0560d04c0d Mon Sep 17 00:00:00 2001
+From: Tom Marshall <tdm.code@gmail.com>
+Date: Wed, 16 Jan 2019 11:18:38 -0800
+Subject: [PATCH] Revert "exfat: Add static libs for recovery"
+
+This reverts commit 9e9dc69b16dc0d13797ee2370b6b43cd4ee968ab.
+---
+ Android.bp | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 1b75c71..b94cd64 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -86,21 +86,3 @@ cc_binary {
+     local_include_dirs: ["label"],
+     shared_libs: ["libexfat"],
+ }
+-
+-// Libraries for recovery
+-
+-cc_library_static {
+-    name: "libexfat_mkfs",
+-    defaults: ["exfat_defaults"],
+-    srcs: ["mkfs/*.c"],
+-    cflags: ["-Dmain=mkfs_exfat_main"],
+-    static_libs: ["libexfat"],
+-}
+-
+-cc_library_static {
+-    name: "libexfat_fsck",
+-    defaults: ["exfat_defaults"],
+-    srcs: ["fsck/main.c"],
+-    cflags: ["-Dmain=fsck_exfat_main"],
+-    static_libs: ["libexfat"],
+-}
+-- 
+2.17.1
+

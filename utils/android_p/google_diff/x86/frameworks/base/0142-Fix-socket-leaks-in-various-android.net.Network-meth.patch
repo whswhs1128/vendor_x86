@@ -1,0 +1,25 @@
+From 4aefaaeb16714314196b5f01c42dcf0d297e2950 Mon Sep 17 00:00:00 2001
+From: Alex <alex@dirtyunicorns.com>
+Date: Mon, 2 Jul 2018 13:08:03 +0000
+Subject: [PATCH 10/25] Fix socket leaks in various android.net.Network methods
+
+---
+ core/java/android/net/Network.java | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/java/android/net/Network.java b/core/java/android/net/Network.java
+index d75d4391dee3..94a6fc1b973c 100644
+--- a/core/java/android/net/Network.java
++++ b/core/java/android/net/Network.java
+@@ -28,6 +28,8 @@ import com.android.okhttp.internalandroidapi.HttpURLConnectionFactory;
+ 
+ import libcore.io.IoUtils;
+ 
++import libcore.io.IoUtils;
++
+ import java.io.FileDescriptor;
+ import java.io.IOException;
+ import java.net.DatagramSocket;
+-- 
+2.17.1
+

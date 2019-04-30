@@ -1,0 +1,32 @@
+From 9bff156f5de7a9ffa980a6f79917647acdcaaa52 Mon Sep 17 00:00:00 2001
+From: Terigele <terigele@huawei.com>
+Date: Wed, 26 Dec 2018 15:18:28 +0800
+Subject: [PATCH 17/25] AMS: Fix the null pointer exception in IntentResolver
+
+Test: NA.
+Change-Id: Ic0ece6b1cdb0986220661530d62567bba0769e33
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ .../java/com/android/server/am/ActivityManagerService.java   | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 1d4836b8d52b..81d01fb0857d 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -1103,6 +1103,11 @@ public class ActivityManagerService extends IActivityManager.Stub
+         @Override
+         protected boolean allowFilterResult(
+                 BroadcastFilter filter, List<BroadcastFilter> dest) {
++            if (filter.receiverList.receiver == null) {
++                Slog.w(TAG, "  Receiver of filter's receiverList is null; packageName = "
++                        + filter.packageName);
++                return false;
++            }
+             IBinder target = filter.receiverList.receiver.asBinder();
+             for (int i = dest.size() - 1; i >= 0; i--) {
+                 if (dest.get(i).receiverList.receiver.asBinder() == target) {
+-- 
+2.17.1
+

@@ -1,0 +1,45 @@
+From f60e1aa15669ce43e0625a9d144afa19cbc81f2e Mon Sep 17 00:00:00 2001
+From: Ayke van Laethem <aykevanlaethem@gmail.com>
+Date: Sat, 24 Jun 2017 18:32:25 +0200
+Subject: [PATCH 03/25] Add support for the .opus file format
+
+The codec and container format are already supported, but not in that
+combination. Simply add the file extension as a type of Ogg file (which
+it is).
+
+See: https://issuetracker.google.com/issues/37054258
+(cherry picked from commit 32a5b16557e7d7943492d4eff2c4722a069bead6)
+
+Change-Id: I959dc7ed16e4ef46fb9c9ed028b5da4043e92848
+---
+ media/java/android/media/MediaFile.java                          | 1 +
+ services/core/java/com/android/server/storage/FileCollector.java | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/media/java/android/media/MediaFile.java b/media/java/android/media/MediaFile.java
+index ee5804b8132e..8633a7f49aaf 100644
+--- a/media/java/android/media/MediaFile.java
++++ b/media/java/android/media/MediaFile.java
+@@ -211,6 +211,7 @@ public class MediaFile {
+         addFileType("OGG", FILE_TYPE_OGG, "application/ogg", MtpConstants.FORMAT_OGG, true);
+         addFileType("OGA", FILE_TYPE_OGG, "audio/ogg", MtpConstants.FORMAT_OGG, false);
+         addFileType("OGA", FILE_TYPE_OGG, "application/ogg", MtpConstants.FORMAT_OGG, false);
++        addFileType("OPUS", FILE_TYPE_OGG, "audio/ogg", MtpConstants.FORMAT_OGG, false);
+         addFileType("AAC", FILE_TYPE_AAC, "audio/aac", MtpConstants.FORMAT_AAC, true);
+         addFileType("AAC", FILE_TYPE_AAC, "audio/aac-adts", MtpConstants.FORMAT_AAC, false);
+         addFileType("MKA", FILE_TYPE_MKA, "audio/x-matroska");
+diff --git a/services/core/java/com/android/server/storage/FileCollector.java b/services/core/java/com/android/server/storage/FileCollector.java
+index 96e358402a97..87f30f04f0fd 100644
+--- a/services/core/java/com/android/server/storage/FileCollector.java
++++ b/services/core/java/com/android/server/storage/FileCollector.java
+@@ -78,6 +78,7 @@ public class FileCollector {
+         EXTENSION_MAP.put("wav", AUDIO);
+         EXTENSION_MAP.put("ogg", AUDIO);
+         EXTENSION_MAP.put("oga", AUDIO);
++        EXTENSION_MAP.put("opus", AUDIO);
+         // Video
+         EXTENSION_MAP.put("3gpp", VIDEO);
+         EXTENSION_MAP.put("3gp", VIDEO);
+-- 
+2.17.1
+

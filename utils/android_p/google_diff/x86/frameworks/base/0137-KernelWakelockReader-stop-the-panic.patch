@@ -1,0 +1,46 @@
+From 5259492be1893547cf892465d45a55471dbedf49 Mon Sep 17 00:00:00 2001
+From: Simao Gomes Viana <xdevs23@outlook.com>
+Date: Tue, 22 Nov 2016 16:08:20 +0100
+Subject: [PATCH 05/25] KernelWakelockReader: stop the panic
+
+Change-Id: I44119cc26fcadd28e88ae7f6bcb01ec985f3bfde
+---
+ .../com/android/internal/os/KernelWakelockReader.java     | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/com/android/internal/os/KernelWakelockReader.java b/core/java/com/android/internal/os/KernelWakelockReader.java
+index 86b2a90dd64e..60d804d32e44 100644
+--- a/core/java/com/android/internal/os/KernelWakelockReader.java
++++ b/core/java/com/android/internal/os/KernelWakelockReader.java
+@@ -81,8 +81,8 @@ public class KernelWakelockReader {
+                     is = new FileInputStream(sWakeupSourceFile);
+                     wakeup_sources = true;
+                 } catch (java.io.FileNotFoundException e2) {
+-                    Slog.wtf(TAG, "neither " + sWakelockFile + " nor " +
+-                            sWakeupSourceFile + " exists");
++                    Slog.w(TAG, "neither " + sWakelockFile + " nor " +
++                            sWakeupSourceFile + " exists, ignoring.");
+                     return null;
+                 }
+             }
+@@ -94,7 +94,7 @@ public class KernelWakelockReader {
+ 
+             is.close();
+         } catch (java.io.IOException e) {
+-            Slog.wtf(TAG, "failed to read kernel wakelocks", e);
++            Slog.w(TAG, "failed to read kernel wakelocks", e);
+             return null;
+         } finally {
+             StrictMode.setThreadPolicyMask(oldMask);
+@@ -107,7 +107,7 @@ public class KernelWakelockReader {
+ 
+         if (len > 0) {
+             if (len >= buffer.length) {
+-                Slog.wtf(TAG, "Kernel wake locks exceeded buffer size " + buffer.length);
++                Slog.w(TAG, "Kernel wake locks exceeded buffer size " + buffer.length);
+             }
+             int i;
+             for (i=0; i<len; i++) {
+-- 
+2.17.1
+

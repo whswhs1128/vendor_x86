@@ -1,0 +1,30 @@
+From ccd362dd9cda386b8044449034a227d5e90fc849 Mon Sep 17 00:00:00 2001
+From: Terigele <terigele@huawei.com>
+Date: Wed, 26 Dec 2018 16:25:25 +0800
+Subject: [PATCH 18/25] AMS: Uncatch the IllegalStateException cause process
+ crash
+
+Test: NA.
+Change-Id: Ie9b6b7a3d7c002edf91eb44d7f2a3fe5dacac3aa
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ .../core/java/com/android/server/am/ActivityManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 81d01fb0857d..917131736561 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -2469,7 +2469,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+                     IStorageManager storageManager = IStorageManager.Stub.asInterface(service);
+                     Log.d(TAG, "Storing locale " + l.toLanguageTag() + " for decryption UI");
+                     storageManager.setField(StorageManager.SYSTEM_LOCALE_KEY, l.toLanguageTag());
+-                } catch (RemoteException e) {
++                } catch (RemoteException | IllegalStateException e) {
+                     Log.e(TAG, "Error storing locale for decryption UI", e);
+                 }
+                 break;
+-- 
+2.17.1
+

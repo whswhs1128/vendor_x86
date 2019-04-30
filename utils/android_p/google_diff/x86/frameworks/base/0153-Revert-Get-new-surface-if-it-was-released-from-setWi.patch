@@ -1,0 +1,29 @@
+From 2ccf4f3f9db02b03c3112815f2c3e52b444930fd Mon Sep 17 00:00:00 2001
+From: DennySPB <dennyspb@gmail.com>
+Date: Tue, 5 Feb 2019 14:56:11 +0300
+Subject: [PATCH 21/25] Revert "Get new surface if it was released from
+ setWindowStopped"
+
+This reverts commit aca387289ab07f05dddfc6c49f9d410ffc9a5a6a.
+
+Change-Id: I95d9a916f70bf5ab143c264effcf1912341e4cab
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ core/java/android/view/ViewRootImpl.java | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/core/java/android/view/ViewRootImpl.java b/core/java/android/view/ViewRootImpl.java
+index be96aafb3c23..edb525a92feb 100644
+--- a/core/java/android/view/ViewRootImpl.java
++++ b/core/java/android/view/ViewRootImpl.java
+@@ -1360,7 +1360,6 @@ public final class ViewRootImpl implements ViewParent,
+                 renderer.setStopped(mStopped);
+             }
+             if (!mStopped) {
+-                mNewSurfaceNeeded = true;
+                 scheduleTraversals();
+             } else {
+                 if (renderer != null) {
+-- 
+2.17.1
+

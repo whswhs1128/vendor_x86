@@ -1,0 +1,30 @@
+From 9db470b8585bd9367928563a5a4a5d2037ce0b0c Mon Sep 17 00:00:00 2001
+From: Simao Gomes Viana <xdevs23@outlook.com>
+Date: Tue, 22 Nov 2016 16:13:50 +0100
+Subject: [PATCH 04/25] ParcelFileDescriptor: can we stop the panic here?
+
+Change-Id: Ifa58336abc264571ee307e3c2d69d3c294e2d8c3
+---
+ core/java/android/os/ParcelFileDescriptor.java | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/os/ParcelFileDescriptor.java b/core/java/android/os/ParcelFileDescriptor.java
+index 7556f0921b4d..5e26de6e8353 100644
+--- a/core/java/android/os/ParcelFileDescriptor.java
++++ b/core/java/android/os/ParcelFileDescriptor.java
+@@ -189,7 +189,11 @@ public class ParcelFileDescriptor implements Parcelable, Closeable {
+         mWrapped = null;
+         mFd = fd;
+         mCommFd = commChannel;
+-        mGuard.open("close");
++        try {
++            mGuard.open("close");
++        } catch(Throwable e) {
++            Log.w("ParcelFileDescriptor", "Explicit termination method 'close' not called");
++        }
+     }
+ 
+     /**
+-- 
+2.17.1
+

@@ -1,0 +1,32 @@
+From 46e2fc7c2b245299a8027f3311518b9ffb9ed69c Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Mon, 26 Oct 2015 03:07:26 -0700
+Subject: [PATCH 07/25] Initialize SensorManager in systemReady()
+
+ * Service startup ordering is different on M and the sensor service
+   is not ready during construction of the PowerManager. This was
+   causing a hang on boot. Move it to systemReady instead.
+
+Change-Id: I9e0293484e1aaaf9f82f9c75680bec558607c54d
+---
+ .../java/com/android/server/power/PowerManagerService.java    | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index e5181ea80cbb..ebf83e0d5774 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -828,6 +828,10 @@ public final class PowerManagerService extends SystemService
+             mDisplayManagerInternal.initPowerManagement(
+                     mDisplayPowerCallbacks, mHandler, sensorManager);
+ 
++            // Initialize proximity sensor
++            mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
++            mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
++
+             try {
+                 final ForegroundProfileObserver observer = new ForegroundProfileObserver();
+                 ActivityManager.getService().registerUserSwitchObserver(observer, TAG);
+-- 
+2.17.1
+

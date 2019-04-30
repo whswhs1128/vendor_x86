@@ -1,0 +1,29 @@
+From 4f733e0d7757f05bf9578887452dc28103c87e04 Mon Sep 17 00:00:00 2001
+From: Danny Baumann <dannybaumann@web.de>
+Date: Fri, 14 Nov 2014 09:44:51 -0800
+Subject: [PATCH 09/25] Treat default value that wasn't found as empty value
+
+Fixes http://code.google.com/p/android/issues/detail?id=33220
+
+Change-Id: I0840c9bf0b46c117cecd77617233c01ef1caf8dc
+Signed-off-by: Shubham Singh <coolsks94@gmail.com>
+---
+ core/java/android/preference/MultiSelectListPreference.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/java/android/preference/MultiSelectListPreference.java b/core/java/android/preference/MultiSelectListPreference.java
+index 138bd8780837..721519b4a059 100644
+--- a/core/java/android/preference/MultiSelectListPreference.java
++++ b/core/java/android/preference/MultiSelectListPreference.java
+@@ -220,7 +220,7 @@ public class MultiSelectListPreference extends DialogPreference {
+     @Override
+     protected Object onGetDefaultValue(TypedArray a, int index) {
+         final CharSequence[] defaultValues = a.getTextArray(index);
+-        final int valueCount = defaultValues.length;
++        final int valueCount = defaultValues != null ? defaultValues.length : 0;
+         final Set<String> result = new HashSet<String>();
+         
+         for (int i = 0; i < valueCount; i++) {
+-- 
+2.17.1
+

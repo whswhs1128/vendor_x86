@@ -1,0 +1,30 @@
+From d160a90d5acaa2f21ceee2aa41b035966fdb8bbe Mon Sep 17 00:00:00 2001
+From: Andreas Gampe <agampe@google.com>
+Date: Tue, 18 Sep 2018 14:21:11 -0700
+Subject: [PATCH 14/25] Update boot image profile to include Object.wait()
+
+Bug: 116028959
+Test: m
+Test: inspect oatdump
+Change-Id: I5aefa4e334d61cd24f110a35a0084d563a8aca63
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ config/boot-image-profile.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/config/boot-image-profile.txt b/config/boot-image-profile.txt
+index a78773692ef3..a1c23c629a71 100644
+--- a/config/boot-image-profile.txt
++++ b/config/boot-image-profile.txt
+@@ -11074,6 +11074,7 @@ HPLjava/lang/Long;->formatUnsignedLong(JI[CII)I
+ HPLjava/lang/Long;->valueOf(Ljava/lang/String;I)Ljava/lang/Long;
+ HPLjava/lang/Math;->addExact(JJ)J
+ HPLjava/lang/Math;->scalb(FI)F
++HPLjava/lang/Object;->wait()V
+ HPLjava/lang/StackTraceElement;-><init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+ HPLjava/lang/String;->copyValueOf([C)Ljava/lang/String;
+ HPLjava/lang/String;->join(Ljava/lang/CharSequence;[Ljava/lang/CharSequence;)Ljava/lang/String;
+-- 
+2.17.1
+

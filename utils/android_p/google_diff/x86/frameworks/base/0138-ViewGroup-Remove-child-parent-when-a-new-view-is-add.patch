@@ -1,0 +1,31 @@
+From ee03bfc1c7f72b20b8fd04428684b25d9b562c87 Mon Sep 17 00:00:00 2001
+From: mydongistiny <jaysonedson@gmail.com>
+Date: Sat, 1 Sep 2018 22:29:01 -0700
+Subject: [PATCH 06/25] ViewGroup: Remove child parent when a new view is added
+
+Instead of throwing IllegalStateException just fix the problem instead.
+
+Fixes: Occasional force close from second qs page
+Change-Id: Ie9573a53f62691dac63480655983f22dcb8ff7af
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+---
+ core/java/android/view/ViewGroup.java | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/core/java/android/view/ViewGroup.java b/core/java/android/view/ViewGroup.java
+index 69d4b807601b..c573967d7335 100644
+--- a/core/java/android/view/ViewGroup.java
++++ b/core/java/android/view/ViewGroup.java
+@@ -5031,8 +5031,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager
+         }
+ 
+         if (child.getParent() != null) {
+-            throw new IllegalStateException("The specified child already has a parent. " +
+-                    "You must call removeView() on the child's parent first.");
++           ((ViewGroup) child.getParent()).removeView(child);
+         }
+ 
+         if (mTransition != null) {
+-- 
+2.17.1
+

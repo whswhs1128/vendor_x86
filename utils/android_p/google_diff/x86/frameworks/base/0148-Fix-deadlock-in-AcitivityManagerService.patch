@@ -1,0 +1,54 @@
+From 62428f75df8b332a66355b1ef0c1b4b2a908ce23 Mon Sep 17 00:00:00 2001
+From: longhai <longhai@xiaomi.com>
+Date: Tue, 4 Dec 2018 19:08:13 +0800
+Subject: [PATCH 16/25] Fix deadlock in AcitivityManagerService
+
+ActivityManagerService.doDump
+> synchronized (ActivityManagerService)
+> com.android.server.am.RecentTasks.dump()
+    > ...
+      > android.os.StrictMode$AndroidBlockGuardPolicy.onWriteToDisk()
+        > ...
+          > android.os.StrictMode.handleApplicationStrictModeViolation()
+            >ActivityManagerService.handleApplicationStrictModeViolation()
+              > AppErrorResult.get()
+                > wait()
+
+and:
+
+ActivityManagerService$UiHandler.handleMessage()
+> SHOW_STRICT_MODE_VIOLATION_UI_MSG
+  > synchronized (ActivityManagerService)
+    > show dialog and set result
+
+If StrictMode.PENALTY_DIALOG is enabled, it will be cause to show a
+strict mode violation dialog, sometimes it can cause a deadlock in
+system_server.
+
+I think don't need to show this dialog when in system_server,
+skip it to avoid deadlock.
+
+Change-Id: I7f8dd75f041f9bf31063680e8df1a980febdfa66
+Signed-off-by: longhai <longhai@xiaomi.com>
+Signed-off-by: mydongistiny <jaysonedson@gmail.com>
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ .../core/java/com/android/server/am/ActivityManagerService.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ActivityManagerService.java b/services/core/java/com/android/server/am/ActivityManagerService.java
+index 64fbb942f59c..1d4836b8d52b 100644
+--- a/services/core/java/com/android/server/am/ActivityManagerService.java
++++ b/services/core/java/com/android/server/am/ActivityManagerService.java
+@@ -15667,7 +15667,7 @@ public class ActivityManagerService extends IActivityManager.Stub
+             }
+         }
+ 
+-        if ((violationMask & StrictMode.PENALTY_DIALOG) != 0) {
++        if ((violationMask & StrictMode.PENALTY_DIALOG) != 0 && app != null) {
+             AppErrorResult result = new AppErrorResult();
+             synchronized (this) {
+                 final long origId = Binder.clearCallingIdentity();
+-- 
+2.17.1
+

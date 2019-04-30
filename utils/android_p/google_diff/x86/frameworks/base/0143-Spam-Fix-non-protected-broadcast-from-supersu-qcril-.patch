@@ -1,0 +1,33 @@
+From 9fde173c94daf483e495b51961a2e39b754b3274 Mon Sep 17 00:00:00 2001
+From: xyyx <xyyx@mail.ru>
+Date: Mon, 11 Sep 2017 10:03:51 +0800
+Subject: [PATCH 11/25] Spam: Fix non-protected broadcast from supersu, qcril
+ and fm
+
+Change-Id: Ibf96073242225267d829cc77e649f4f237fec1c3
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+---
+ .../java/com/android/server/pm/PackageManagerService.java   | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
+index 56537a7f3310..cca983908846 100644
+--- a/services/core/java/com/android/server/pm/PackageManagerService.java
++++ b/services/core/java/com/android/server/pm/PackageManagerService.java
+@@ -5632,7 +5632,11 @@ public class PackageManagerService extends IPackageManager.Stub
+                 if (actionName.startsWith("android.net.netmon.lingerExpired")
+                         || actionName.startsWith("com.android.server.sip.SipWakeupTimer")
+                         || actionName.startsWith("com.android.internal.telephony.data-reconnect")
+-                        || actionName.startsWith("android.net.netmon.launchCaptivePortalApp")) {
++                        || actionName.startsWith("android.net.netmon.launchCaptivePortalApp")
++                        || actionName.startsWith("eu.chainfire.supersu.NativeAccess")
++                        || actionName.startsWith("qualcomm.intent.action.ACTION_AUDIO_STATE_CHANGED")
++                        || actionName.startsWith("com.qualcomm.intent.action.ACTION_UNSOL_RESPONSE_OEM_HOOK_RAW")
++                        || actionName.startsWith("com.caf.fmradio.action.AUDIO_BECOMING_NOISY")) {
+                     return true;
+                 }
+             }
+-- 
+2.17.1
+

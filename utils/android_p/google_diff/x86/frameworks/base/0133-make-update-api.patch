@@ -1,0 +1,61 @@
+From 6a783fbd6b4973f9bd64f72a11da9a3eeb7718e0 Mon Sep 17 00:00:00 2001
+From: Inventor1938 <ivan.kolev@mail.bg>
+Date: Mon, 11 Feb 2019 01:42:04 +0200
+Subject: [PATCH 01/25] make update-api
+
+Change-Id: I0ac890c656820c05f04b4bbd817b2d59d6c7bbb1
+---
+ api/current.txt        | 1 +
+ api/system-current.txt | 2 ++
+ api/test-current.txt   | 2 +-
+ 3 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/api/current.txt b/api/current.txt
+index 21569813a3d5..dee1d6c4851c 100644
+--- a/api/current.txt
++++ b/api/current.txt
+@@ -8307,6 +8307,7 @@ package android.bluetooth {
+   }
+ 
+   public final class BluetoothHeadset implements android.bluetooth.BluetoothProfile {
++    method public void finalize();
+     method public java.util.List<android.bluetooth.BluetoothDevice> getConnectedDevices();
+     method public int getConnectionState(android.bluetooth.BluetoothDevice);
+     method public java.util.List<android.bluetooth.BluetoothDevice> getDevicesMatchingConnectionStates(int[]);
+diff --git a/api/system-current.txt b/api/system-current.txt
+index 3b4a0be6cd13..031ac405241c 100644
+--- a/api/system-current.txt
++++ b/api/system-current.txt
+@@ -5482,6 +5482,7 @@ package android.telephony.ims {
+     method public void callSessionMergeStarted(android.telephony.ims.stub.ImsCallSessionImplBase, android.telephony.ims.ImsCallProfile);
+     method public void callSessionMultipartyStateChanged(boolean);
+     method public void callSessionProgressing(android.telephony.ims.ImsStreamMediaProfile);
++    method public void callSessionPropertyChanged(int);
+     method public void callSessionRemoveParticipantsRequestDelivered();
+     method public void callSessionRemoveParticipantsRequestFailed(android.telephony.ims.ImsReasonInfo);
+     method public void callSessionResumeFailed(android.telephony.ims.ImsReasonInfo);
+@@ -6047,6 +6048,7 @@ package android.telephony.ims.stub {
+     method public final void onRegistering(int);
+     method public final void onSubscriberAssociatedUriChanged(android.net.Uri[]);
+     method public final void onTechnologyChangeFailed(int, android.telephony.ims.ImsReasonInfo);
++    method public void updateToState(int, int);
+     field public static final int REGISTRATION_TECH_IWLAN = 1; // 0x1
+     field public static final int REGISTRATION_TECH_LTE = 0; // 0x0
+     field public static final int REGISTRATION_TECH_NONE = -1; // 0xffffffff
+diff --git a/api/test-current.txt b/api/test-current.txt
+index e34614e966c4..2bd60b809c5b 100644
+--- a/api/test-current.txt
++++ b/api/test-current.txt
+@@ -248,8 +248,8 @@ package android.content.pm {
+   public abstract class PackageManager {
+     method public abstract java.lang.String getDefaultBrowserPackageNameAsUser(int);
+     method public abstract int getInstallReason(java.lang.String, android.os.UserHandle);
+-    method public abstract java.util.List<android.content.pm.PackageInfo> getInstalledPackagesAsUser(int, int);
+     method public abstract java.util.List<android.content.pm.ApplicationInfo> getInstalledApplicationsAsUser(int, int);
++    method public abstract java.util.List<android.content.pm.PackageInfo> getInstalledPackagesAsUser(int, int);
+     method public abstract java.lang.String[] getNamesForUids(int[]);
+     method public abstract java.lang.String getPermissionControllerPackageName();
+     method public abstract java.lang.String getServicesSystemSharedLibraryPackageName();
+-- 
+2.17.1
+

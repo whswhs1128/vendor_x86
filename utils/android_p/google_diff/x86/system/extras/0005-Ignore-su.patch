@@ -1,0 +1,33 @@
+From e2c2ad8a569a36c6078b256e7405900273e65ea4 Mon Sep 17 00:00:00 2001
+From: Dan Pasanen <dan.pasanen@gmail.com>
+Date: Sun, 9 Nov 2014 16:43:22 -0600
+Subject: [PATCH] Ignore su
+
+Squash of:
+
+Author: Dan Pasanen <dan.pasanen@gmail.com>
+Date:   Sun Nov 9 16:43:22 2014 -0600
+    extras: remove su, we have our own
+    Change-Id: I18e9819efc3e7aed56e4fb19b0fa4f4bf4bd902e
+
+Author: Matt Mower <mowerm@gmail.com>
+Date:   Sat Jan 3 22:11:46 2015 -0600
+    Extras: gitignore su
+    Change-Id: Iff5a1a6962ee1633f833f5dd998e62ecf6e5f0af
+
+Change-Id: I4fde8fce19df6db5bebaa311f9d1bb3b59737fb6
+---
+ .gitignore | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 00000000..546c736c
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1 @@
++/su
+-- 
+2.17.1
+

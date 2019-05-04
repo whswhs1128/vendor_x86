@@ -1,4 +1,4 @@
-From d745eccaec86cd7b37859491a4ef18e53e97ccc3 Mon Sep 17 00:00:00 2001
+From 9cd0e259c3733bcbb29d5c630a87c8fc812ac0fc Mon Sep 17 00:00:00 2001
 From: Kumar K M <kumar.k.m@intel.com>
 Date: Fri, 15 Mar 2019 16:11:06 +0530
 Subject: [PATCH] Handle HDMI audio in accessory manager
@@ -7,14 +7,14 @@ Change-Id: I2d2a81138a5f283822518d7ba62fee4c7c338b9a
 Tracked-On: OAM-76220
 Signed-off-by: Kumar K M <kumar.k.m@intel.com>
 ---
- .../android/server/WiredAccessoryManager.java | 70 +++++++++++++------
- 1 file changed, 49 insertions(+), 21 deletions(-)
+ .../android/server/WiredAccessoryManager.java | 69 +++++++++++++------
+ 1 file changed, 48 insertions(+), 21 deletions(-)
 
 diff --git a/services/core/java/com/android/server/WiredAccessoryManager.java b/services/core/java/com/android/server/WiredAccessoryManager.java
-index a8929fc8333..719270c5cab 100644
+index 3980bc6b57d9..eca38f514830 100644
 --- a/services/core/java/com/android/server/WiredAccessoryManager.java
 +++ b/services/core/java/com/android/server/WiredAccessoryManager.java
-@@ -103,12 +103,15 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -105,12 +105,15 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
          if (mUseDevInputEventForAudioJack) {
              int switchValues = 0;
              if (mInputManager.getSwitchState(-1, InputDevice.SOURCE_ANY, SW_HEADPHONE_INSERT) == 1) {
@@ -30,62 +30,58 @@ index a8929fc8333..719270c5cab 100644
 +		 Log.v(TAG,"SW_LINEOUT_INSERT #######");
                  switchValues |= SW_LINEOUT_INSERT_BIT;
              }
-             notifyWiredAccessoryChanged(0, switchValues,
-@@ -120,40 +123,52 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+             if (mInputManager.getSwitchState(-1, InputDevice.SOURCE_ANY, SW_VIDEOOUT_INSERT) == 1) {
+@@ -125,7 +128,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
  
      @Override
      public void notifyWiredAccessoryChanged(long whenNanos, int switchValues, int switchMask) {
--        if (LOG) Slog.v(TAG, "notifyWiredAccessoryChanged: when=" + whenNanos
+-        if (LOG) Slog.i(TAG, "notifyWiredAccessoryChanged: when=" + whenNanos
 +        Log.e(TAG, "notifyWiredAccessoryChanged: when=" + whenNanos
                  + " bits=" + switchCodeToString(switchValues, switchMask)
                  + " mask=" + Integer.toHexString(switchMask));
  
-+  Log.e(TAG, " notifyWiredAccessoryChanged: when=" + whenNanos
-+                + " bits=" + switchCodeToString(switchValues, switchMask)
-+                + " mask=" + Integer.toHexString(switchMask));
-+
-+
-         synchronized (mLock) {
-             int headset;
-             mSwitchValues = (mSwitchValues & ~switchMask) | switchValues;
+@@ -135,14 +138,17 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
              switch (mSwitchValues &
-                 (SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT)) {
+                 (SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT | SW_VIDEOOUT_INSERT_BIT)) {
                  case 0:
-+			Log.v(TAG," case-0");
++					Log.v(TAG," case-0");
                      headset = 0;
                      break;
  
                  case SW_HEADPHONE_INSERT_BIT:
-+			Log.v(TAG," case:SW_HEADPHONE_INSERT_BIT");
++					Log.v(TAG," case:SW_HEADPHONE_INSERT_BIT");
                      headset = BIT_HEADSET_NO_MIC;
                      break;
  
                  case SW_LINEOUT_INSERT_BIT:
-+			Log.v(TAG," case:SW_LINEOUT_INSERT_BIT");
++                    Log.v(TAG," case:SW_LINEOUT_INSERT_BIT");
                      headset = BIT_LINEOUT;
                      break;
  
+@@ -152,14 +158,22 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+                     break;
+ 
                  case SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT:
-+			Log.v(TAG," case: SW_HEADPHONE_INSERT_BIT| SW_MICROPHONE_INSERT_BIT ");
++					Log.v(TAG," case: SW_HEADPHONE_INSERT_BIT| SW_MICROPHONE_INSERT_BIT ");
                      headset = BIT_HEADSET;
                      break;
  
                  case SW_MICROPHONE_INSERT_BIT:
-+			Log.v(TAG," case:SW_MICROPHONE_INSERT_BIT");
++					Log.v(TAG," case:SW_MICROPHONE_INSERT_BIT");
                      headset = BIT_HEADSET;
                      break;
-                 
-                 case SW_HEADPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT:
-+			Log.v(TAG," case : SW_HEADPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT");
-                     headset = BIT_HEADSET;
-                     break;
++                    
++                case SW_HEADPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT:
++					Log.v(TAG," case : SW_HEADPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT");
++					headset = BIT_HEADSET;
++					break;
  
                  default:
-+			Log.v(TAG," case :default");
++					Log.v(TAG," case :default");
                      headset = 0;
                      break;
              }
-@@ -190,7 +205,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -196,7 +210,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
          int h2w_headset = headsetState & (BIT_HEADSET | BIT_HEADSET_NO_MIC | BIT_LINEOUT);
          boolean h2wStateChange = true;
          boolean usbStateChange = true;
@@ -94,7 +90,7 @@ index a8929fc8333..719270c5cab 100644
                  + " newState=" + newState
                  + " headsetState=" + headsetState
                  + " prev headsetState=" + mHeadsetState);
-@@ -204,23 +219,23 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -210,23 +224,23 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
          // - a: 0 headset to 1 headset
          // - b: 1 headset to 0 headset
          if (h2w_headset == (BIT_HEADSET | BIT_HEADSET_NO_MIC | BIT_LINEOUT)) {
@@ -122,7 +118,7 @@ index a8929fc8333..719270c5cab 100644
          Message msg = mHandler.obtainMessage(MSG_NEW_DEVICE_STATE, headsetState,
                  mHeadsetState, "");
          mHandler.sendMessage(msg);
-@@ -264,6 +279,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -270,6 +284,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
              int inDevice = 0;
              int state;
  
@@ -131,25 +127,25 @@ index a8929fc8333..719270c5cab 100644
              if ((headsetState & headset) != 0) {
                  state = 1;
              } else {
-@@ -271,25 +288,29 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -277,25 +293,29 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
              }
  
              if (headset == BIT_HEADSET) {
-+		Log.v(TAG," inside AudioManager.DEVICE_OUT_WIRED_HEADSET");
++				Log.v(TAG," inside AudioManager.DEVICE_OUT_WIRED_HEADSET");
                  outDevice = AudioManager.DEVICE_OUT_WIRED_HEADSET;
                  inDevice = AudioManager.DEVICE_IN_WIRED_HEADSET;
              } else if (headset == BIT_HEADSET_NO_MIC){
                  outDevice = AudioManager.DEVICE_OUT_WIRED_HEADPHONE;
              } else if (headset == BIT_LINEOUT){
                  outDevice = AudioManager.DEVICE_OUT_LINE;
-+		Log.v(TAG," inside BIT_LINEOUT");
-+//		outDevice = AudioManager.DEVICE_OUT_HDMI;
++                Log.v(TAG," inside BIT_LINEOUT");
+++//				outDevice = AudioManager.DEVICE_OUT_HDMI;
              } else if (headset == BIT_USB_HEADSET_ANLG) {
                  outDevice = AudioManager.DEVICE_OUT_ANLG_DOCK_HEADSET;
              } else if (headset == BIT_USB_HEADSET_DGTL) {
                  outDevice = AudioManager.DEVICE_OUT_DGTL_DOCK_HEADSET;
              } else if (headset == BIT_HDMI_AUDIO) {
-+		Log.v(TAG," inside BIT_HDMI_AUDIO ");
++				Log.v(TAG," inside BIT_HDMI_AUDIO ");
                  outDevice = AudioManager.DEVICE_OUT_HDMI;
              } else {
 -                Slog.e(TAG, "setDeviceState() invalid headset type: "+headset);
@@ -158,12 +154,12 @@ index a8929fc8333..719270c5cab 100644
              }
  
              if (LOG) {
--                Slog.v(TAG, "headsetName: " + headsetName +
+-                Slog.i(TAG, "headsetName: " + headsetName +
 +                Log.e(TAG, "headsetName: " + headsetName +
                          (state == 1 ? " connected" : " disconnected"));
              }
  
-@@ -324,7 +345,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -338,7 +358,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
  
          void init() {
              synchronized (mLock) {
@@ -172,7 +168,7 @@ index a8929fc8333..719270c5cab 100644
                  char[] buffer = new char[1024];
  
                  for (int i = 0; i < mUEventInfo.size(); ++i) {
-@@ -340,10 +361,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -354,10 +374,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                              updateStateLocked(uei.getDevPath(), uei.getDevName(), curState);
                          }
                      } catch (FileNotFoundException e) {
@@ -185,7 +181,7 @@ index a8929fc8333..719270c5cab 100644
                      }
                  }
              }
-@@ -363,20 +384,22 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -377,20 +397,22 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
  
              // Monitor h2w
              if (!mUseDevInputEventForAudioJack) {
@@ -211,7 +207,7 @@ index a8929fc8333..719270c5cab 100644
              }
  
              // Monitor HDMI
-@@ -387,15 +410,18 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -401,15 +423,18 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
              //
              // If the kernel does not have an "hdmi_audio" switch, just fall back on the older
              // "hdmi" switch instead.
@@ -233,7 +229,7 @@ index a8929fc8333..719270c5cab 100644
                  }
              }
  
-@@ -404,7 +430,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -418,7 +443,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
  
          @Override
          public void onUEvent(UEventObserver.UEvent event) {
@@ -242,7 +238,7 @@ index a8929fc8333..719270c5cab 100644
  
              try {
                  String devPath = event.get("DEVPATH");
-@@ -414,7 +440,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -428,7 +453,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                      updateStateLocked(devPath, name, state);
                  }
              } catch (NumberFormatException e) {
@@ -251,7 +247,7 @@ index a8929fc8333..719270c5cab 100644
              }
          }
  
-@@ -441,7 +467,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+@@ -455,7 +480,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                  mStateNbits = stateNbits;
              }
  

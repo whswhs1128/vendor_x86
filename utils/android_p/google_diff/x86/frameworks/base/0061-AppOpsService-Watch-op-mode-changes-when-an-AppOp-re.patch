@@ -1,7 +1,7 @@
 From 600f7824b9d36a6fc187011105663ac77486990b Mon Sep 17 00:00:00 2001
 From: Bruno Martins <bgcngm@gmail.com>
 Date: Sun, 30 Dec 2018 16:02:59 +0000
-Subject: [PATCH 2/3] AppOpsService: Watch op mode changes when an AppOp
+Subject: [PATCH 2/4] AppOpsService: Watch op mode changes when an AppOp
  restriction dies
 
 On binder death, ensure that any associated watched ops are not left

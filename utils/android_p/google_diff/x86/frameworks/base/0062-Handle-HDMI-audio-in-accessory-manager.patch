@@ -1,7 +1,7 @@
 From 3150197225251b2f3b77112991118fbccee57f95 Mon Sep 17 00:00:00 2001
 From: Kumar K M <kumar.k.m@intel.com>
 Date: Fri, 15 Mar 2019 16:11:06 +0530
-Subject: [PATCH 3/3] Handle HDMI audio in accessory manager
+Subject: [PATCH 3/4] Handle HDMI audio in accessory manager
 
 Change-Id: I2d2a81138a5f283822518d7ba62fee4c7c338b9a
 Tracked-On: OAM-76220

@@ -1,7 +1,7 @@
-From 4f923f5027b287106d951889e26108c00d2f4166 Mon Sep 17 00:00:00 2001
+From 1346fd917bd0c5c98c083a252a957d5c64860dad Mon Sep 17 00:00:00 2001
 From: Adrian DC <radian.dc@gmail.com>
 Date: Fri, 5 Aug 2016 09:11:44 +0200
-Subject: [PATCH 3/3] Settings: Root appops access in developer settings
+Subject: [PATCH 3/4] Settings: Root appops access in developer settings
 
  * Allow users to directly access the root app settings,
     as the feature is mostly unknown and often a reason
@@ -14,29 +14,32 @@ Subject: [PATCH 3/3] Settings: Root appops access in developer settings
 
 Change-Id: Ia5bc9d56fb11700b19d73336fad13c0a936091ff
 Signed-off-by: Adrian DC <radian.dc@gmail.com>
+
+Conflicts:
+	res/values/cm_strings.xml
 ---
- res/values/cm_strings.xml                     |  4 +
+ res/values/bliss_strings.xml                  |  4 +
  res/xml/development_settings.xml              |  5 +
  .../DevelopmentSettingsDashboardFragment.java |  1 +
  .../RootAppOpsPreferenceController.java       | 94 +++++++++++++++++++
  4 files changed, 104 insertions(+)
  create mode 100644 src/com/android/settings/development/RootAppOpsPreferenceController.java
 
-diff --git a/res/values/cm_strings.xml b/res/values/cm_strings.xml
-index 9ebc9c8772..4db1e9b09f 100644
---- a/res/values/cm_strings.xml
-+++ b/res/values/cm_strings.xml
-@@ -334,6 +334,10 @@
+diff --git a/res/values/bliss_strings.xml b/res/values/bliss_strings.xml
+index 50e5b06683..6ecbae15bd 100644
+--- a/res/values/bliss_strings.xml
++++ b/res/values/bliss_strings.xml
+@@ -66,6 +66,10 @@
+     <string name="root_access_apps">Apps only</string>
      <string name="root_access_adb">ADB only</string>
      <string name="root_access_all">Apps and ADB</string>
- 
++    
 +    <!-- Preference link for root appops -->
 +    <string name="root_appops_title">Manage root accesses</string>
 +    <string name="root_appops_summary">View and control the root rules</string>
-+
-     <!-- Touchscreen gesture settings -->
-     <string name="touchscreen_gesture_settings_title">Touchscreen gestures</string>
-     <string name="touchscreen_gesture_settings_summary">Perform various touchscreen gestures for quick actions</string>
+ 
+     <!-- App Ops Categories -->
+     <string name="app_ops_cat_location">Location</string>
 diff --git a/res/xml/development_settings.xml b/res/xml/development_settings.xml
 index 44b82e4e3a..feba1bd613 100644
 --- a/res/xml/development_settings.xml

@@ -1,0 +1,25 @@
+From 238f973843a44b46f085fdb737575e93fee9b5ef Mon Sep 17 00:00:00 2001
+From: Sam Mortimer <sam@mortimer.me.uk>
+Date: Fri, 8 Sep 2017 00:22:33 -0700
+Subject: [PATCH 4/4] Settings: depend on lineage platform library
+
+Change-Id: I9f23ed70ba4eba9a0008c33ecc4b048c23ca9be3
+---
+ Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Android.mk b/Android.mk
+index 2ae5ee8922..83aeb29e0e 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -50,6 +50,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
+     guava \
+     jsr305 \
+     settings-logtags \
++    org.lineageos.platform.internal
+ 
+ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
+     frameworks/support/v7/preference/res \
+-- 
+2.17.1
+

@@ -1,0 +1,30 @@
+From 221e57ddbabe0067bfe137a8c4918fa4a5fafccf Mon Sep 17 00:00:00 2001
+From: electrikjesus <electrikjesus@gmail.com>
+Date: Mon, 6 May 2019 19:51:55 -0400
+Subject: [PATCH 3/3] remove duplicate case "ac" & case "ic"
+
+Change-Id: I8b94005a17520c124538960263f5e639db0cfade
+---
+ services/core/java/com/android/server/AppOpsService.java | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/services/core/java/com/android/server/AppOpsService.java b/services/core/java/com/android/server/AppOpsService.java
+index 03b1da345cc..f05721d14dd 100644
+--- a/services/core/java/com/android/server/AppOpsService.java
++++ b/services/core/java/com/android/server/AppOpsService.java
+@@ -2598,12 +2598,6 @@ public class AppOpsService extends IAppOpsService.Stub {
+                         case "pp":
+                             op.proxyPackageName = value;
+                             break;
+-                        case "ac":
+-                            op.allowedCount = Integer.parseInt(value);
+-                            break;
+-                        case "ic":
+-                            op.ignoredCount = Integer.parseInt(value);
+-                            break;
+                         case "tp":
+                             op.time[AppOpsManager.UID_STATE_PERSISTENT] = Long.parseLong(value);
+                             break;
+-- 
+2.17.1
+

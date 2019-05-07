@@ -1,0 +1,26 @@
+From bea44ec1fdca36e3a81fa65da30aeed4470c6b94 Mon Sep 17 00:00:00 2001
+From: electrikjesus <electrikjesus@gmail.com>
+Date: Sun, 5 May 2019 15:10:21 -0400
+Subject: [PATCH 2/3] remove duplicate OPSTR_BOOT_COMPLETED
+
+Change-Id: I2c4cb447adf123aae4b5053ad5130b0890e5e668
+---
+ core/java/android/app/AppOpsManager.java | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/core/java/android/app/AppOpsManager.java b/core/java/android/app/AppOpsManager.java
+index 22ad18f1c88..c6a7492f617 100644
+--- a/core/java/android/app/AppOpsManager.java
++++ b/core/java/android/app/AppOpsManager.java
+@@ -622,8 +622,6 @@ public class AppOpsManager {
+     /** @hide */
+     public static final String OPSTR_BLUETOOTH_CHANGE = "android:bluetooth_change";
+     /** @hide */
+-    public static final String OPSTR_BOOT_COMPLETED = "android:boot_completed";
+-    /** @hide */
+     public static final String OPSTR_NFC_CHANGE = "android:nfc_change";
+     /** @hide */
+     public static final String OPSTR_DATA_CONNECT_CHANGE = "android:data_connect_change";
+-- 
+2.17.1
+

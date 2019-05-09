@@ -3,6 +3,11 @@
 # determine the GPD Win patches folder location
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# patch bootable/newinstaller
+cd "bootable/newinstaller"
+git am < "$DIR/Use-magisk-init.patch"
+cd ../..
+
 # bundle MagiskManager into the system
 cd "out/target/product/x86_64/system/app"
 mkdir MagiskManager

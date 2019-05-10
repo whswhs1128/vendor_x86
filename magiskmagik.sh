@@ -7,6 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "bootable/newinstaller"
 git am < "$DIR/Use-magisk-init.patch"
 cd ../..
+echo "Patching Complete"
 
 # bundle MagiskManager into the system
 cd "out/target/product/x86_64/system/app"
@@ -20,14 +21,17 @@ mv lib ..
 cd ..
 rm -rf tmp
 cd ..
+echo "MagiskManager copied"
 
-cd ../../../../../../..
+cd ../../../../../..
 
 # delete all files we wish to rebuild
 rm -f "out/target/product/x86_64/*.iso"
 rm -f "out/target/product/x86_64/system.sfs"
+rm -f "out/target/product/x86_64/system.img"
 rm -f "out/target/product/x86_64/ramdisk.img"
 rm -f "out/target/product/x86_64/obj/PACKAGING/systemimage_intermediates/system.img"
+echo "Removed system images"
 
 # copy the magisk init binary into the ramdisk
 # we need to go this roundabout way because android-x86 has three ramdisks...
@@ -44,6 +48,7 @@ rm -f "out/target/product/x86_64/obj/PACKAGING/systemimage_intermediates/system.
 cd "bootable/newinstaller/initrd/bin"
 cp "$DIR/magisk/init" .
 cd ../../../..
+echo "Moved init"
 
 # workaround until I figure out what's wrong with the code above
 # cp "$DIR/magisk/ramdisk.img" "out/target/product/x86_64"

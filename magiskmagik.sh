@@ -74,13 +74,16 @@ echo "Removed system images"
 #cd "bootable/newinstaller/initrd/bin"
 #cp "$DIR/magisk/init" .
 #cd ../../../..
-echo "Moved init"
+# echo "Moved init"
 
 # workaround until I figure out what's wrong with the code above
 # cp "$DIR/magisk/ramdisk.img" "out/target/product/x86_64"
+
 rm -rf out/target/product/x86_64/system/magisk
 mkdir out/target/product/x86_64/system/magisk
-cp "out/target/product/x86_64/ramdisk.img" "out/target/product/x86_64/system/magisk"
+cp -a "$DIR/zip/." "out/target/product/x86_64/system/magisk"
+
+#cp "out/target/product/x86_64/ramdisk.img" "out/target/product/x86_64/system/magisk"
 
 # setup the aosp build environment
 # . build/envsetup.sh

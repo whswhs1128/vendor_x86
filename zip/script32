@@ -1,0 +1,36 @@
+echo "****************"
+echo "Magisk installer"
+echo "****************"
+echo "- Checking environment"
+echo "  Magisk version: 15.3"
+echo "- Placing files"
+
+if [ -f "/system/xbin/su" ]; then
+  mv /system/xbin/su /system/xbin/su.bak
+fi
+
+mkdir -p /data/adb/magisk
+chmod 0755 /data/adb/magisk
+cp x86/magiskboot /data/adb/magisk/magiskboot
+chmod 0755 /data/adb/magisk/magiskboot
+cp x86/magiskinit /data/adb/magisk/magiskinit
+chmod 0755 /data/adb/magisk/magiskinit
+cp common/magisk /data/adb/magisk/magisk
+chmod 0755 /data/adb/magisk/magisk
+cp common/busybox /data/adb/magisk/busybox
+chmod 0755 /data/adb/magisk/busybox
+cp common/boot_patch.sh /data/adb/magisk/boot_patch.sh
+chmod 0755 /data/adb/magisk/boot_patch.sh
+cp common/util_functions.sh /data/adb/magisk/util_functions.sh
+chmod 0755 /data/adb/magisk/util_functions.sh
+
+mkdir -p /data/adb/magisk/chromeos
+chmod 0755 /data/adb/magisk/chromeos
+cp chromeos/futility /data/adb/magisk/chromeos/futility
+chmod 0755 /data/adb/magisk/chromeos/futility
+cp chromeos/kernel_data_key.vbprivk /data/adb/magisk/chromeos/kernel_data_key.vbprivk
+chmod 0755 /data/adb/magisk/chromeos/kernel_data_key.vbprivk
+cp chromeos/kernel.keyblock /data/adb/magisk/chromeos/kernel.keyblock
+chmod 0755 /data/adb/magisk/chromeos/kernel.keyblock
+
+echo "- Done"
